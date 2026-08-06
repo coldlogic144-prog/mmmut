@@ -1803,7 +1803,7 @@
 
         /* ===== COMMUNITY POSTS ===== */
         .community-post {
-            padding: 14px 0;
+            padding: 16px 0;
             border-bottom: 1px solid var(--paper-line);
         }
         .community-post:last-child {
@@ -1830,6 +1830,7 @@
             font-weight: 600;
             font-size: 15px;
             margin-top: 4px;
+            color: var(--ink);
         }
         .community-post .cp-body {
             font-size: 13px;
@@ -1897,6 +1898,17 @@
             font-size: 10px;
             color: var(--ink-soft);
             font-family: 'IBM Plex Mono', monospace;
+        }
+        .community-post .cp-admin-badge {
+            font-size: 9px;
+            background: var(--brass-soft);
+            color: var(--brass);
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
         }
 
         .cp-modal textarea {
@@ -2147,10 +2159,11 @@
                         <div class="card-head">
                             <div>
                                 <div class="card-eyebrow">📝 Community</div>
-                                <div class="card-title display" style="margin-bottom:0;">Posts</div>
+                                <div class="card-title display" style="margin-bottom:0;">Announcements &amp; Updates</div>
                             </div>
                             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                <button class="btn-primary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="openCreatePost()">✏️ New Post</button>
+                                <!-- Only show New Post button for admins -->
+                                <button class="btn-primary" id="cpNewPostBtn" style="margin:0;padding:6px 14px;font-size:12px;display:none;" onclick="openCreatePost()">✏️ New Post</button>
                             </div>
                         </div>
                         <div id="communityPostsFeed" style="max-height:450px;overflow-y:auto;padding-right:4px;">
@@ -2177,7 +2190,7 @@
         <footer class="app-foot">M.M.M. University of Technology, Gorakhpur — Session 2026–27</footer>
     </div>
 
-    <!-- ===== CREATE POST OVERLAY ===== -->
+    <!-- ===== CREATE POST OVERLAY (Admin only) ===== -->
     <div class="feedback-overlay" id="createPostOverlay">
         <div class="feedback-panel cp-modal" style="max-width:560px;">
             <div class="feedback-panel-header">
@@ -3966,6 +3979,11 @@
                 (snap) => {
                     communityPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderCommunityPosts();
+                    // Show/hide New Post button based on admin status
+                    const newBtn = document.getElementById('cpNewPostBtn');
+                    if (newBtn) {
+                        newBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+                    }
                 }
             );
 
@@ -4019,6 +4037,11 @@
                             pill.parentNode.insertBefore(b, pill.nextSibling);
                         } else {
                             document.querySelector('.topbar-right').appendChild(b);
+                        }
+                        // Update community post button visibility
+                        const newBtn = document.getElementById('cpNewPostBtn');
+                        if (newBtn) {
+                            newBtn.style.display = isAdmin ? 'inline-flex' : 'none';
                         }
                     }
                 });
@@ -5204,6 +5227,7 @@
 
         function openCreatePost() {
             if (!currentUser) { showToast('Please log in first.'); return; }
+            if (!isAdmin) { showToast('Only admins can create posts.'); return; }
             document.getElementById('createPostOverlay').classList.add('open');
             document.getElementById('cpTitle').value = '';
             document.getElementById('cpContent').value = '';
@@ -5234,6 +5258,7 @@
         async function submitCommunityPost(e) {
             e.preventDefault();
             if (!currentUser) { showToast('Please log in first.'); return; }
+            if (!isAdmin) { showToast('Only admins can create posts.'); return; }
             const errorEl = document.getElementById('cpFormError');
             errorEl.style.display = 'none';
 
@@ -5255,9 +5280,9 @@
                     await uploadBytes(storageRef, file);
                     imageUrl = await getDownloadURL(storageRef);
                 } catch (err) {
-                    errorEl.textContent = 'Failed to upload image: ' + err.message;
-                    errorEl.style.display = 'block';
-                    return;
+                    // Image upload failed - but we still want to save the post
+                    console.warn('Image upload failed, proceeding without image:', err);
+                    showToast('⚠️ Image upload failed, but post will be saved without it.');
                 }
             }
 
@@ -5268,7 +5293,7 @@
                     name: currentUser.name,
                     title,
                     content,
-                    imageUrl,
+                    imageUrl: imageUrl || null,
                     likes: [],
                     createdAt: serverTimestamp()
                 });
@@ -5290,7 +5315,7 @@
             }
 
             if (communityPosts.length === 0) {
-                feed.innerHTML = `<div class="empty-note">No posts yet. Be the first to share!</div>`;
+                feed.innerHTML = `<div class="empty-note">No posts yet. Check back later for updates from the admin.</div>`;
                 return;
             }
 
@@ -5307,7 +5332,9 @@
               <div class="community-post">
                 <div class="cp-head">
                   <div>
-                    <div class="cp-author">${post.name || 'Unknown'} <span>@${post.username || '—'}</span></div>
+                    <div class="cp-author">${post.name || 'Unknown'} <span>@${post.username || '—'}</span>
+                      <span class="cp-admin-badge">Admin</span>
+                    </div>
                     <div class="cp-title">${post.title}</div>
                   </div>
                   <div class="cp-time">${date}</div>
