@@ -8,20 +8,20 @@
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
         :root {
-            --ink: #152A3B;
-            --ink-soft: #2C4258;
-            --paper: #EDEAE0;
-            --paper-raised: #F7F5EE;
-            --paper-line: #D9D4C4;
-            --brass: #B08A3E;
-            --brass-soft: #E4D2A4;
-            --teal: #2F5D5A;
-            --teal-soft: #DCE9E6;
-            --brick: #A3402E;
-            --brick-soft: #F2DCD6;
-            --moss: #4C7A47;
-            --moss-soft: #DCE8D6;
-            --shadow: 0 1px 2px rgba(21, 42, 59, .06), 0 8px 24px rgba(21, 42, 59, .08);
+            --ink: #1E2438;
+            --ink-soft: #454C68;
+            --paper: #EDEEF3;
+            --paper-raised: #F8F8FB;
+            --paper-line: #D8DAE4;
+            --brass: #C17A3D;
+            --brass-soft: #F0DAC0;
+            --teal: #3E6E8E;
+            --teal-soft: #DCE8EF;
+            --brick: #B23A48;
+            --brick-soft: #F4DBDE;
+            --moss: #3F8361;
+            --moss-soft: #DCEFE3;
+            --shadow: 0 1px 2px rgba(30, 36, 56, .06), 0 8px 24px rgba(30, 36, 56, .08);
             --radius: 14px;
             font-size: 16px;
         }
@@ -35,7 +35,7 @@
         }
         body {
             background: var(--paper);
-            background-image: radial-gradient(circle at 1px 1px, rgba(21, 42, 59, .045) 1px, transparent 0);
+            background-image: radial-gradient(circle at 1px 1px, rgba(30, 36, 56, .045) 1px, transparent 0);
             background-size: 22px 22px;
             color: var(--ink);
             font-family: 'IBM Plex Sans', sans-serif;
@@ -259,6 +259,36 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
+        }
+        .password-field {
+            position: relative;
+        }
+        .password-field input {
+            padding-right: 42px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: var(--ink-soft);
+            transition: background .15s ease, color .15s ease;
+        }
+        .toggle-password:hover {
+            background: var(--paper-line);
+            color: var(--ink);
+        }
+        .toggle-password:active {
+            transform: translateY(-50%) scale(.9);
         }
         .btn-primary {
             margin-top: 8px;
@@ -929,7 +959,7 @@
         .admin-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(21, 42, 59, .55);
+            background: rgba(30, 36, 56, .55);
             backdrop-filter: blur(6px);
             z-index: 100;
             display: none;
@@ -948,7 +978,7 @@
             max-height: 92vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 24px 60px rgba(21, 42, 59, .25);
+            box-shadow: 0 24px 60px rgba(30, 36, 56, .25);
             border: 1px solid var(--paper-line);
             overflow: hidden;
         }
@@ -1298,7 +1328,7 @@
         .profile-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(21, 42, 59, .55);
+            background: rgba(30, 36, 56, .55);
             backdrop-filter: blur(6px);
             z-index: 150;
             display: none;
@@ -1315,7 +1345,7 @@
             max-width: 480px;
             width: 100%;
             padding: 28px 32px;
-            box-shadow: 0 24px 60px rgba(21, 42, 59, .25);
+            box-shadow: 0 24px 60px rgba(30, 36, 56, .25);
             border: 1px solid var(--paper-line);
         }
         .profile-panel h2 {
@@ -1414,7 +1444,7 @@
         .feedback-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(21, 42, 59, .55);
+            background: rgba(30, 36, 56, .55);
             backdrop-filter: blur(6px);
             z-index: 160;
             display: none;
@@ -1433,7 +1463,7 @@
             max-height: 92vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 24px 60px rgba(21, 42, 59, .25);
+            box-shadow: 0 24px 60px rgba(30, 36, 56, .25);
             border: 1px solid var(--paper-line);
             overflow: hidden;
         }
@@ -1950,6 +1980,432 @@
                 padding: 3px 6px;
             }
         }
+        /* ================================================================
+           ANIMATION LAYER
+           All motion added below. Kept in its own block so the original
+           design system above stays untouched. Uses only transform/opacity
+           where possible for performance, plus a couple of width/backdrop
+           transitions that are cheap at this scale.
+        ================================================================= */
+
+        /* ---------- Respect reduced-motion users ---------- */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* ---------- Keyframes ---------- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes popBounce {
+            0% { transform: scale(.75); opacity: 0; }
+            55% { transform: scale(1.18); opacity: 1; }
+            80% { transform: scale(.94); }
+            100% { transform: scale(1); }
+        }
+        @keyframes badgePop {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        @keyframes badgeDissolve {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(0); opacity: 0; }
+        }
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(163, 64, 46, .45); }
+            50% { box-shadow: 0 0 0 5px rgba(163, 64, 46, 0); }
+        }
+        @keyframes nowGlow {
+            0%, 100% { box-shadow: 0 0 0 4px var(--brass-soft); }
+            50% { box-shadow: 0 0 0 7px rgba(176, 138, 62, .18); }
+        }
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: .85; }
+        }
+        @keyframes loaderFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: scale(1.04); }
+        }
+        @keyframes authSlideUp {
+            from { opacity: 0; transform: translateY(36px) scale(.98); }
+            60% { opacity: 1; }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes topbarSlideDown {
+            0% { opacity: 0; transform: translateY(-26px); }
+            65% { opacity: 1; transform: translateY(4px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes panelSlideUp {
+            from { opacity: 0; transform: translateY(48px) scale(.96); }
+            65% { transform: translateY(-4px) scale(1.005); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastSlideBounce {
+            0% { opacity: 0; transform: translateY(28px) scale(.9); }
+            55% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes zoomFadeIn {
+            from { opacity: 0; transform: scale(.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes heartPop {
+            0% { transform: scale(1); }
+            35% { transform: scale(1.35); }
+            60% { transform: scale(.9); }
+            100% { transform: scale(1); }
+        }
+        @keyframes slideInFromRight {
+            from { opacity: 0; transform: translateX(26px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInFromLeft {
+            from { opacity: 0; transform: translateX(-26px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes focusGlow {
+            from { box-shadow: 0 0 0 0 rgba(176, 138, 62, .35); }
+            to { box-shadow: 0 0 0 4px rgba(176, 138, 62, 0); }
+        }
+        @keyframes brandSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); opacity: .6; }
+            50% { transform: scale(1.35); opacity: 0; }
+        }
+
+        /* ---------- Loader ---------- */
+        #loadingScreen {
+            animation: fadeIn .3s ease both;
+        }
+        #loadingScreen.fade-out {
+            animation: loaderFadeOut .45s ease both;
+        }
+        .loader-ring {
+            animation: spin .9s linear infinite, loaderPulse 1.8s ease-in-out infinite;
+        }
+        .loading-msg {
+            animation: fadeIn .5s ease .1s both;
+        }
+
+        /* ---------- Auth screen entrance ---------- */
+        .auth-wrap {
+            animation: authSlideUp .65s cubic-bezier(.22, 1.15, .32, 1) both;
+        }
+
+        /* ---------- Topbar entrance ---------- */
+        .topbar {
+            animation: topbarSlideDown .55s cubic-bezier(.22, 1.15, .32, 1) both;
+        }
+        .brand-mark {
+            transition: transform .5s ease;
+        }
+        .brand-mark:hover {
+            transform: rotate(360deg);
+        }
+        .user-pill {
+            position: relative;
+            transition: background .2s ease, transform .15s ease;
+        }
+        .user-pill:active {
+            transform: scale(.97);
+        }
+        .user-pill:hover {
+            animation: none;
+            background: var(--paper-line);
+        }
+
+        /* ---------- Cards: reveal on scroll + hover lift + glow ---------- */
+        .card {
+            position: relative;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s ease, opacity .5s ease;
+        }
+        .card.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            padding: 1px;
+            background: linear-gradient(120deg, var(--brass), transparent 40%, transparent 60%, var(--teal));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity .3s ease;
+            pointer-events: none;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(30, 36, 56, .09), 0 16px 34px rgba(30, 36, 56, .12);
+        }
+        .card:hover::before {
+            opacity: .55;
+        }
+
+        /* ---------- Period rail ---------- */
+        .rail-item {
+            animation: fadeInLeft .38s ease both;
+        }
+        .rail-item:nth-child(1) { animation-delay: .02s; }
+        .rail-item:nth-child(2) { animation-delay: .07s; }
+        .rail-item:nth-child(3) { animation-delay: .12s; }
+        .rail-item:nth-child(4) { animation-delay: .17s; }
+        .rail-item:nth-child(5) { animation-delay: .22s; }
+        .rail-item:nth-child(6) { animation-delay: .27s; }
+        .rail-item:nth-child(7) { animation-delay: .32s; }
+        .rail-item:nth-child(8) { animation-delay: .37s; }
+        .rail-item:nth-child(9) { animation-delay: .42s; }
+        .rail-item.now .rail-dot {
+            animation: nowGlow 1.8s ease-in-out infinite;
+        }
+        .rail-dot {
+            transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+        }
+        .mini-btn {
+            transition: background .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
+        }
+        .mini-btn:hover {
+            transform: translateY(-1px);
+        }
+        .mini-btn:active {
+            transform: scale(.9);
+        }
+        .mini-btn.present.active,
+        .mini-btn.absent.active {
+            animation: popBounce .38s cubic-bezier(.3, 1.4, .5, 1) both;
+        }
+        .status-tag {
+            display: inline-block;
+            animation: popBounce .4s cubic-bezier(.3, 1.4, .5, 1) both;
+        }
+
+        /* ---------- Stats & progress ---------- */
+        .stat-row {
+            animation: fadeIn .4s ease both;
+        }
+        .stat-row:nth-child(1) { animation-delay: .0s; }
+        .stat-row:nth-child(2) { animation-delay: .08s; }
+        .stat-row:nth-child(3) { animation-delay: .16s; }
+        .stat-row:nth-child(4) { animation-delay: .24s; }
+        .stat-row:nth-child(5) { animation-delay: .32s; }
+        .stat-row:nth-child(6) { animation-delay: .4s; }
+        .stat-row:nth-child(7) { animation-delay: .48s; }
+        .stat-row:nth-child(8) { animation-delay: .56s; }
+        .stat-bar-fill {
+            transition: width .6s cubic-bezier(.2, .8, .2, 1), background .3s ease;
+        }
+        .overall-num {
+            display: inline-block;
+        }
+
+        /* ---------- Admin panel / modals ---------- */
+        .admin-overlay.open,
+        .profile-overlay.open,
+        .feedback-overlay.open {
+            animation: overlayFadeIn .25s ease both;
+        }
+        .admin-overlay.open .admin-panel,
+        .profile-overlay.open .profile-panel,
+        .feedback-overlay.open .feedback-panel {
+            animation: panelSlideUp .4s cubic-bezier(.22, 1.1, .32, 1) both;
+        }
+        .admin-tab {
+            transition: background .15s ease, color .15s ease;
+        }
+        .admin-panel-body .tab-content.active {
+            animation: fadeIn .3s ease both;
+        }
+        .admin-card {
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .admin-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(30, 36, 56, .1);
+        }
+        .close-btn {
+            transition: background .15s ease, transform .15s ease;
+        }
+        .close-btn:active {
+            transform: scale(.9) rotate(90deg);
+        }
+
+        /* ---------- Toast ---------- */
+        .toast.show {
+            animation: toastSlideBounce .5s cubic-bezier(.22, 1.15, .32, 1) both;
+        }
+
+        /* ---------- Notification bell ---------- */
+        .badge-dot {
+            animation: badgePop .35s cubic-bezier(.3, 1.4, .5, 1) both, badgePulse 2.2s ease-in-out .4s infinite;
+        }
+        .badge-dot.dissolve {
+            animation: badgeDissolve .3s ease both !important;
+        }
+        .btn-icon {
+            transition: background .15s ease, transform .12s ease;
+        }
+        .btn-icon:active {
+            transform: scale(.92);
+        }
+
+        /* ---------- Feedback & community posts ---------- */
+        .feedback-list-item {
+            animation: fadeInUp .35s ease both;
+            transition: transform .15s ease;
+        }
+        .feedback-list-item:nth-child(1) { animation-delay: 0s; }
+        .feedback-list-item:nth-child(2) { animation-delay: .05s; }
+        .feedback-list-item:nth-child(3) { animation-delay: .1s; }
+        .feedback-list-item:nth-child(4) { animation-delay: .15s; }
+        .feedback-list-item:nth-child(5) { animation-delay: .2s; }
+        .feedback-list-item:nth-child(6) { animation-delay: .25s; }
+        .feedback-list-item:hover {
+            transform: translateY(-2px);
+        }
+        .post-item {
+            animation: fadeInUp .35s ease both;
+        }
+        .post-item:nth-child(1) { animation-delay: 0s; }
+        .post-item:nth-child(2) { animation-delay: .06s; }
+        .post-item:nth-child(3) { animation-delay: .12s; }
+        .post-item:nth-child(4) { animation-delay: .18s; }
+        .post-item:nth-child(5) { animation-delay: .24s; }
+        .community-post {
+            animation: fadeInUp .4s ease both;
+        }
+        .community-post:nth-child(1) { animation-delay: 0s; }
+        .community-post:nth-child(2) { animation-delay: .07s; }
+        .community-post:nth-child(3) { animation-delay: .14s; }
+        .community-post:nth-child(4) { animation-delay: .21s; }
+        .community-post:nth-child(5) { animation-delay: .28s; }
+        .cp-like-btn {
+            transition: color .15s ease, background .15s ease, transform .1s ease;
+        }
+        .cp-like-btn:active {
+            transform: scale(.92);
+        }
+        .cp-like-btn.liked {
+            animation: heartPop .4s ease;
+        }
+        .event-item {
+            animation: fadeInUp .35s ease both;
+        }
+        .event-item:nth-child(1) { animation-delay: 0s; }
+        .event-item:nth-child(2) { animation-delay: .06s; }
+        .event-item:nth-child(3) { animation-delay: .12s; }
+        .event-item:nth-child(4) { animation-delay: .18s; }
+        .event-item:nth-child(5) { animation-delay: .24s; }
+        .event-item:nth-child(6) { animation-delay: .3s; }
+        .week-cell {
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .week-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(30, 36, 56, .08);
+        }
+
+        /* ---------- Timetable image view ---------- */
+        #imageView canvas,
+        #ttCanvas {
+            animation: zoomFadeIn .5s ease both;
+        }
+
+        /* ---------- History view ---------- */
+        #historyView {
+            animation: fadeIn .35s ease both;
+        }
+        #historyView.slide-next {
+            animation: slideInFromRight .32s ease both;
+        }
+        #historyView.slide-prev {
+            animation: slideInFromLeft .32s ease both;
+        }
+        .history-nav .date-display {
+            transition: transform .2s ease;
+        }
+
+        /* ---------- General micro-interactions ---------- */
+        button {
+            transition: transform .1s ease;
+        }
+        button:active {
+            transform: scale(.97);
+        }
+        .btn-primary:active,
+        .btn-secondary:active,
+        .btn-danger:active,
+        .btn-success:active,
+        .btn-ghost:active,
+        .btn-admin:active,
+        .btn-request-admin:active,
+        .btn-sm:active {
+            transform: scale(.96);
+        }
+        .field input,
+        .field select,
+        .field textarea,
+        .admin-form input,
+        .admin-form select,
+        .admin-form textarea,
+        .profile-panel .field input,
+        .profile-panel .field select {
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus,
+        .admin-form input:focus,
+        .admin-form select:focus,
+        .admin-form textarea:focus,
+        .profile-panel .field input:focus,
+        .profile-panel .field select:focus {
+            animation: focusGlow .5s ease;
+        }
+        .tab-btn {
+            transition: color .15s ease, background .15s ease;
+        }
+        .auth-tab {
+            transition: color .15s ease;
+        }
+        .period-chip {
+            transition: transform .2s ease;
+        }
+        .period-chip:hover {
+            transform: scale(1.15);
+        }
     </style>
 </head>
 <body>
@@ -1984,7 +2440,12 @@
 
                 <div id="loginForm">
                     <div class="field"><label>Username</label><input id="loginUsername" placeholder="e.g. rahul.cse26" autocomplete="username" /></div>
-                    <div class="field"><label>Password</label><input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+                    <div class="field"><label>Password</label>
+                        <div class="password-field">
+                            <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show password">👁️</button>
+                        </div>
+                    </div>
                     <button class="btn-primary" onclick="handleLogin()">Log in</button>
                     <div class="auth-error" id="loginError"></div>
                 </div>
@@ -1993,7 +2454,12 @@
                     <div class="field"><label>Full name</label><input id="suName" placeholder="Rahul Kumar" /></div>
                     <div class="field-row">
                         <div class="field"><label>Username</label><input id="suUsername" placeholder="rahul.cse26" /></div>
-                        <div class="field"><label>Password</label><input id="suPassword" type="password" placeholder="••••••••" /></div>
+                        <div class="field"><label>Password</label>
+                            <div class="password-field">
+                                <input id="suPassword" type="password" placeholder="••••••••" />
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('suPassword', this)" aria-label="Show password">👁️</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="field-row">
                         <div class="field"><label>Branch</label>
@@ -3917,6 +4383,7 @@
 
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
+            setTimeout(setupCardReveal, 50);
 
             const branch = getBranch(record.branchId);
             document.getElementById('pillName').textContent = record.name;
@@ -4063,10 +4530,19 @@
                 return ts > lastReadPosts;
             }).length;
             if (unread > 0) {
+                const wasHidden = badge.style.display === 'none' || !badge.style.display;
+                badge.classList.remove('dissolve');
                 badge.style.display = 'inline';
                 badge.textContent = unread > 99 ? '99+' : unread;
-            } else {
-                badge.style.display = 'none';
+                if (wasHidden) {
+                    badge.style.animation = 'none';
+                    void badge.offsetWidth;
+                    badge.style.animation = '';
+                }
+            } else if (badge.style.display !== 'none') {
+                badge.classList.add('dissolve');
+                setTimeout(() => { badge.style.display = 'none';
+                    badge.classList.remove('dissolve'); }, 260);
             }
         }
 
@@ -4905,9 +5381,15 @@
             </div>`;
             });
             statsEl.innerHTML = html || `<div class="empty-note">No attendance marked yet — tick classes off as they happen.</div>`;
+            animateStatBars(statsEl);
             const overallTotal = totalP + totalA;
             const overallPct = overallTotal ? Math.round((totalP / overallTotal) * 100) : null;
-            document.getElementById('overallPct').textContent = overallPct === null ? '—' : overallPct + '%';
+            const overallPctEl = document.getElementById('overallPct');
+            if (overallPct === null) {
+                overallPctEl.textContent = '—';
+            } else {
+                animateCountUp(overallPctEl, overallPct, '%');
+            }
             document.getElementById('overallCounts').innerHTML = overallTotal ?
                 `<b>${totalP}</b> attended<br><b>${totalA}</b> missed<br>of ${overallTotal} marked (excluding holidays)` :
                 `Nothing marked yet this semester.`;
@@ -5091,10 +5573,12 @@
         }
 
         // ========== RENDER: History View ==========
+        let _historyNavDelta = 0;
         function navigateHistoryDate(delta) {
             const newDate = new Date(historyDate);
             newDate.setDate(newDate.getDate() + delta);
             historyDate = newDate;
+            _historyNavDelta = delta;
             renderHistoryView();
             document.getElementById('histPrev').disabled = false;
             document.getElementById('histNext').disabled = false;
@@ -5108,6 +5592,11 @@
         async function renderHistoryView() {
             const container = document.getElementById('historyView');
             if (!container) return;
+            container.classList.remove('slide-next', 'slide-prev');
+            void container.offsetWidth;
+            if (_historyNavDelta > 0) container.classList.add('slide-next');
+            else if (_historyNavDelta < 0) container.classList.add('slide-prev');
+            _historyNavDelta = 0;
             const dateObj = historyDate;
             const dateStr = dateKey(dateObj);
             const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
@@ -5997,7 +6486,7 @@
                     attendanceCache = {};
                     isAdmin = false;
                     adminRequested = false;
-                    document.getElementById('loadingScreen').style.display = 'none';
+                    hideLoadingScreen();
                     document.getElementById('app').style.display = 'none';
                     document.getElementById('authScreen').style.display = 'flex';
                     if (window._adminUnsub) { window._adminUnsub();
@@ -6019,12 +6508,12 @@
                         record.isAdmin = true;
                     }
                     await loginAs(record, user.uid);
-                    document.getElementById('loadingScreen').style.display = 'none';
+                    hideLoadingScreen();
                     setTimeout(() => renderPostsFeed(), 500);
                 } catch (e) {
                     if (signingUp) return;
                     await signOut(auth);
-                    document.getElementById('loadingScreen').style.display = 'none';
+                    hideLoadingScreen();
                     document.getElementById('app').style.display = 'none';
                     document.getElementById('authScreen').style.display = 'flex';
                     showError('loginError', 'Could not load your profile. Please log in again.');
@@ -6104,6 +6593,7 @@
         window.saveProfile = saveProfile;
         window.changePassword = changePassword;
         window.scrollToPosts = scrollToPosts;
+        window.togglePasswordVisibility = togglePasswordVisibility;
 
         // Community posts exports
         window.openCreatePost = openCreatePost;
@@ -6133,6 +6623,78 @@
         window.renderFeedbackPreview = renderFeedbackPreview;
         window.adminFeedbackFilter = 'all';
         window.adminFeedbackSearch = '';
+
+        // ========== ANIMATION HELPERS ==========
+
+        // Fade + scale out the loader instead of yanking it away instantly.
+        function hideLoadingScreen() {
+            const el = document.getElementById('loadingScreen');
+            if (!el || el.style.display === 'none') return;
+            el.classList.add('fade-out');
+            setTimeout(() => { el.style.display = 'none'; }, 420);
+        }
+
+        // Reveal .card elements as they scroll into view (also catches
+        // the ones already on screen right after login).
+        let cardObserver = null;
+        function setupCardReveal() {
+            const cards = document.querySelectorAll('.card');
+            if (!cards.length) return;
+            if (!('IntersectionObserver' in window)) {
+                cards.forEach(c => c.classList.add('in-view'));
+                return;
+            }
+            if (cardObserver) cardObserver.disconnect();
+            cardObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        cardObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+            cards.forEach(c => {
+                if (!c.classList.contains('in-view')) cardObserver.observe(c);
+            });
+        }
+
+        // Count a number up from 0 to a target value.
+        function animateCountUp(el, target, suffix = '', duration = 700) {
+            if (!el) return;
+            const start = 0;
+            const startTime = performance.now();
+            function tick(now) {
+                const progress = Math.min(1, (now - startTime) / duration);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const val = Math.round(start + (target - start) * eased);
+                el.textContent = val + suffix;
+                if (progress < 1) requestAnimationFrame(tick);
+                else el.textContent = target + suffix;
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // Animate every .stat-bar-fill from 0% up to its rendered width.
+        function animateStatBars(container) {
+            const bars = container.querySelectorAll('.stat-bar-fill');
+            bars.forEach(bar => {
+                const target = bar.style.width;
+                bar.style.width = '0%';
+                // Force reflow so the browser registers the 0% start point.
+                void bar.offsetWidth;
+                requestAnimationFrame(() => { bar.style.width = target; });
+            });
+        }
+
+        // Toggle a password input between hidden and visible text.
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            btn.textContent = showing ? '👁️' : '🙈';
+            btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        }
 
         boot();
     </script>
