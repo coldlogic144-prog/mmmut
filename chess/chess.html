@@ -22,6 +22,7 @@
         <div class="chess-topbar">
             <div class="brand"><span class="brand-piece">♟️</span> Chess</div>
             <div class="topbar-player">
+                <span class="challenge-bell" id="challengeBell" onclick="openChallengeInbox()" style="display:none;" title="Pending challenges">🔔<span class="bell-dot" id="challengeBellDot"></span></span>
                 <span class="rating-chip mono" id="ratingChip">Rating —</span>
                 <span class="name" id="playerNameLabel">—</span>
                 <a href="../index.html" class="back-link">← Ledger</a>
@@ -44,8 +45,7 @@
                         <h3>Play Local</h3>
                         <p>Two players, one board — pass the device to take turns.</p>
                     </div>
-                    <div class="mode-card disabled-mode">
-                        <span class="soon-tag">Phase 2</span>
+                    <div class="mode-card active-mode" onclick="openOnlineSetupModal()">
                         <div class="mode-icon">🌐</div>
                         <h3>Play Online</h3>
                         <p>Real-time matchmaking against other Ledger students.</p>
@@ -56,12 +56,24 @@
                         <h3>Play Computer</h3>
                         <p>Practice against an engine with adjustable difficulty.</p>
                     </div>
-                    <div class="mode-card disabled-mode">
-                        <span class="soon-tag">Phase 2</span>
+                    <div class="mode-card active-mode" onclick="openChallengeModal()">
                         <div class="mode-icon">⚔️</div>
                         <h3>Challenge</h3>
                         <p>Challenge a specific Ledger student to a rated game.</p>
                     </div>
+                </div>
+
+                <div id="resumeGameBanner" class="resume-banner" style="display:none;">
+                    <div>
+                        <strong>You have a game in progress</strong>
+                        <div class="status-line" id="resumeGameSub">vs —</div>
+                    </div>
+                    <button class="btn-primary" style="flex:none;" onclick="resumeActiveGame()">Resume →</button>
+                </div>
+
+                <div class="tc-section" id="challengesSection" style="display:none;">
+                    <h3>Challenges</h3>
+                    <div id="challengesPanel"></div>
                 </div>
 
                 <div class="tc-section">
@@ -78,7 +90,7 @@
 
                 <div class="migration-note">
                     <span>ℹ️</span>
-                    <span>This replaces the old Chess Club tab. Ratings, online play, and your previous club members/challenges will appear here once Phase 2 (Firebase profiles &amp; matchmaking) ships.</span>
+                    <span>This replaces the old Chess Club tab. Your rating, match history, and challenges now live here — synced with your existing Chess Club profile. Online matchmaking and challenges are rated; local games are not.</span>
                 </div>
             </div>
 
@@ -88,7 +100,7 @@
                     <div class="board-col">
                         <div class="player-strip" id="topPlayerStrip">
                             <div class="p-info">
-                                <span class="p-name">Black</span>
+                                <span class="p-name" id="blackNameLabel">Black</span>
                                 <span class="p-captures" id="blackCaptures"></span>
                             </div>
                             <div class="p-clock mono" id="blackClock">--:--</div>
@@ -100,7 +112,7 @@
 
                         <div class="player-strip" id="bottomPlayerStrip">
                             <div class="p-info">
-                                <span class="p-name">White</span>
+                                <span class="p-name" id="whiteNameLabel">White</span>
                                 <span class="p-captures" id="whiteCaptures"></span>
                             </div>
                             <div class="p-clock mono" id="whiteClock">--:--</div>
@@ -120,6 +132,10 @@
                         <div class="panel-card">
                             <h4>Status</h4>
                             <div class="status-line" id="statusLine">White to move.</div>
+                            <div id="drawOfferBanner" style="display:none; margin-top:10px;">
+                                <div class="status-line important" id="drawOfferText"></div>
+                                <div class="panel-actions" style="margin-top:6px;" id="drawOfferActions"></div>
+                            </div>
                         </div>
 
                         <div class="panel-card">
@@ -145,7 +161,7 @@
     <!-- ============ SETUP MODAL ============ -->
     <div class="modal-backdrop" id="setupModal">
         <div class="modal-box">
-            <h3>New local game</h3>
+            <h3 id="setupModalTitle">New local game</h3>
             <div class="setup-row">
                 <label>Time control</label>
                 <select id="setupTimeControl">
@@ -171,7 +187,56 @@
             </div>
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeSetupModal()">Cancel</button>
-                <button class="btn-primary" onclick="startLocalGame()">Start game</button>
+                <button class="btn-primary" id="setupModalConfirmBtn" onclick="confirmSetup()">Start game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEARCHING FOR OPPONENT ============ -->
+    <div class="modal-backdrop" id="searchingModal">
+        <div class="modal-box" style="text-align:center;">
+            <div class="gate-piece" style="font-size:36px;">🔎</div>
+            <h3 style="margin-top:10px;">Looking for an opponent…</h3>
+            <p style="color:var(--ink-soft); font-size:13px; margin-top:6px;" id="searchingSub">Matching you at your time control.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" style="flex:1;" onclick="cancelMatchmaking()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CHALLENGE MODAL ============ -->
+    <div class="modal-backdrop" id="challengeModal">
+        <div class="modal-box" style="max-width: 440px;">
+            <h3>Challenge a player</h3>
+            <div class="setup-row" style="margin-bottom:10px;">
+                <input type="text" id="challengeSearchInput" placeholder="Search by name or username…" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--paper-line); font-size:13px;" oninput="renderChallengeMemberList()">
+            </div>
+            <div class="setup-row">
+                <label>Time control</label>
+                <select id="challengeTimeControl">
+                    <option value="180-0">3 + 0</option>
+                    <option value="180-2" selected>3 + 2</option>
+                    <option value="300-0">5 + 0</option>
+                    <option value="300-3">5 + 3</option>
+                    <option value="600-0">10 + 0</option>
+                    <option value="600-5">10 + 5</option>
+                    <option value="900-10">15 + 10</option>
+                </select>
+            </div>
+            <div id="challengeMemberList" class="challenge-member-list"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeChallengeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CHALLENGE INBOX MODAL ============ -->
+    <div class="modal-backdrop" id="challengeInboxModal">
+        <div class="modal-box" style="max-width: 420px;">
+            <h3>Your challenges</h3>
+            <div id="challengeInboxList" class="challenge-member-list"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeChallengeInbox()">Close</button>
             </div>
         </div>
     </div>
@@ -189,6 +254,7 @@
         "imports": {
             "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
             "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js",
             "chess.js": "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm"
         }
     }
