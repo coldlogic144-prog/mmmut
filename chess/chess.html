@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Chess — Ledger</title>
+<link rel="stylesheet" href="chess.css" />
+</head>
+<body>
+
+    <!-- ============ AUTH GATE ============ -->
+    <div id="gateScreen">
+        <div class="gate-piece">♟️</div>
+        <h2 id="gateTitle">Checking your Ledger session…</h2>
+        <p id="gateMessage">One moment while we confirm you're logged in.</p>
+        <a href="../index.html" class="btn-primary" id="gateBackLink" style="display:none; text-decoration:none;">← Back to Ledger to log in</a>
+    </div>
+
+    <!-- ============ CHESS APP ============ -->
+    <div id="chessApp">
+
+        <div class="chess-topbar">
+            <div class="brand"><span class="brand-piece">♟️</span> Chess</div>
+            <div class="topbar-player">
+                <span class="rating-chip mono" id="ratingChip">Rating —</span>
+                <span class="name" id="playerNameLabel">—</span>
+                <a href="../index.html" class="back-link">← Ledger</a>
+            </div>
+        </div>
+
+        <div class="chess-main">
+
+            <!-- ---------- HOME ---------- -->
+            <div id="homeScreen">
+                <div class="chess-home-hero">
+                    <span class="piece-hero">♟️</span>
+                    <h1>Chess</h1>
+                    <p>Play a game on the board below. Online matches, computer opponents, ratings and tournaments are on the way.</p>
+                </div>
+
+                <div class="mode-grid">
+                    <div class="mode-card active-mode" onclick="openSetupModal()">
+                        <div class="mode-icon">🎯</div>
+                        <h3>Play Local</h3>
+                        <p>Two players, one board — pass the device to take turns.</p>
+                    </div>
+                    <div class="mode-card disabled-mode">
+                        <span class="soon-tag">Phase 2</span>
+                        <div class="mode-icon">🌐</div>
+                        <h3>Play Online</h3>
+                        <p>Real-time matchmaking against other Ledger students.</p>
+                    </div>
+                    <div class="mode-card disabled-mode">
+                        <span class="soon-tag">Phase 5</span>
+                        <div class="mode-icon">🤖</div>
+                        <h3>Play Computer</h3>
+                        <p>Practice against an engine with adjustable difficulty.</p>
+                    </div>
+                    <div class="mode-card disabled-mode">
+                        <span class="soon-tag">Phase 2</span>
+                        <div class="mode-icon">⚔️</div>
+                        <h3>Challenge</h3>
+                        <p>Challenge a specific Ledger student to a rated game.</p>
+                    </div>
+                </div>
+
+                <div class="tc-section">
+                    <h3>Quick play — pick a time control</h3>
+                    <div class="tc-grid" id="quickTcGrid"></div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box"><div class="stat-num" id="statRating">—</div><div class="stat-label">Rating</div></div>
+                    <div class="stat-box"><div class="stat-num" id="statGames">—</div><div class="stat-label">Games</div></div>
+                    <div class="stat-box"><div class="stat-num" id="statWins">—</div><div class="stat-label">Wins</div></div>
+                    <div class="stat-box"><div class="stat-num" id="statLosses">—</div><div class="stat-label">Losses</div></div>
+                </div>
+
+                <div class="migration-note">
+                    <span>ℹ️</span>
+                    <span>This replaces the old Chess Club tab. Ratings, online play, and your previous club members/challenges will appear here once Phase 2 (Firebase profiles &amp; matchmaking) ships.</span>
+                </div>
+            </div>
+
+            <!-- ---------- GAME ---------- -->
+            <div id="gameScreen">
+                <div class="game-layout">
+                    <div class="board-col">
+                        <div class="player-strip" id="topPlayerStrip">
+                            <div class="p-info">
+                                <span class="p-name">Black</span>
+                                <span class="p-captures" id="blackCaptures"></span>
+                            </div>
+                            <div class="p-clock mono" id="blackClock">--:--</div>
+                        </div>
+
+                        <div class="board-wrap">
+                            <div id="board"></div>
+                        </div>
+
+                        <div class="player-strip" id="bottomPlayerStrip">
+                            <div class="p-info">
+                                <span class="p-name">White</span>
+                                <span class="p-captures" id="whiteCaptures"></span>
+                            </div>
+                            <div class="p-clock mono" id="whiteClock">--:--</div>
+                        </div>
+
+                        <div class="board-controls">
+                            <button class="btn-ghost-chess" onclick="flipBoard()">⇅ Flip board</button>
+                            <button class="btn-ghost-chess" onclick="offerResign()">🏳 Resign</button>
+                            <button class="btn-ghost-chess" onclick="offerDraw()">🤝 Offer draw</button>
+                            <button class="btn-ghost-chess" onclick="backToHome()">✕ Exit</button>
+                        </div>
+                    </div>
+
+                    <div class="side-panel">
+                        <div class="panel-card" id="resultCard" style="display:none;"></div>
+
+                        <div class="panel-card">
+                            <h4>Status</h4>
+                            <div class="status-line" id="statusLine">White to move.</div>
+                        </div>
+
+                        <div class="panel-card">
+                            <h4>Moves</h4>
+                            <div id="moveList"></div>
+                        </div>
+
+                        <div class="panel-card">
+                            <h4>PGN</h4>
+                            <div class="status-line mono" id="pgnBox" style="word-break: break-word; max-height: 90px; overflow-y:auto;"></div>
+                            <div class="panel-actions" style="margin-top:10px;">
+                                <button class="btn-secondary" onclick="copyPgn()">Copy PGN</button>
+                                <button class="btn-secondary" onclick="copyFen()">Copy FEN</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============ SETUP MODAL ============ -->
+    <div class="modal-backdrop" id="setupModal">
+        <div class="modal-box">
+            <h3>New local game</h3>
+            <div class="setup-row">
+                <label>Time control</label>
+                <select id="setupTimeControl">
+                    <option value="60-0">1 + 0</option>
+                    <option value="120-1">2 + 1</option>
+                    <option value="180-0" selected>3 + 0</option>
+                    <option value="180-2">3 + 2</option>
+                    <option value="300-0">5 + 0</option>
+                    <option value="300-3">5 + 3</option>
+                    <option value="600-0">10 + 0</option>
+                    <option value="600-5">10 + 5</option>
+                    <option value="900-10">15 + 10</option>
+                    <option value="1800-0">30 + 0</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="customTcRow" style="display:none;">
+                <label>Minutes / Increment (sec)</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="number" id="customMinutes" min="1" max="180" value="10" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                    <input type="number" id="customIncrement" min="0" max="60" value="0" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeSetupModal()">Cancel</button>
+                <button class="btn-primary" onclick="startLocalGame()">Start game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PROMOTION MODAL ============ -->
+    <div class="modal-backdrop" id="promoModal">
+        <div class="modal-box" style="text-align:center;">
+            <h3>Promote pawn to…</h3>
+            <div class="promo-choices" id="promoChoices"></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+            "chess.js": "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm"
+        }
+    }
+    </script>
+    <script type="module" src="chess.js"></script>
+</body>
+</html>
