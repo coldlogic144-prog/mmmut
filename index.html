@@ -435,6 +435,22 @@
             border-color: var(--ink-soft);
             color: var(--ink);
         }
+        .btn-chess {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            border: 1px solid var(--brass);
+            background: var(--brass-soft);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .btn-chess:hover {
+            background: var(--brass);
+            color: #fff;
+        }
         .btn-admin {
             border: 1px solid var(--brass);
             background: var(--brass-soft);
@@ -2308,6 +2324,221 @@
             display: block;
         }
 
+        /* ===== CHESS CLUB STYLES ===== */
+        #chessClubView {
+            display: none;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px;
+        }
+        #chessClubView .chess-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--paper-line);
+            padding-bottom: 12px;
+        }
+        #chessClubView .chess-tabs .tab-btn {
+            border: none;
+            background: var(--paper);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            transition: background .15s, color .15s;
+        }
+        #chessClubView .chess-tabs .tab-btn.active {
+            background: var(--ink);
+            color: #F1ECDD;
+        }
+        #chessClubView .chess-tabs .tab-btn:hover {
+            background: var(--paper-line);
+        }
+        #chessClubView .chess-card {
+            background: var(--paper-raised);
+            border: 1px solid var(--paper-line);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
+        }
+        #chessClubView .chess-card .card-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #chessClubView .chess-card .card-head .card-eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--brass);
+            margin-bottom: 4px;
+        }
+        #chessClubView .chess-card .card-head .card-title {
+            font-size: 20px;
+        }
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--paper-line);
+        }
+        .member-item:last-child {
+            border-bottom: none;
+        }
+        .member-item .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--brass);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            flex-shrink: 0;
+        }
+        .member-item .info {
+            flex: 1;
+        }
+        .member-item .info .name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .member-item .info .branch {
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+        .member-item .rating {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            color: var(--brass);
+        }
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--paper-line);
+        }
+        .leaderboard-row:last-child {
+            border-bottom: none;
+        }
+        .leaderboard-row .rank {
+            font-weight: 700;
+            width: 32px;
+            text-align: center;
+            color: var(--ink-soft);
+        }
+        .leaderboard-row .rank.gold {
+            color: #F59E0B;
+        }
+        .leaderboard-row .rank.silver {
+            color: #9CA3AF;
+        }
+        .leaderboard-row .rank.bronze {
+            color: #D97706;
+        }
+        .leaderboard-row .player {
+            flex: 1;
+            font-weight: 600;
+        }
+        .leaderboard-row .rating {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+        }
+        .event-card {
+            border: 1px solid var(--paper-line);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            background: var(--paper);
+        }
+        .event-card .title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .event-card .details {
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin: 4px 0;
+        }
+        .event-card .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .challenge-item {
+            border: 1px solid var(--paper-line);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            background: var(--paper);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .challenge-item .info {
+            font-size: 13px;
+        }
+        .challenge-item .info strong {
+            font-weight: 600;
+        }
+        .challenge-item .actions {
+            display: flex;
+            gap: 6px;
+        }
+        .game-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--paper-line);
+            font-size: 13px;
+        }
+        .game-item:last-child {
+            border-bottom: none;
+        }
+        .game-item .opponent {
+            font-weight: 600;
+        }
+        .game-item .result {
+            font-weight: 600;
+        }
+        .game-item .result.win {
+            color: var(--moss);
+        }
+        .game-item .result.loss {
+            color: var(--brick);
+        }
+        .game-item .result.draw {
+            color: var(--brass);
+        }
+
+        @media (max-width: 720px) {
+            #chessClubView {
+                padding: 12px;
+            }
+            .member-item .info .branch {
+                font-size: 11px;
+            }
+            .leaderboard-row .rank {
+                width: 24px;
+                font-size: 13px;
+            }
+        }
+
         @media (max-width: 520px) {
             .ledger-ai-chat {
                 bottom: 80px;
@@ -2516,6 +2747,7 @@
                     🔔
                     <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
                 </button>
+                <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
                 <div class="user-pill" onclick="openProfileModal()">
                     <div>
                         <div class="user-pill-name" id="pillName">—</div>
@@ -2527,7 +2759,7 @@
             </div>
         </div>
 
-        <div class="shell">
+        <div class="shell" id="mainShell">
             <!-- Announcements -->
             <div class="card" id="postsTopCard">
                 <div class="card-head">
@@ -2688,6 +2920,191 @@
             </div>
         </div>
         <footer class="app-foot">M.M.M. University of Technology, Gorakhpur — Session 2026–27</footer>
+    </div>
+
+    <!-- ===== CHESS CLUB VIEW ===== -->
+    <div id="chessClubView">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 style="font-family:'Fraunces',serif; font-size:28px; font-weight:600;">♟️ Chess Club</h1>
+                <p style="color:var(--ink-soft); font-size:14px; margin-top:2px;">Think. Play. Improve.</p>
+            </div>
+            <button class="btn-secondary" onclick="toggleChessClub(false)" style="margin:0;">← Back to Ledger</button>
+        </div>
+
+        <div class="chess-tabs" id="chessTabs">
+            <button class="tab-btn active" data-tab="home" onclick="switchChessTab('home')">🏠 Home</button>
+            <button class="tab-btn" data-tab="members" onclick="switchChessTab('members')">👥 Members</button>
+            <button class="tab-btn" data-tab="leaderboard" onclick="switchChessTab('leaderboard')">🏆 Leaderboard</button>
+            <button class="tab-btn" data-tab="events" onclick="switchChessTab('events')">📅 Events</button>
+            <button class="tab-btn" data-tab="challenges" onclick="switchChessTab('challenges')">⚔️ Challenges</button>
+            <button class="tab-btn" data-tab="games" onclick="switchChessTab('games')">🎮 My Games</button>
+            <button class="tab-btn" data-tab="activity" onclick="switchChessTab('activity')">📜 Activity</button>
+        </div>
+
+        <!-- Home -->
+        <div id="chessTab-home" class="chess-tab-content">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">♟️ Chess Club</div>
+                        <div class="card-title display">Welcome to the Chess Club</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+                    <div style="flex:1; min-width:200px;">
+                        <p style="font-size:14px; color:var(--ink-soft); margin-bottom:12px;">
+                            A community for chess enthusiasts at MMMUT. Join, challenge others, track your rating, and participate in events.
+                        </p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn-primary" id="chessJoinBtn" style="width:auto; padding:10px 28px; margin:0;" onclick="handleChessJoin()">Join Club</button>
+                            <button class="btn-danger" id="chessLeaveBtn" style="width:auto; padding:10px 28px; margin:0; display:none;" onclick="handleChessLeave()">Leave Club</button>
+                        </div>
+                        <div style="margin-top:16px; font-size:14px;">
+                            <span>👥 <span id="chessMemberCount">0</span> members</span>
+                        </div>
+                    </div>
+                    <div style="flex:1; min-width:200px; background:var(--paper); border-radius:12px; padding:16px;">
+                        <div style="font-weight:600; margin-bottom:8px;">🏆 Upcoming Tournament</div>
+                        <div id="chessNextEvent">
+                            <div style="font-size:13px; color:var(--ink-soft);">No upcoming events.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🏅 Leaderboard</div>
+                        <div class="card-title display">Top 3</div>
+                    </div>
+                    <button class="btn-secondary" style="margin:0; padding:6px 14px; font-size:12px;" onclick="switchChessTab('leaderboard')">View all</button>
+                </div>
+                <div id="chessLeaderboardPreview">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members -->
+        <div id="chessTab-members" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">👥 Members</div>
+                        <div class="card-title display">All Club Members</div>
+                    </div>
+                    <span id="chessMemberCount2" style="font-size:13px; color:var(--ink-soft);">0 members</span>
+                </div>
+                <div id="chessMembersList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="chessTab-leaderboard" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🏆 Leaderboard</div>
+                        <div class="card-title display">Club Rankings</div>
+                    </div>
+                </div>
+                <div id="chessLeaderboardFull">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events -->
+        <div id="chessTab-events" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">📅 Events</div>
+                        <div class="card-title display">Upcoming & Past</div>
+                    </div>
+                    <button class="btn-primary" id="chessEventCreateBtn" style="margin:0; padding:6px 14px; font-size:12px; display:none;" onclick="openChessEventForm()">➕ New Event</button>
+                </div>
+                <div id="chessEventsList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+            <!-- Event creation form (admin) -->
+            <div id="chessEventForm" style="display:none; margin-top:20px;">
+                <div class="chess-card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-eyebrow">✏️ Create Event</div>
+                            <div class="card-title display">New Chess Event</div>
+                        </div>
+                        <button class="btn-secondary" onclick="closeChessEventForm()">Cancel</button>
+                    </div>
+                    <form onsubmit="submitChessEvent(event)">
+                        <div class="field"><label>Title</label><input id="chessEventTitle" placeholder="e.g. Sunday Blitz" required /></div>
+                        <div class="field-row">
+                            <div class="field"><label>Date</label><input type="date" id="chessEventDate" required /></div>
+                            <div class="field"><label>Time</label><input type="time" id="chessEventTime" required /></div>
+                        </div>
+                        <div class="field"><label>Time Control</label><input id="chessEventTimeControl" placeholder="e.g. 10+5" /></div>
+                        <div class="field"><label>Description</label><textarea id="chessEventDesc" rows="2" placeholder="Event description"></textarea></div>
+                        <button type="submit" class="btn-primary" style="width:auto; padding:10px 28px; margin:0;">Create Event</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenges -->
+        <div id="chessTab-challenges" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">⚔️ Challenges</div>
+                        <div class="card-title display">Challenge a Member</div>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-weight:600; font-size:13px;">Select opponent:</label>
+                    <select id="chessChallengeOpponent" style="padding:8px 12px; border-radius:8px; border:1px solid var(--paper-line); background:#fff; font-size:13px; margin-left:8px;"></select>
+                    <button class="btn-primary" style="width:auto; padding:8px 20px; margin:0 0 0 10px;" onclick="sendChessChallenge()">Challenge</button>
+                </div>
+                <div id="chessChallengesList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Games -->
+        <div id="chessTab-games" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🎮 My Games</div>
+                        <div class="card-title display">Game History</div>
+                    </div>
+                </div>
+                <div id="chessGamesList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity -->
+        <div id="chessTab-activity" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">📜 Activity</div>
+                        <div class="card-title display">Recent Club Activity</div>
+                    </div>
+                </div>
+                <div id="chessActivityList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ===== CREATE POST OVERLAY (Admin only) ===== -->
@@ -3019,12 +3436,13 @@
             deleteObject
         } from "firebase/storage";
 
+        // ===== FIREBASE APP CHECK =====
         import {
             initializeAppCheck,
             ReCaptchaEnterpriseProvider
         } from "firebase/app-check";
 
-        // ===== FIREBASE AI LOGIC – REPLACES VERTEX AI =====
+        // ===== FIREBASE AI =====
         import {
             getAI,
             getGenerativeModel,
@@ -3044,21 +3462,6 @@
         const firebaseApp = initializeApp(firebaseConfig);
 
         // ===== FIREBASE APP CHECK =====
-        // ORDER: firebaseApp → initializeAppCheck → Auth / Firestore / Storage →
-        // Firebase AI Logic → generateContent(). App Check MUST be initialized
-        // before any AI request, or AI Logic enforcement rejects the call.
-        //
-        // PRODUCTION (GitHub Pages, coldlogic144-prog.github.io):
-        //    reCAPTCHA Enterprise provider with the PUBLIC site key (site keys
-        //    are public by design - never use a secret or an API key here).
-        // LOCALHOST (VS Code Live Server):
-        //    Firebase App Check Debug Provider. The debug token is set ONLY
-        //    inside the isLocal branch below, so the production GitHub Pages
-        //    build can never enter App Check debug mode.
-        //
-        // reCAPTCHA Enterprise SITE KEY (public by design - NOT a secret, NOT a
-        // Gemini key). Configured for the GitHub Pages domain:
-        // coldlogic144-prog.github.io
         const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LdMyoYtAAAAACElgEbzVYEQRFYAWzLNLQRfPjGo";
 
         const isLocal =
@@ -3084,19 +3487,9 @@
 
             try {
                 if (isLocal) {
-                    // Localhost / VS Code Live Server ONLY. Enables the debug
-                    // provider: the SDK generates a debug token, prints it to this
-                    // console, and uses it in place of reCAPTCHA. Register it under
-                    // Firebase Console → App Check → Apps → mmmut → Manage debug tokens.
-                    // Master gate: this line is unreachable on the GitHub Pages
-                    // production build, so production can never enable debug mode.
                     self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
                 }
 
-                // One initialization call for both environments. On localhost the
-                // debug token above takes precedence internally (the SDK exchanges
-                // the debug token and never calls the provider); on GitHub Pages no
-                // debug token exists, so the reCAPTCHA Enterprise provider is used.
                 initializeAppCheck(firebaseApp, {
                     provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
                     isTokenAutoRefreshEnabled: true
@@ -3125,15 +3518,15 @@
         const ratingsCollection = collection(db, "ratings");
         const communityPostsCollection = collection(db, "communityPosts");
 
+        // ===== CHESS CLUB COLLECTIONS =====
+        const chessMembersCollection = collection(db, "chessClubMembers");
+        const chessChallengesCollection = collection(db, "chessChallenges");
+        const chessEventsCollection = collection(db, "chessEvents");
+        const chessActivityCollection = collection(db, "chessActivity");
+        const chessGamesCollection = collection(db, "chessGames");
+
         // ========== FIREBASE AI LOGIC SETUP ==========
-        // Model IDs below are currently supported by Firebase AI Logic with the
-        // Gemini Developer API (GoogleAIBackend). Names were verified against the
-        // current official Gemini API model catalog:
-        //   - gemini-3.6-flash         (previous-generation Flash, stable)
-        //   - gemini-3.5-flash-lite    (fast / low-cost Flash-Lite, stable)
-        // sendLedgerAIMessage() tries them in order and automatically falls back
-        // to the next one if a model is not enabled for this Firebase project.
-        const AI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite'];
+        const AI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
 
         let aiModels = [];
         let aiReady = false;
@@ -3142,15 +3535,10 @@
             if (aiReady) return;
 
             try {
-                // Firebase AI Logic initialized from the existing firebaseApp.
                 const ai = getAI(firebaseApp, {
                     backend: new GoogleAIBackend()
                 });
 
-                // Create a GenerativeModel for each configured name. Requested
-                // model names are only resolved by the server when
-                // generateContent() is called, so we prepare all of them up
-                // front and fall back to the next one at request time.
                 aiModels = AI_MODELS.map(modelName => ({
                     name: modelName,
                     model: getGenerativeModel(ai, {
@@ -4975,6 +5363,15 @@
         let lastReadPosts = 0;
         let communityPosts = [];
 
+        // Chess club state
+        let chessMembers = [];
+        let chessEvents = [];
+        let chessChallenges = [];
+        let chessActivity = [];
+        let chessGames = [];
+        let chessCurrentTab = 'home';
+        let chessMemberStatus = false; // whether current user is a member
+
         // ========== TOAST ==========
         function showToast(msg, duration = 3000) {
             const el = document.getElementById('toast');
@@ -5231,6 +5628,10 @@
             if (document.getElementById('ledgerAiChat').classList.contains('open')) {
                 document.getElementById('ledgerAiChat').classList.remove('open');
             }
+            // Close chess club if open
+            if (document.getElementById('chessClubView').style.display !== 'none') {
+                toggleChessClub(false);
+            }
         }
 
         async function loadUserProfile(uid) {
@@ -5438,6 +5839,8 @@
             renderFeedbackPreview();
             loadExistingRating();
             renderCommunityPosts();
+            // Initialize chess club if not already
+            initChessClub();
         }
 
         // ========== NOTIFICATION ==========
@@ -6610,6 +7013,571 @@
 
             container.innerHTML = html;
         }
+
+        // ============================================================
+        // ========== CHESS CLUB ======================================
+        // ============================================================
+
+        function toggleChessClub(show) {
+            const chessView = document.getElementById('chessClubView');
+            const mainShell = document.getElementById('mainShell');
+            const app = document.getElementById('app');
+            if (show) {
+                chessView.style.display = 'block';
+                mainShell.style.display = 'none';
+                // Hide footer? We'll keep footer visible but it's outside shell. Actually footer is inside app but after shell? The footer is inside app but after shell. We'll hide footer too.
+                const footer = document.querySelector('.app-foot');
+                if (footer) footer.style.display = 'none';
+                // Show chess club view
+                chessView.style.display = 'block';
+                // Initialize data if not loaded
+                if (currentUser) {
+                    initChessClub();
+                }
+            } else {
+                chessView.style.display = 'none';
+                mainShell.style.display = 'flex';
+                const footer = document.querySelector('.app-foot');
+                if (footer) footer.style.display = 'block';
+            }
+        }
+
+        function switchChessTab(tab) {
+            chessCurrentTab = tab;
+            document.querySelectorAll('#chessClubView .chess-tabs .tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            document.querySelectorAll('#chessClubView .chess-tab-content').forEach(el => {
+                el.style.display = 'none';
+            });
+            const target = document.getElementById('chessTab-' + tab);
+            if (target) target.style.display = 'block';
+            // Render content based on tab
+            if (tab === 'home') renderChessHome();
+            else if (tab === 'members') renderChessMembers();
+            else if (tab === 'leaderboard') renderChessLeaderboard();
+            else if (tab === 'events') renderChessEvents();
+            else if (tab === 'challenges') renderChessChallenges();
+            else if (tab === 'games') renderChessGames();
+            else if (tab === 'activity') renderChessActivity();
+        }
+
+        async function initChessClub() {
+            // Check if user is member
+            if (currentUid) {
+                const docSnap = await getDoc(doc(chessMembersCollection, currentUid));
+                chessMemberStatus = docSnap.exists();
+                updateChessJoinButtons();
+            }
+            // Load members count
+            const snap = await getDocs(chessMembersCollection);
+            const count = snap.size;
+            document.getElementById('chessMemberCount').textContent = count;
+            document.getElementById('chessMemberCount2').textContent = count + ' members';
+
+            // Listen for changes
+            if (window._chessMembersUnsub) window._chessMembersUnsub();
+            window._chessMembersUnsub = onSnapshot(chessMembersCollection, (snap) => {
+                const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                chessMembers = docs;
+                document.getElementById('chessMemberCount').textContent = docs.length;
+                document.getElementById('chessMemberCount2').textContent = docs.length + ' members';
+                if (chessCurrentTab === 'home') renderChessHome();
+                if (chessCurrentTab === 'members') renderChessMembers();
+                if (chessCurrentTab === 'leaderboard') renderChessLeaderboard();
+                // Also update challenge opponent dropdown
+                populateChallengeOpponents();
+            });
+
+            if (window._chessEventsUnsub) window._chessEventsUnsub();
+            window._chessEventsUnsub = onSnapshot(chessEventsCollection, (snap) => {
+                chessEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (chessCurrentTab === 'home') renderChessHome();
+                if (chessCurrentTab === 'events') renderChessEvents();
+            });
+
+            if (window._chessChallengesUnsub) window._chessChallengesUnsub();
+            window._chessChallengesUnsub = onSnapshot(chessChallengesCollection, (snap) => {
+                chessChallenges = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (chessCurrentTab === 'challenges') renderChessChallenges();
+                if (chessCurrentTab === 'home') renderChessHome();
+            });
+
+            if (window._chessActivityUnsub) window._chessActivityUnsub();
+            window._chessActivityUnsub = onSnapshot(query(chessActivityCollection, orderBy('createdAt', 'desc'), limit(20)), (snap) => {
+                chessActivity = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (chessCurrentTab === 'activity') renderChessActivity();
+                if (chessCurrentTab === 'home') renderChessHome();
+            });
+
+            if (window._chessGamesUnsub) window._chessGamesUnsub();
+            window._chessGamesUnsub = onSnapshot(chessGamesCollection, (snap) => {
+                chessGames = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (chessCurrentTab === 'games') renderChessGames();
+            });
+
+            // Initial render
+            switchChessTab(chessCurrentTab);
+            renderChessHome();
+            populateChallengeOpponents();
+            // Admin event button
+            const eventCreateBtn = document.getElementById('chessEventCreateBtn');
+            if (eventCreateBtn) {
+                eventCreateBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+            }
+        }
+
+        function updateChessJoinButtons() {
+            const joinBtn = document.getElementById('chessJoinBtn');
+            const leaveBtn = document.getElementById('chessLeaveBtn');
+            if (chessMemberStatus) {
+                joinBtn.style.display = 'none';
+                leaveBtn.style.display = 'inline-block';
+            } else {
+                joinBtn.style.display = 'inline-block';
+                leaveBtn.style.display = 'none';
+            }
+        }
+
+        async function handleChessJoin() {
+            if (!currentUser) { showToast('Please log in first.'); return; }
+            try {
+                await setDoc(doc(chessMembersCollection, currentUid), {
+                    uid: currentUid,
+                    name: currentUser.name,
+                    username: currentUser.username,
+                    branch: currentUser.branchId,
+                    section: currentUser.section,
+                    joinedAt: serverTimestamp(),
+                    rating: 1200, // initial rating
+                    wins: 0,
+                    losses: 0,
+                    draws: 0
+                });
+                chessMemberStatus = true;
+                updateChessJoinButtons();
+                showToast('🎉 You joined the Chess Club!');
+                // Add activity
+                await addDoc(chessActivityCollection, {
+                    type: 'join',
+                    uid: currentUid,
+                    name: currentUser.name,
+                    message: `${currentUser.name} joined the Chess Club`,
+                    createdAt: serverTimestamp()
+                });
+                renderChessHome();
+                renderChessMembers();
+                renderChessLeaderboard();
+            } catch (e) {
+                showToast('Error joining: ' + e.message);
+            }
+        }
+
+        async function handleChessLeave() {
+            if (!currentUser) { showToast('Please log in first.'); return; }
+            if (!confirm('Are you sure you want to leave the Chess Club?')) return;
+            try {
+                await deleteDoc(doc(chessMembersCollection, currentUid));
+                chessMemberStatus = false;
+                updateChessJoinButtons();
+                showToast('You left the Chess Club.');
+                // Activity
+                await addDoc(chessActivityCollection, {
+                    type: 'leave',
+                    uid: currentUid,
+                    name: currentUser.name,
+                    message: `${currentUser.name} left the Chess Club`,
+                    createdAt: serverTimestamp()
+                });
+                renderChessHome();
+                renderChessMembers();
+                renderChessLeaderboard();
+            } catch (e) {
+                showToast('Error leaving: ' + e.message);
+            }
+        }
+
+        function renderChessHome() {
+            // Next event
+            const nextEvent = chessEvents.filter(e => new Date(e.date + 'T' + (e.time || '00:00')) >= new Date()).sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')))[0];
+            const nextEl = document.getElementById('chessNextEvent');
+            if (nextEvent) {
+                const date = new Date(nextEvent.date + 'T' + (nextEvent.time || '00:00'));
+                const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                nextEl.innerHTML = `
+                    <div style="font-weight:600; font-size:15px;">${nextEvent.title}</div>
+                    <div style="font-size:13px; color:var(--ink-soft);">${nextEvent.timeControl || ''} • ${dateStr} ${timeStr}</div>
+                `;
+            } else {
+                nextEl.innerHTML = `<div style="font-size:13px; color:var(--ink-soft);">No upcoming events.</div>`;
+            }
+
+            // Leaderboard preview (top 3)
+            const sorted = [...chessMembers].sort((a, b) => (b.rating || 1200) - (a.rating || 1200));
+            const top3 = sorted.slice(0, 3);
+            const preview = document.getElementById('chessLeaderboardPreview');
+            if (top3.length === 0) {
+                preview.innerHTML = `<div class="empty-note">No members yet.</div>`;
+            } else {
+                const medals = ['🥇', '🥈', '🥉'];
+                preview.innerHTML = top3.map((m, i) => `
+                    <div class="leaderboard-row">
+                        <div class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${medals[i] || i+1}</div>
+                        <div class="player">${m.name || 'Unknown'}</div>
+                        <div class="rating">${m.rating || 1200}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Recent activity preview
+            const activityPreview = document.getElementById('chessActivityList');
+            if (activityPreview && chessCurrentTab === 'home') {
+                // we'll show only in activity tab
+            }
+        }
+
+        function renderChessMembers() {
+            const list = document.getElementById('chessMembersList');
+            if (!list) return;
+            if (chessMembers.length === 0) {
+                list.innerHTML = `<div class="empty-note">No members yet. Be the first to join!</div>`;
+                return;
+            }
+            let html = '';
+            chessMembers.forEach(m => {
+                const branchName = getBranch(m.branch)?.name || m.branch || '';
+                const shortBranch = branchName.replace('B.Tech — ', '');
+                const avatar = (m.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+                html += `
+                    <div class="member-item">
+                        <div class="avatar">${avatar}</div>
+                        <div class="info">
+                            <div class="name">${m.name || 'Unknown'} ${m.uid === currentUid ? ' (you)' : ''}</div>
+                            <div class="branch">${shortBranch}${m.section ? ' · Sec ' + m.section : ''}</div>
+                        </div>
+                        <div class="rating">${m.rating || 1200}</div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        function renderChessLeaderboard() {
+            const container = document.getElementById('chessLeaderboardFull');
+            if (!container) return;
+            const sorted = [...chessMembers].sort((a, b) => (b.rating || 1200) - (a.rating || 1200));
+            if (sorted.length === 0) {
+                container.innerHTML = `<div class="empty-note">No members yet.</div>`;
+                return;
+            }
+            let html = '';
+            sorted.forEach((m, i) => {
+                const rank = i + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+                const games = (m.wins || 0) + (m.losses || 0) + (m.draws || 0);
+                html += `
+                    <div class="leaderboard-row">
+                        <div class="rank ${rank===1?'gold':rank===2?'silver':rank===3?'bronze':''}">${medal}</div>
+                        <div class="player">${m.name || 'Unknown'}</div>
+                        <div style="font-size:12px; color:var(--ink-soft); flex:1;">${games} games</div>
+                        <div class="rating">${m.rating || 1200}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderChessEvents() {
+            const container = document.getElementById('chessEventsList');
+            if (!container) return;
+            if (chessEvents.length === 0) {
+                container.innerHTML = `<div class="empty-note">No events scheduled.</div>`;
+                return;
+            }
+            const sorted = [...chessEvents].sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
+            let html = '';
+            sorted.forEach(e => {
+                const date = new Date(e.date + 'T' + (e.time || '00:00'));
+                const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                const participants = e.participants ? e.participants.length : 0;
+                const isPast = date < new Date();
+                html += `
+                    <div class="event-card">
+                        <div class="title">${e.title} ${isPast ? ' (past)' : ''}</div>
+                        <div class="details">${dateStr} ${timeStr} · ${e.timeControl || 'No time control'} · ${participants} participants</div>
+                        <div class="details" style="font-size:12px;">${e.description || ''}</div>
+                        <div class="actions">
+                            ${!isPast && currentUser ? `<button class="btn-primary" style="margin:0; padding:4px 16px; font-size:12px;" onclick="registerForEvent('${e.id}')">Register</button>` : ''}
+                            ${isAdmin ? `<button class="btn-danger" style="margin:0; padding:4px 16px; font-size:12px;" onclick="deleteChessEvent('${e.id}')">Delete</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function registerForEvent(eventId) {
+            if (!currentUser) { showToast('Please log in first.'); return; }
+            try {
+                const ref = doc(chessEventsCollection, eventId);
+                const snap = await getDoc(ref);
+                if (!snap.exists()) { showToast('Event not found.'); return; }
+                const data = snap.data();
+                const participants = data.participants || [];
+                if (participants.includes(currentUid)) {
+                    showToast('You are already registered.');
+                    return;
+                }
+                participants.push(currentUid);
+                await updateDoc(ref, { participants });
+                showToast('Registered for event!');
+                renderChessEvents();
+                // Activity
+                await addDoc(chessActivityCollection, {
+                    type: 'register',
+                    uid: currentUid,
+                    name: currentUser.name,
+                    message: `${currentUser.name} registered for ${data.title}`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (e) {
+                showToast('Error: ' + e.message);
+            }
+        }
+
+        async function deleteChessEvent(eventId) {
+            if (!confirm('Delete this event?')) return;
+            try {
+                await deleteDoc(doc(chessEventsCollection, eventId));
+                showToast('Event deleted.');
+                renderChessEvents();
+            } catch (e) {
+                showToast('Error: ' + e.message);
+            }
+        }
+
+        function openChessEventForm() {
+            document.getElementById('chessEventForm').style.display = 'block';
+            document.getElementById('chessEventDate').value = dateKey(new Date());
+            document.getElementById('chessEventTime').value = '19:00';
+        }
+
+        function closeChessEventForm() {
+            document.getElementById('chessEventForm').style.display = 'none';
+        }
+
+        async function submitChessEvent(e) {
+            e.preventDefault();
+            if (!isAdmin) { showToast('Only admins can create events.'); return; }
+            const title = document.getElementById('chessEventTitle').value.trim();
+            const date = document.getElementById('chessEventDate').value;
+            const time = document.getElementById('chessEventTime').value;
+            const timeControl = document.getElementById('chessEventTimeControl').value.trim();
+            const description = document.getElementById('chessEventDesc').value.trim();
+            if (!title || !date) { showToast('Title and date are required.'); return; }
+            try {
+                await addDoc(chessEventsCollection, {
+                    title,
+                    date,
+                    time,
+                    timeControl: timeControl || 'N/A',
+                    description,
+                    participants: [],
+                    createdBy: currentUid,
+                    createdAt: serverTimestamp()
+                });
+                showToast('Event created!');
+                closeChessEventForm();
+                renderChessEvents();
+                // Activity
+                await addDoc(chessActivityCollection, {
+                    type: 'event_created',
+                    uid: currentUid,
+                    name: currentUser.name,
+                    message: `${currentUser.name} created event: ${title}`,
+                    createdAt: serverTimestamp()
+                });
+                // Reset form
+                document.getElementById('chessEventTitle').value = '';
+                document.getElementById('chessEventDesc').value = '';
+                document.getElementById('chessEventTimeControl').value = '';
+            } catch (e) {
+                showToast('Error: ' + e.message);
+            }
+        }
+
+        function populateChallengeOpponents() {
+            const sel = document.getElementById('chessChallengeOpponent');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '';
+            chessMembers.forEach(m => {
+                if (m.uid !== currentUid) {
+                    const opt = document.createElement('option');
+                    opt.value = m.uid;
+                    opt.textContent = m.name || 'Unknown';
+                    sel.appendChild(opt);
+                }
+            });
+            if (current && sel.querySelector(`option[value="${current}"]`)) {
+                sel.value = current;
+            }
+        }
+
+        async function sendChessChallenge() {
+            if (!currentUser) { showToast('Please log in first.'); return; }
+            const opponentUid = document.getElementById('chessChallengeOpponent').value;
+            if (!opponentUid) { showToast('Select an opponent.'); return; }
+            if (opponentUid === currentUid) { showToast('You cannot challenge yourself.'); return; }
+            // Check if there is already a pending challenge between these two
+            const existing = chessChallenges.find(c =>
+                (c.challengerUid === currentUid && c.opponentUid === opponentUid && c.status === 'pending') ||
+                (c.challengerUid === opponentUid && c.opponentUid === currentUid && c.status === 'pending')
+            );
+            if (existing) {
+                showToast('A challenge is already pending between you two.');
+                return;
+            }
+            try {
+                await addDoc(chessChallengesCollection, {
+                    challengerUid: currentUid,
+                    opponentUid: opponentUid,
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                    challengerName: currentUser.name,
+                    opponentName: chessMembers.find(m => m.uid === opponentUid)?.name || 'Unknown'
+                });
+                showToast('Challenge sent!');
+                renderChessChallenges();
+                // Activity
+                await addDoc(chessActivityCollection, {
+                    type: 'challenge',
+                    uid: currentUid,
+                    name: currentUser.name,
+                    message: `${currentUser.name} challenged ${chessMembers.find(m=>m.uid===opponentUid)?.name || 'Unknown'}`,
+                    createdAt: serverTimestamp()
+                });
+            } catch (e) {
+                showToast('Error: ' + e.message);
+            }
+        }
+
+        function renderChessChallenges() {
+            const container = document.getElementById('chessChallengesList');
+            if (!container) return;
+            // Show challenges where current user is involved
+            const myChallenges = chessChallenges.filter(c => c.challengerUid === currentUid || c.opponentUid === currentUid);
+            if (myChallenges.length === 0) {
+                container.innerHTML = `<div class="empty-note">No challenges.</div>`;
+                return;
+            }
+            let html = '';
+            myChallenges.forEach(c => {
+                const isChallenger = c.challengerUid === currentUid;
+                const otherName = isChallenger ? c.opponentName || 'Unknown' : c.challengerName || 'Unknown';
+                const status = c.status;
+                const date = c.createdAt ? new Date(c.createdAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+                let actions = '';
+                if (status === 'pending' && !isChallenger) {
+                    actions = `<button class="btn-success" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','accepted')">Accept</button>
+                               <button class="btn-danger" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','declined')">Decline</button>`;
+                } else if (status === 'pending' && isChallenger) {
+                    actions = `<button class="btn-danger" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','cancelled')">Cancel</button>`;
+                }
+                html += `
+                    <div class="challenge-item">
+                        <div class="info">
+                            <strong>${isChallenger ? 'You' : otherName}</strong> ${isChallenger ? 'challenged' : 'challenged you'} 
+                            (${status}) ${date}
+                        </div>
+                        <div class="actions">${actions}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function respondChallenge(challengeId, status) {
+            if (!currentUser) { showToast('Please log in first.'); return; }
+            try {
+                await updateDoc(doc(chessChallengesCollection, challengeId), { status });
+                showToast(`Challenge ${status}.`);
+                renderChessChallenges();
+                // Activity
+                const challenge = chessChallenges.find(c => c.id === challengeId);
+                if (challenge) {
+                    const msg = status === 'accepted' ? `${currentUser.name} accepted challenge from ${challenge.challengerName}` :
+                        status === 'declined' ? `${currentUser.name} declined challenge from ${challenge.challengerName}` :
+                        `Challenge cancelled`;
+                    await addDoc(chessActivityCollection, {
+                        type: 'challenge_response',
+                        uid: currentUid,
+                        name: currentUser.name,
+                        message: msg,
+                        createdAt: serverTimestamp()
+                    });
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message);
+            }
+        }
+
+        function renderChessGames() {
+            const container = document.getElementById('chessGamesList');
+            if (!container) return;
+            // Show games where current user is involved
+            const myGames = chessGames.filter(g => g.whiteUid === currentUid || g.blackUid === currentUid);
+            if (myGames.length === 0) {
+                container.innerHTML = `<div class="empty-note">No games recorded yet.</div>`;
+                return;
+            }
+            let html = '';
+            myGames.forEach(g => {
+                const isWhite = g.whiteUid === currentUid;
+                const opponent = isWhite ? g.blackName : g.whiteName;
+                const result = g.result; // 'win', 'loss', 'draw'
+                const resultText = result === 'win' ? (isWhite ? 'Win' : 'Loss') : result === 'loss' ? (isWhite ? 'Loss' : 'Win') : 'Draw';
+                const date = g.playedAt ? new Date(g.playedAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                const ratingChange = g.ratingChange || 0;
+                const resultClass = result === 'win' ? 'win' : result === 'loss' ? 'loss' : 'draw';
+                html += `
+                    <div class="game-item">
+                        <div><span class="opponent">${opponent}</span> · ${date}</div>
+                        <div><span class="result ${resultClass}">${resultText}</span> ${ratingChange !== 0 ? '(' + (ratingChange > 0 ? '+' : '') + ratingChange + ')' : ''}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderChessActivity() {
+            const container = document.getElementById('chessActivityList');
+            if (!container) return;
+            if (chessActivity.length === 0) {
+                container.innerHTML = `<div class="empty-note">No activity yet.</div>`;
+                return;
+            }
+            let html = '';
+            chessActivity.forEach(a => {
+                const date = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                html += `
+                    <div style="padding:6px 0; border-bottom:1px solid var(--paper-line); font-size:13px;">
+                        <span style="color:var(--ink-soft);">${date}</span> — ${a.message}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Admin event form triggers
+        document.addEventListener('DOMContentLoaded', () => {
+            const chessEventCreateBtn = document.getElementById('chessEventCreateBtn');
+            if (chessEventCreateBtn) {
+                chessEventCreateBtn.addEventListener('click', openChessEventForm);
+            }
+        });
 
         // ============================================================
         // ========== COMMUNITY POSTS ==================================
@@ -7984,6 +8952,16 @@
                         window._feedbackUnsub = null; }
                     if (window._communityPostsUnsub) { window._communityPostsUnsub();
                         window._communityPostsUnsub = null; }
+                    if (window._chessMembersUnsub) { window._chessMembersUnsub();
+                        window._chessMembersUnsub = null; }
+                    if (window._chessEventsUnsub) { window._chessEventsUnsub();
+                        window._chessEventsUnsub = null; }
+                    if (window._chessChallengesUnsub) { window._chessChallengesUnsub();
+                        window._chessChallengesUnsub = null; }
+                    if (window._chessActivityUnsub) { window._chessActivityUnsub();
+                        window._chessActivityUnsub = null; }
+                    if (window._chessGamesUnsub) { window._chessGamesUnsub();
+                        window._chessGamesUnsub = null; }
                     return;
                 }
                 try {
@@ -8108,6 +9086,19 @@
         window.renderFeedbackPreview = renderFeedbackPreview;
         window.adminFeedbackFilter = 'all';
         window.adminFeedbackSearch = '';
+
+        // Chess club globals
+        window.toggleChessClub = toggleChessClub;
+        window.switchChessTab = switchChessTab;
+        window.handleChessJoin = handleChessJoin;
+        window.handleChessLeave = handleChessLeave;
+        window.registerForEvent = registerForEvent;
+        window.deleteChessEvent = deleteChessEvent;
+        window.openChessEventForm = openChessEventForm;
+        window.closeChessEventForm = closeChessEventForm;
+        window.submitChessEvent = submitChessEvent;
+        window.sendChessChallenge = sendChessChallenge;
+        window.respondChallenge = respondChallenge;
 
         window.toggleLedgerAI = toggleLedgerAI;
         window.clearLedgerAI = clearLedgerAI;
