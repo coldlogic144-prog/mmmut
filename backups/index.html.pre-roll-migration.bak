@@ -3273,17 +3273,6 @@
                     <option value="Not specified">Not specified</option>
                 </select>
             </div>
-            <div class="field">
-                <label>Roll Number</label>
-                <input id="profileRollNumber" disabled style="background:var(--paper);" placeholder="—" />
-            </div>
-            <div class="field">
-                <label>Migration Status</label>
-                <input id="profileMigrationStatus" disabled style="background:var(--paper);" placeholder="—" />
-            </div>
-            <div style="margin:0 0 14px;">
-                <button class="btn-secondary" id="profileLinkRollBtn" style="display:none;" onclick="openMigrationModal()">🔗 Link my roll number</button>
-            </div>
             <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
 
             <hr />
@@ -3304,34 +3293,6 @@
         </div>
     </div>
 
-    <!-- Roll-Number Migration Gate (recovery-safe) — shown only for a
-         session whose migrationStatus === 'pending'. It never locks the
-         user out: the app keeps working behind it and "Skip for now"
-         dismisses it until the next login. -->
-    <div class="profile-overlay" id="migrationModal">
-        <div class="profile-panel">
-            <button class="close-btn" onclick="closeMigrationModal()">✕</button>
-            <h2>Link your MMMUT Roll Number</h2>
-            <div style="font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px;">
-                Your account needs to be linked to your college roll number so you can
-                sign in with it later. This link does <b>not</b> create a new account,
-                change your username/password, or affect your attendance.
-            </div>
-            <div class="field">
-                <label>Roll Number</label>
-                <input id="migrationRollInput" placeholder="e.g. 2026011001" maxlength="12" autocomplete="off" />
-            </div>
-            <button class="btn-primary" onclick="verifyRollNumber()">Verify Roll Number</button>
-            <div style="margin-top:8px;">
-                <a href="javascript:void(0)" style="font-size:12.5px;color:var(--ink-soft);text-decoration:underline;"
-                   onclick="closeMigrationModal()">Skip for now</a>
-                <span style="font-size:12px;color:var(--ink-soft);">— you can always do it later from your profile.</span>
-            </div>
-            <div class="auth-error" id="migrationError" style="display:none;"></div>
-            <div id="migrationStatus" style="margin-top:12px;font-size:13px;"></div>
-        </div>
-    </div>
-
     <div class="admin-overlay" id="adminPanel">
         <div class="admin-panel">
             <div class="admin-panel-header">
@@ -3347,7 +3308,6 @@
                 <button class="admin-tab" data-tab="posts" onclick="switchAdminTab('posts')">📢 Announcements</button>
                 <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin Requests</button>
                 <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
-                <button class="admin-tab" data-tab="rollverify" onclick="switchAdminTab('rollverify')">🎓 Roll Verify</button>
             </div>
             <div class="admin-panel-body" id="adminBody">
                 <div class="tab-content active" id="tab-dashboard"><div id="adminDashboardContent">Loading dashboard…</div></div>
@@ -3358,7 +3318,6 @@
                 <div class="tab-content" id="tab-posts"><div id="adminPostsContent">Loading announcements…</div></div>
                 <div class="tab-content" id="tab-requests"><div id="adminRequestsContent">Loading requests…</div></div>
                 <div class="tab-content" id="tab-feedback"><div id="adminFeedbackContent">Loading feedback…</div></div>
-                <div class="tab-content" id="tab-rollverify"><div id="adminRollVerifyContent">Loading roll verification…</div></div>
             </div>
         </div>
     </div>
@@ -3575,27 +3534,6 @@
         const chessEventsCollection = collection(db, "chessEvents");
         const chessActivityCollection = collection(db, "chessActivity");
         const chessGamesCollection = collection(db, "chessGames");
-
-        // ========== ROLL-NUMBER MIGRATION (recovery-safe, additive) ==========
-        // Master switches. FLIP ROLL_MIGRATION_ENABLED to false to instantly
-        // restore the ORIGINAL pre-migration behavior of the app (gate hidden,
-        // roll-login disabled). No cleanup required — the migration only EVER:
-        //   * reads studentRoster (authoritative roster, admin-imported),
-        //   * creates ONE userRolls/{roll} doc (claim once, never overwritten),
-        //   * updateDoc()s (merges) the CURRENT user's own users/{uid} doc.
-        // It NEVER deletes/recreates Firebase users, changes UIDs/emails/
-        // passwords, nor touches attendance, chess, notices, feedback,
-        // timetable, syllabus or FCM data.
-        const ROLL_MIGRATION_ENABLED = true; // master kill-switch
-        // While TEST mode is on, only usernames in ROLL_MIGRATION_TEST_USERS
-        // see the linking gate / get roll-login resolution. Everyone else
-        // keeps 100% of the old experience.
-        const ROLL_MIGRATION_TEST_MODE = true;
-        const ROLL_MIGRATION_TEST_USERS = ['tanish'];
-        const ROLL_MIGRATION_DEBUG = true; // safe console diagnostics (no secrets)
-        const ROLL_NUMBER_PATTERN = /^\d{10}$/;
-        const studentRosterCollection = collection(db, "studentRoster");
-        const userRollsCollection = collection(db, "userRolls");
 
         // ========== FIREBASE CLOUD MESSAGING (WEB PUSH NOTIFICATIONS) ==========
         // Additive module. Does not touch auth, App Check, AI Logic, Firestore rules,
@@ -5752,14 +5690,6 @@
                 `<option value="${s}" ${s===currentUser.section?'selected':''}>${s}</option>`).join('');
             document.getElementById('profileHostel').value = currentUser.hostel || 'Day Scholar';
             document.getElementById('profileGender').value = currentUser.gender || 'Not specified';
-            const rollField = document.getElementById('profileRollNumber');
-            const migField = document.getElementById('profileMigrationStatus');
-            if (rollField) rollField.value = currentUser.rollNumber || (currentUser.pendingRollNumber ? currentUser.pendingRollNumber + ' (unverified)' : '—');
-            if (migField) migField.value = rollMigrationLabel(currentUser.migrationStatus);
-            const linkBtn = document.getElementById('profileLinkRollBtn');
-            if (linkBtn) {
-                linkBtn.style.display = (currentUser.migrationStatus !== 'verified' && rollMigrationActive(currentUser)) ? 'inline-block' : 'none';
-            }
             document.getElementById('profileOldPassword').value = '';
             document.getElementById('profileNewPassword').value = '';
             document.getElementById('profileConfirmPassword').value = '';
@@ -5936,46 +5866,9 @@
 
         async function handleLogin() {
             hideError('loginError');
-            let username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showError('loginError', 'Enter your username and password.'); return; }
-            // Roll-number login alias (Phase 8): if the login box holds a 10-digit roll
-            // number, resolve it to the VERIFIED existing account (userRolls/{roll} ->
-            // uid + username). Real sign-in STILL uses that account's normal
-            // email/password — no new credential system, no secrets in the frontend.
-            if (ROLL_MIGRATION_ENABLED && ROLL_NUMBER_PATTERN.test(username)) {
-                try {
-                    const rollSnap = await getDoc(doc(userRollsCollection, username));
-                    if (rollSnap.exists()) {
-                        const r = rollSnap.data();
-                        // Best-effort check that the mapped account still exists;
-                        // if the users read is blocked by rules, trust the verified mapping.
-                        let accountOk = false;
-                        try {
-                            const ue = await getDoc(doc(usersCollection, r.uid));
-                            accountOk = ue.exists();
-                        } catch (e) { accountOk = true; }
-                        if (accountOk && r.username) {
-                            if (!rollMigrationActive({ username: r.username })) {
-                                showError('loginError', 'Roll-number login is not enabled for this account yet. Log in with your username.');
-                                return;
-                            }
-                            username = r.username;
-                            rollMigrationLog('roll login resolution', { mappedUid: r.uid });
-                        } else {
-                            showError('loginError', 'That roll number is linked to an account that could not be loaded. Contact an administrator.');
-                            return;
-                        }
-                    } else {
-                        showError('loginError', 'That roll number has not been verified yet. Log in with your username and link it from your profile.');
-                        return;
-                    }
-                } catch (e) {
-                    rollMigrationLog('roll lookup failed', e && e.code);
-                    showError('loginError', 'Roll-number login is unavailable right now. Use your username to log in.');
-                    return;
-                }
-            }
             try {
                 const credential = await signInWithEmailAndPassword(auth, authEmail(username), password);
                 const record = await loadUserProfile(credential.user.uid);
@@ -6002,7 +5895,6 @@
             document.getElementById('loginPassword').value = '';
             closeAdminPanel();
             closeProfileModal();
-            closeMigrationModal();
             closeFeedbackForm();
             closeMyFeedback();
             closeRatingModal();
@@ -6035,9 +5927,6 @@
                 adminRequested: data.adminRequested || false,
                 migrationStatus: data.migrationStatus || 'pending',
                 rollNumber: data.rollNumber || '',
-                rollNumberVerified: !!data.rollNumberVerified,
-                pendingRollNumber: data.pendingRollNumber || '',
-                migrationReviewReason: data.migrationReviewReason || '',
                 lastReadPosts: data.lastReadPosts || 0
             };
         }
@@ -6235,221 +6124,6 @@
             // automatically — see PART 4/9). Runs after auth is fully established.
             updatePushButtonUI();
             initializePushNotifications().catch(e => console.warn('Push init skipped:', e));
-            // Roll-number migration gate — additive, dismissible, never locks out.
-            maybeShowMigrationModal();
-        }
-
-        // ========== ROLL-NUMBER MIGRATION — CORE (recovery-safe, additive) ==========
-        // SAFETY RULES enforced below:
-        //   * roll numbers come ONLY from studentRoster (admin-imported CSV).
-        //   * a roll number is linked exactly once (create-only userRolls doc).
-        //   * existing users/{uid} docs are merged (updateDoc) — never replaced.
-        //   * Firebase UIDs, emails, passwords and attendance are untouched.
-        //   * gates are dismissible; old username/password login NEVER breaks.
-        function rollMigrationActive(user) {
-            if (!ROLL_MIGRATION_ENABLED) return false;
-            if (!ROLL_MIGRATION_TEST_MODE) return true;
-            const username = String((user && user.username) || '').toLowerCase();
-            return ROLL_MIGRATION_TEST_USERS.map(u => u.toLowerCase()).includes(username);
-        }
-
-        function rollMigrationLog(...args) {
-            if (ROLL_MIGRATION_ENABLED && ROLL_MIGRATION_DEBUG) {
-                try {
-                    // Migration diagnostics ONLY — never passwords, auth tokens,
-                    // FCM tokens, private keys, or service-account credentials.
-                    console.debug('[roll-mig]', ...args);
-                } catch (e) { /* ignore */ }
-            }
-        }
-
-        function normalizeUserName(s) {
-            return String(s || '').toUpperCase().replace(/[^A-Z]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function normalizeRollInput(raw) {
-            return String(raw || '').trim().replace(/\s+/g, '');
-        }
-
-        function rollMigrationLabel(status) {
-            const map = {
-                pending: 'Pending — roll not linked',
-                verified: 'Verified',
-                rejected: 'Rejected',
-                manual_review: 'Manual review'
-            };
-            return map[status] || String(status || 'pending');
-        }
-
-        function renderMigrationStatus() {
-            const el = document.getElementById('migrationStatus');
-            if (!el || !currentUser) return;
-            if (currentUser.migrationStatus === 'verified' && currentUser.rollNumber) {
-                el.innerHTML = '<div style="color:var(--moss);font-weight:600;">✓ Roll number verified: <span class="mono">' +
-                    escapeHtml(currentUser.rollNumber) + '</span></div>';
-            } else {
-                const extra = currentUser.migrationReviewReason ? ' — ' + escapeHtml(currentUser.migrationReviewReason) : '';
-                el.innerHTML = '<div style="color:var(--ink-soft);">' + rollMigrationLabel(currentUser.migrationStatus) + extra + '.</div>';
-            }
-        }
-
-        function openMigrationModal() {
-            const modal = document.getElementById('migrationModal');
-            if (!modal || !currentUser) return;
-            if (!rollMigrationActive(currentUser)) return;
-            if (currentUser.migrationStatus === 'verified') return;
-            const input = document.getElementById('migrationRollInput');
-            if (input) input.value = currentUser.pendingRollNumber || currentUser.rollNumber || '';
-            const errEl = document.getElementById('migrationError');
-            if (errEl) errEl.style.display = 'none';
-            renderMigrationStatus();
-            modal.classList.add('open');
-        }
-
-        function closeMigrationModal() {
-            window.__migrationGateSkipped = true;
-            const modal = document.getElementById('migrationModal');
-            if (modal) modal.classList.remove('open');
-        }
-
-        async function maybeShowMigrationModal() {
-            try {
-                const modal = document.getElementById('migrationModal');
-                if (!modal || !currentUser) return;
-                if (!rollMigrationActive(currentUser)) return;
-                if (currentUser.migrationStatus === 'verified') {
-                    if (modal.classList.contains('open')) closeMigrationModal();
-                    return;
-                }
-                // Gentle, dismissible prompt — shown once per session, never a lock-out.
-                if (!window.__migrationGateShownThisSession) {
-                    window.__migrationGateShownThisSession = true;
-                    openMigrationModal();
-                }
-            } catch (e) {
-                rollMigrationLog('gate error', e && e.message);
-            }
-        }
-
-        async function setMigrationState(status, roll, reason) {
-            const patch = { migrationStatus: status };
-            if (status === 'verified') {
-                patch.rollNumber = roll;
-                patch.rollNumberVerified = true;
-                patch.rollClaimedAt = serverTimestamp();
-                patch.pendingRollNumber = '';
-                patch.migrationReviewReason = '';
-            } else {
-                if (roll) patch.pendingRollNumber = roll;
-                if (reason) patch.migrationReviewReason = reason;
-            }
-            await updateDoc(doc(usersCollection, currentUid), patch);
-            currentUser.migrationStatus = status;
-            if (status === 'verified') {
-                currentUser.rollNumber = roll;
-                currentUser.rollNumberVerified = true;
-                currentUser.pendingRollNumber = '';
-                currentUser.migrationReviewReason = '';
-            } else {
-                if (roll) currentUser.pendingRollNumber = roll;
-                if (reason) currentUser.migrationReviewReason = reason;
-            }
-            rollMigrationLog('state', { uid: currentUid, status, roll, reason });
-        }
-
-        function evaluateRollClaim(profile, rosterEntry) {
-            if (!rosterEntry) return { verdict: 'notfound', reasons: ['not-in-roster'] };
-            const reasons = [];
-            const pName = normalizeUserName(profile.name);
-            const rName = normalizeUserName(rosterEntry.applicantName || rosterEntry.formalName || '');
-            if (!pName || !rName || pName !== rName) reasons.push('name-mismatch');
-            const branch = String(rosterEntry.branchName ||
-                (rosterEntry.enrollmentNo || '').slice(4, 7) || '').toUpperCase();
-            if (branch === 'CED') {
-                if (String(profile.branchId || '').toLowerCase() !== 'civil') reasons.push('branch-mismatch');
-            } else if (branch === 'CSD') {
-                // The app has no CSD branchId yet — route such claims to manual
-                // review (an admin can still approve them) instead of guessing.
-                reasons.push('csd-unmapped-branch');
-            } else {
-                reasons.push('unknown-branch');
-            }
-            return reasons.length === 0
-                ? { verdict: 'ok', reasons, branch }
-                : { verdict: 'manual-review', reasons, branch };
-        }
-
-        async function verifyRollNumber() {
-            const err = document.getElementById('migrationError');
-            const fail = (msg) => { if (err) { err.textContent = msg; err.style.display = 'block'; } };
-            if (err) err.style.display = 'none';
-            if (!currentUser) { fail('You are not logged in.'); return; }
-            if (!rollMigrationActive(currentUser)) { fail('Roll-number linking is not enabled for this session yet.'); return; }
-            const raw = normalizeRollInput(document.getElementById('migrationRollInput').value);
-            if (!raw) return fail('Enter your roll number.');
-            if (!ROLL_NUMBER_PATTERN.test(raw)) return fail('That does not look like a 10-digit roll number (e.g. 2026011001).');
-
-            rollMigrationLog('claim start', { uid: currentUid, roll: raw });
-
-            let rosterEntry = null;
-            try {
-                const snap = await getDoc(doc(studentRosterCollection, raw));
-                rosterEntry = snap.exists() ? snap.data() : null;
-            } catch (e) { rollMigrationLog('roster read error', e && e.code); }
-            if (!rosterEntry) {
-                fail('That roll number was not found in the 2026–27 admission roster. Only published CED/CSD roll numbers can be linked.');
-                rollMigrationLog('roster miss', { roll: raw });
-                return;
-            }
-
-            const verdict = evaluateRollClaim(currentUser, rosterEntry);
-            rollMigrationLog('identity verdict', { roll: raw, verdict });
-            if (verdict.verdict === 'manual-review') {
-                fail(verdict.reasons.includes('name-mismatch')
-                    ? 'Your account name does not match the roster entry for this roll number. Please contact an administrator for manual verification.'
-                    : 'Your roll number could not be automatically verified (branch/name mismatch). Please contact an administrator.');
-                await setMigrationState('manual_review', raw, (verdict.reasons || []).join(','));
-                renderMigrationStatus();
-                return;
-            }
-
-            let claim = null;
-            try {
-                const cSnap = await getDoc(doc(userRollsCollection, raw));
-                claim = cSnap.exists() ? cSnap.data() : null;
-            } catch (e) { rollMigrationLog('claim read failed', e && e.code); }
-            if (claim) {
-                if (claim.uid === currentUid && claim.rollNumber === raw) {
-                    await setMigrationState('verified', raw, '');
-                    closeMigrationModal();
-                    renderMigrationStatus();
-                    showToast('✓ Roll number verified: ' + raw);
-                    return;
-                }
-                fail('This roll number is already linked to a different account. Contact an administrator if you believe this is an error.');
-                await setMigrationState('rejected', raw, 'already-claimed');
-                renderMigrationStatus();
-                return;
-            }
-
-            try {
-                await setDoc(doc(userRollsCollection, raw), {
-                    uid: currentUid,
-                    username: currentUser.username || '',
-                    rollNumber: raw,
-                    verifiedAt: serverTimestamp()
-                }, { merge: false });
-            } catch (e) {
-                fail('This roll number was claimed by another account at the same moment. It has been flagged for manual review.');
-                await setMigrationState('manual_review', raw, 'claim-race');
-                return;
-            }
-
-            await setMigrationState('verified', raw, '');
-            closeMigrationModal();
-            renderMigrationStatus();
-            showToast('✓ Roll number verified: ' + raw);
-            rollMigrationLog('verified', { uid: currentUid, roll: raw });
         }
 
         // ========== NOTIFICATION ==========
@@ -6530,143 +6204,6 @@
             }
         }
 
-        // ========== ADMIN: ROLL VERIFICATION (uses the EXISTING isAdmin system) ==========
-        async function renderAdminRollVerify() {
-            const el = document.getElementById('adminRollVerifyContent');
-            if (!el) return;
-            try {
-                const userSnap = await getDocs(usersCollection);
-                const users = userSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                const needReview = users.filter(u => (u.migrationStatus || 'pending') !== 'verified' || (u.pendingRollNumber));
-                let html = '<div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">' +
-                    'Students whose roll-number link is pending / in manual review / rejected. Approve only after checking the roster.</div>';
-                if (!needReview.length) {
-                    html += '<div class="empty-note">No pending roll number links. 🎉</div>';
-                } else {
-                    html += '<div style="overflow-x:auto;max-height:520px;overflow-y:auto;">' +
-                        '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-                        '<thead style="background:var(--ink);color:#F1ECDD;position:sticky;top:0;">' +
-                        '<tr><th style="padding:9px 8px;text-align:left;">Name</th>' +
-                        '<th style="padding:9px 8px;text-align:left;">Username</th>' +
-                        '<th style="padding:9px 8px;text-align:left;">Roll entered</th>' +
-                        '<th style="padding:9px 8px;text-align:left;">Status</th>' +
-                        '<th style="padding:9px 8px;text-align:left;">Actions</th></tr></thead><tbody>';
-                    needReview.forEach(u => {
-                        const roll = u.rollNumber || u.pendingRollNumber || '';
-                        const reasons = u.migrationReviewReason ? ' <small style="color:var(--brick);">(' + escapeHtml(u.migrationReviewReason) + ')</small>' : '';
-                        const actions = (u.migrationStatus === 'verified')
-                            ? '<span style="color:var(--moss);">✓ verified</span>'
-                            : '<button class="btn-primary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminApproveRoll(\'' + u.id + '\',\'' + escapeHtml(u.username || '') + '\',\'' + roll + '\')">Approve</button>' +
-                              '<button class="btn-secondary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminRejectRoll(\'' + u.id + '\',\'' + roll + '\')">Reject</button>' +
-                              '<button class="btn-secondary" style="margin:0;padding:5px 10px;font-size:12px;" onclick="adminManualRoll(\'' + u.id + '\')">Review</button>';
-                        html += '<tr style="border-bottom:1px solid var(--paper-line);">' +
-                            '<td style="padding:8px;">' + escapeHtml(u.name || '—') + '</td>' +
-                            '<td style="padding:8px;" class="mono">' + escapeHtml(u.username || '—') + '</td>' +
-                            '<td style="padding:8px;" class="mono">' + (roll ? escapeHtml(roll) : '—') + '</td>' +
-                            '<td style="padding:8px;">' + rollMigrationLabel(u.migrationStatus) + reasons + '</td>' +
-                            '<td style="padding:8px;white-space:nowrap;">' + actions + '</td></tr>';
-                    });
-                    html += '</tbody></table></div>';
-                }
-                html += '<hr style="border:none;border-top:1px solid var(--paper-line);margin:18px 0;" />' +
-                    '<div style="max-width:480px;">' +
-                    '<label style="font-weight:600;font-size:13px;">Look up a roll number (roster + current claim)</label>' +
-                    '<div style="display:flex;gap:8px;margin-top:8px;">' +
-                    '<input id="adminRollLookupInput" placeholder="2026011001" maxlength="12" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--paper-line);font-size:13px;" />' +
-                    '<button class="btn-primary" style="margin:0;padding:8px 18px;" onclick="adminRollLookup()">Look up</button>' +
-                    '</div><div id="adminRollLookupResult" style="margin-top:10px;font-size:13px;line-height:1.6;"></div></div>';
-                el.innerHTML = html;
-            } catch (e) {
-                el.innerHTML = '<div class="empty-note">Error loading roll verification: ' + escapeHtml(e.message) + '</div>';
-            }
-        }
-
-        function escapeHtml(s) {
-            return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            }[ch]));
-        }
-
-        async function adminRollLookup() {
-            const roll = normalizeRollInput(document.getElementById('adminRollLookupInput').value);
-            const out = document.getElementById('adminRollLookupResult');
-            if (!out) return;
-            if (!ROLL_NUMBER_PATTERN.test(roll)) { out.innerHTML = 'Enter a 10-digit roll number.'; return; }
-            let html = '';
-            const rSnap = await getDoc(doc(studentRosterCollection, roll)).catch(() => null);
-            if (rSnap && rSnap.exists()) {
-                const r = rSnap.data();
-                html += '• Roster: <b>' + escapeHtml(r.formalName || r.applicantName) + '</b> — ' +
-                    escapeHtml(r.enrollmentNo || '') + ' (' + escapeHtml(r.branchName || '?') + ')<br/>';
-            } else {
-                html += '• Not present in the import roster.<br/>';
-            }
-            const cSnap = await getDoc(doc(userRollsCollection, roll)).catch(() => null);
-            if (cSnap && cSnap.exists()) {
-                const c = cSnap.data();
-                html += '• Claimed by uid <span class="mono">' + escapeHtml(c.uid || '?') + '</span> (' +
-                    escapeHtml(c.username || '') + ').<br/>';
-            } else {
-                html += '• Not claimed by anyone yet.<br/>';
-            }
-            out.innerHTML = html;
-        }
-
-        async function adminApproveRoll(uid, username, roll) {
-            roll = normalizeRollInput(roll || '');
-            if (!roll) { showToast('No roll number entered for this user yet.'); return; }
-            if (!window.confirm('Approve linking roll ' + roll + ' to this EXISTING account? This only merges fields — it never deletes Firebase users, changes UIDs, emails or passwords.')) return;
-            const claim = await getDoc(doc(userRollsCollection, roll)).catch(() => null);
-            if (claim && claim.exists() && claim.data().uid !== uid) {
-                showToast('Refusing: roll ' + roll + ' is already linked to another uid (' + claim.data().uid + ').');
-                return;
-            }
-            try {
-                if (!claim || !claim.exists()) {
-                    await setDoc(doc(userRollsCollection, roll), {
-                        uid,
-                        username: username || '',
-                        rollNumber: roll,
-                        verifiedAt: serverTimestamp()
-                    }, { merge: false });
-                }
-                await updateDoc(doc(usersCollection, uid), {
-                    rollNumber: roll,
-                    migrationStatus: 'verified',
-                    rollNumberVerified: true,
-                    pendingRollNumber: '',
-                    migrationReviewReason: '',
-                    rollClaimedAt: serverTimestamp()
-                });
-                showToast('✓ Roll verified for ' + (username || uid));
-                renderAdminRollVerify();
-            } catch (e) {
-                showToast('Approval failed: ' + e.message);
-            }
-        }
-
-        async function adminRejectRoll(uid, roll) {
-            if (!window.confirm('Reject this roll-number link request?')) return;
-            try {
-                await updateDoc(doc(usersCollection, uid), {
-                    migrationStatus: 'rejected',
-                    pendingRollNumber: normalizeRollInput(roll || ''),
-                    migrationReviewReason: 'rejected-by-admin'
-                });
-                showToast('Roll request rejected.');
-                renderAdminRollVerify();
-            } catch (e) { showToast('Reject failed: ' + e.message); }
-        }
-
-        async function adminManualRoll(uid) {
-            if (!window.confirm('Mark this roll-number link as needing manual review?')) return;
-            try {
-                await updateDoc(doc(usersCollection, uid), { migrationStatus: 'manual_review' });
-                showToast('Marked for manual review.');
-                renderAdminRollVerify();
-            } catch (e) { showToast('Update failed: ' + e.message); }
-        }
-
         // ========== ADMIN PANEL ==========
         let adminTab = 'dashboard';
 
@@ -6694,7 +6231,6 @@
             if (tab === 'posts') renderAdminPosts();
             if (tab === 'requests') renderAdminRequests();
             if (tab === 'feedback') renderAdminFeedback();
-            if (tab === 'rollverify') renderAdminRollVerify();
         }
 
         // ========== ADMIN: DASHBOARD ==========
@@ -9794,14 +9330,6 @@
         window.renderAdminHolidays = renderAdminHolidays;
         window.renderAdminPosts = renderAdminPosts;
         window.renderAdminRequests = renderAdminRequests;
-        window.renderAdminRollVerify = renderAdminRollVerify;
-        window.adminRollLookup = adminRollLookup;
-        window.adminApproveRoll = adminApproveRoll;
-        window.adminRejectRoll = adminRejectRoll;
-        window.adminManualRoll = adminManualRoll;
-        window.openMigrationModal = openMigrationModal;
-        window.closeMigrationModal = closeMigrationModal;
-        window.verifyRollNumber = verifyRollNumber;
         window.requestAdminRole = requestAdminRole;
         window.renderAttendanceStats = renderAttendanceStats;
         window.renderPostsFeed = renderPostsFeed;
