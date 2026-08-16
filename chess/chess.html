@@ -120,6 +120,11 @@
                             <button class="btn-ghost-chess" onclick="flipBoard()">⇅ Flip board</button>
                             <button class="btn-ghost-chess" onclick="offerResign()">🏳 Resign</button>
                             <button class="btn-ghost-chess" onclick="offerDraw()">🤝 Offer draw</button>
+                            <!-- Draw accept/decline buttons - shown when offer is pending -->
+                            <div style="display:inline-block; margin-left:8px;">
+                                <button class="btn-ghost-chess" onclick="acceptDrawOffer()" style="display:none; margin-right:4px;">Accept</button>
+                                <button class="btn-ghost-chess" onclick="declineDrawOffer()" style="display:none;;">Decline</button>
+                            </div>
                             <button class="btn-ghost-chess" onclick="backToHome()">✕ Exit</button>
                         </div>
                     </div>

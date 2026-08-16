@@ -65,6 +65,7 @@ let whiteMs = 0, blackMs = 0, incrementMs = 0;
 let clockTimer = null;
 let clockRunningColor = null; // 'w' | 'b' | null
 let gameOver = false;
+let pendingDrawOffer = null; // { from, ts } - tracks pending draw offer
 
 function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -356,6 +357,7 @@ function renderBoard() {
 // ---------------- INTERACTION ----------------
 function onSquareClick(id) {
     if (gameOver) return;
+    if (isRemoteGame) return;  // In online mode, moves are made remotely, not by clicking
     if (selectedSquare) {
         if (legalTargets.includes(id)) {
             attemptMove(selectedSquare, id);
@@ -374,6 +376,7 @@ function onSquareClick(id) {
     }
 }
 function selectSquare(id) {
+    if (isRemoteGame) return;  // In online mode, don't allow local square selection
     selectedSquare = id;
     legalTargets = game.moves({ square: id, verbose: true }).map(m => m.to);
     renderBoard();
@@ -661,11 +664,52 @@ window.offerResign = function () {
 };
 window.offerDraw = function () {
     if (gameOver || !game) return;
-    if (!confirm('Both players agree to a draw?')) return;
-    if (isRemoteGame) finishRemoteGame(null, 'agreement');
-    endGame('agreement', null);
-    if (isRemoteGame) leaveCurrentGame();
+    if (isRemoteGame) {
+        // In remote game, send draw offer to opponent
+        if (!currentGameId) return;
+        pendingDrawOffer = { from: me, ts: Date.now() };
+        // Update game doc to indicate draw offer pending
+        const ref = doc(gamesCol, currentGameId);
+        updateDoc(ref, { drawOfferFrom: me, drawOfferTs: Date.now() });
+        // Show accept/decline buttons for opponent
+        showDrawControls(true);
+        setOnlineStatus('Draw offer sent to opponent.');
+    } else {
+        // Local game: just offer draw - the other player can offer too
+        if (!confirm('Offer draw to opponent?')) return;
+        endGame('agreement', null);
+    }
 };
+
+// New function to accept a draw offer from opponent
+window.acceptDrawOffer = function () {
+    if (isRemoteGame && currentGameId && pendingDrawOffer) {
+        // Send accept draw to server
+        const ref = doc(gamesCol, currentGameId);
+        updateDoc(ref, { drawOfferAccepted: me, drawOfferTs: Date.now() });
+        endGame('agreement', null);
+    } else {
+        endGame('agreement', null);
+    }
+    showDrawControls(false);
+};
+
+// New function to decline a draw offer from opponent
+window.declineDrawOffer = function () {
+    pendingDrawOffer = null;
+    showDrawControls(false);
+    setOnlineStatus('Draw declined.');
+};
+
+// Show/hide draw offer control buttons
+function showDrawControls(show) {
+    const acceptBtn = document.querySelector('button[onclick="acceptDrawOffer()"]');
+    const declineBtn = document.querySelector('button[onclick="declineDrawOffer()"]');
+    if (acceptBtn && declineBtn) {
+        acceptBtn.style.display = show ? 'inline-block' : 'none';
+        declineBtn.style.display = show ? 'inline-block' : 'none';
+    }
+}
 
 function endGame(reason, winnerColor) {
     if (gameOver) return;
@@ -871,6 +915,12 @@ function onGameSnap(snap) {
     if (g.blackMs != null) blackMs = g.blackMs;
     renderClocks();
     startClock(game.turn());
+    // Handle draw offer from opponent
+    if (g.drawOfferFrom && g.drawOfferFrom !== me && !pendingDrawOffer) {
+        // Opponent offered a draw - show accept/decline buttons
+        pendingDrawOffer = { from: g.drawOfferFrom, ts: g.drawOfferTs || Date.now() };
+        showDrawControls(true);
+    }
     const res = detectResult();
     if (g.finished) {
         if (!gameOver) endGame(g.reason || (res && res.reason) || 'agreement', g.winnerColor);
