@@ -62,7 +62,10 @@ def build_records():
     problems, duplicates = [], []
 
     # Determine contiguous roll-number blocks (CED list, CSD list-1, CSD list-2)
-    ordered = sorted(rows, key=lambda r: (int(r["rollNumber"] or 0), r["rollNumber"]))
+    # over well-formed rolls only, so a stray non-numeric roll can never crash
+    # the int() sort below — it is reported as a problem instead.
+    well_formed = [r for r in rows if ROLL_RE.match(r["rollNumber"])]
+    ordered = sorted(well_formed, key=lambda r: (int(r["rollNumber"]), r["rollNumber"]))
     block_idx, prev = 0, None
     block_of = {}
     for r in ordered:
@@ -77,10 +80,12 @@ def build_records():
         if not ROLL_RE.match(roll):
             problems.append(f"row {r['row']}: invalid rollNumber '{roll}'")
             continue
-        m = ENROLL_RE.match(enr) if enr else None
-        branch = m.group(1) if m else (
-            "CED" if roll.startswith("202601") else
-            "CSD" if roll.startswith("202602") else "?")
+        m = ENROLL_RE.match(enr)
+        if not m:
+            problems.append(
+                f"row {r['row']}: invalid Enrollment_No '{enr}' "
+                f"(expected 2026CEDxxxx or 2026CSDxxxx)")
+            continue
         normalized = norm_name(r["name"])
         if not normalized:
             problems.append(f"row {r['row']}: empty applicant name")
@@ -90,7 +95,7 @@ def build_records():
             "enrollmentNo": enr,
             "applicantName": normalized,
             "formalName": r["name"],
-            "branchName": branch,
+            "branchName": m.group(1),
             "block": block_of.get(roll, 0),
             "sourceFormNumber": r["formNumber"],
         })
@@ -152,6 +157,7 @@ def main() -> int:
         written = 0
         for rec in records:
             # merge=True: existing roster docs are never replaced/deleted.
+            rec["importedAt"] = firestore.SERVER_TIMESTAMP
             db.collection("studentRoster").document(rec["rollNumber"]).set(rec, merge=True)
             written += 1
         print(f"\nCommitted: {written} roster documents created/merged into 'studentRoster'.")
