@@ -44,8 +44,7 @@
                         <h3>Play Local</h3>
                         <p>Two players, one board — pass the device to take turns.</p>
                     </div>
-                    <div class="mode-card disabled-mode">
-                        <span class="soon-tag">Phase 2</span>
+                    <div class="mode-card active-mode" onclick="openOnlineModal()">
                         <div class="mode-icon">🌐</div>
                         <h3>Play Online</h3>
                         <p>Real-time matchmaking against other Ledger students.</p>
@@ -56,8 +55,7 @@
                         <h3>Play Computer</h3>
                         <p>Practice against an engine with adjustable difficulty.</p>
                     </div>
-                    <div class="mode-card disabled-mode">
-                        <span class="soon-tag">Phase 2</span>
+                    <div class="mode-card active-mode" onclick="openChallengeModal()">
                         <div class="mode-icon">⚔️</div>
                         <h3>Challenge</h3>
                         <p>Challenge a specific Ledger student to a rated game.</p>
@@ -78,8 +76,20 @@
 
                 <div class="migration-note">
                     <span>ℹ️</span>
-                    <span>This replaces the old Chess Club tab. Ratings, online play, and your previous club members/challenges will appear here once Phase 2 (Firebase profiles &amp; matchmaking) ships.</span>
+                    <span>Ratings, online play, and challenges are now live (Phase 2). Your rating updates after every rated game.</span>
                 </div>
+
+                <div class="tc-section">
+                    <h3>Incoming challenges</h3>
+                    <div id="incomingChallenges"><div class="empty-note">No incoming challenges.</div></div>
+                </div>
+
+                <div class="tc-section">
+                    <h3>Recent games</h3>
+                    <div id="recentGames"><div class="empty-note">No games yet.</div></div>
+                </div>
+
+                <div id="onlineStatus" class="online-status"></div>
             </div>
 
             <!-- ---------- GAME ---------- -->
@@ -184,11 +194,80 @@
         </div>
     </div>
 
+    <!-- ============ ONLINE MODAL ============ -->
+    <div class="modal-backdrop" id="onlineModal">
+        <div class="modal-box">
+            <h3>Play online — pick a time control</h3>
+            <div class="setup-row">
+                <label>Time control</label>
+                <select id="onlineTimeControl">
+                    <option value="60-0">1 + 0</option>
+                    <option value="180-0">3 + 0</option>
+                    <option value="180-2">3 + 2</option>
+                    <option value="300-0" selected>5 + 0</option>
+                    <option value="300-3">5 + 3</option>
+                    <option value="600-5">10 + 5</option>
+                    <option value="900-10">15 + 10</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="onlineCustomRow" style="display:none;">
+                <label>Minutes / Increment (sec)</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="number" id="onlineMinutes" min="1" max="180" value="10" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                    <input type="number" id="onlineIncrement" min="0" max="60" value="0" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                </div>
+            </div>
+            <div class="online-status" id="onlineStatusModal" style="margin:6px 0;"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeOnlineModal()">Cancel</button>
+                <button class="btn-primary" id="cancelSearchBtn" style="display:none;" onclick="cancelOnlineSearch()">Cancel search</button>
+                <button class="btn-primary" onclick="startOnlineMatch()">Find match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CHALLENGE MODAL ============ -->
+    <div class="modal-backdrop" id="challengeModal">
+        <div class="modal-box">
+            <h3>Challenge a student</h3>
+            <div class="setup-row">
+                <label>Opponent (username or email)</label>
+                <input type="text" id="challengeOpponent" placeholder="e.g. rahul.cse26 or rahul@mmmut.local" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--paper-line);">
+            </div>
+            <div class="setup-row">
+                <label>Time control</label>
+                <select id="challengeTimeControl">
+                    <option value="60-0">1 + 0</option>
+                    <option value="180-0">3 + 0</option>
+                    <option value="180-2">3 + 2</option>
+                    <option value="300-0" selected>5 + 0</option>
+                    <option value="300-3">5 + 3</option>
+                    <option value="600-5">10 + 5</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="challengeCustomRow" style="display:none;">
+                <label>Minutes / Increment (sec)</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="number" id="challengeMinutes" min="1" max="180" value="10" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                    <input type="number" id="challengeIncrement" min="0" max="60" value="0" style="width:60px; padding:6px; border-radius:8px; border:1px solid var(--paper-line);">
+                </div>
+            </div>
+            <div class="online-status" id="challengeStatus"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeChallengeModal()">Cancel</button>
+                <button class="btn-primary" onclick="sendChallengeFromModal()">Send challenge</button>
+            </div>
+        </div>
+    </div>
+
     <script type="importmap">
     {
         "imports": {
             "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
             "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js",
             "chess.js": "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm"
         }
     }

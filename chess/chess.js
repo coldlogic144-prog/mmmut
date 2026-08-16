@@ -9,6 +9,7 @@
 
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, getDocs, runTransaction } from "firebase/firestore";
 import { Chess } from "chess.js";
 
 // ===== Same Firebase project as the main Ledger app =====
@@ -24,6 +25,27 @@ const firebaseConfig = {
 
 const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+
+// ===== Phase 2 collections (reuse the same chess* collections the Chess Club uses) =====
+const playersCol = collection(db, "chessPlayers");
+const challengesCol = collection(db, "chessChallenges");
+const gamesCol = collection(db, "chessGames");
+const activityCol = collection(db, "chessActivity");
+
+// ===== Phase 2 runtime state =====
+let currentUser = null;
+let me = null;
+let myName = "Player";
+
+let isRemoteGame = false;
+let currentGameId = null;
+let gameUnsub = null;
+let startedForId = null;
+let waitingGameId = null;
+let myGamesUnsubs = [];
+let challengesUnsub = null;
+const recordedGameIds = new Set();
 
 const PIECE_GLYPHS = {
     w: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' },
@@ -72,6 +94,7 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('chessApp').style.display = 'flex';
         document.getElementById('playerNameLabel').textContent = user.displayName || user.email || 'Player';
         initHome();
+        initPhase2(user);
     } else {
         document.getElementById('gateTitle').textContent = "You're not logged in";
         document.getElementById('gateMessage').textContent = 'Log in to Ledger first, then open Chess again.';
@@ -116,6 +139,12 @@ document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'setupTimeControl') {
         document.getElementById('customTcRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
     }
+    if (e.target && e.target.id === 'onlineTimeControl') {
+        document.getElementById('onlineCustomRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+    }
+    if (e.target && e.target.id === 'challengeTimeControl') {
+        document.getElementById('challengeCustomRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+    }
 });
 window.startLocalGame = function () {
     const sel = document.getElementById('setupTimeControl').value;
@@ -158,7 +187,8 @@ function beginGame(baseSeconds, incSeconds) {
 }
 
 window.backToHome = function () {
-    stopClock();
+    if (isRemoteGame) leaveCurrentGame();
+    else stopClock();
     document.getElementById('gameScreen').style.display = 'none';
     document.getElementById('homeScreen').style.display = 'block';
 };
@@ -178,6 +208,7 @@ function startClock(color) {
             if (whiteMs === 0) {
                 renderClocks();
                 stripElFor('w').clock.classList.add('timeout-flash');
+                if (isRemoteGame) finishRemoteGame('b', 'timeout');
                 endGame('timeout', 'b');
                 return;
             }
@@ -186,6 +217,7 @@ function startClock(color) {
             if (blackMs === 0) {
                 renderClocks();
                 stripElFor('b').clock.classList.add('timeout-flash');
+                if (isRemoteGame) finishRemoteGame('w', 'timeout');
                 endGame('timeout', 'w');
                 return;
             }
@@ -396,12 +428,20 @@ function doMove(from, to, promotion) {
     lastMove = { from, to };
     selectedSquare = null;
     legalTargets = [];
-    switchClock(move.color);
-    renderBoard();
-    animateMove(move);
-    renderMoveList();
-    renderCaptures();
-    checkGameEnd();
+    if (isRemoteGame) {
+        renderBoard();
+        animateMove(move);
+        renderMoveList();
+        renderCaptures();
+        persistRemoteMove(move);
+    } else {
+        switchClock(move.color);
+        renderBoard();
+        animateMove(move);
+        renderMoveList();
+        renderCaptures();
+        checkGameEnd();
+    }
 }
 
 // ---------------- ANIMATIONS ----------------
@@ -613,13 +653,18 @@ function checkGameEnd() {
 window.offerResign = function () {
     if (gameOver || !game) return;
     if (!confirm('Resign this game?')) return;
-    const resigningColor = game.turn(); // whoever clicks mid-hotseat; treat current side to move as resigning for simplicity
-    endGame('resignation', resigningColor === 'w' ? 'b' : 'w');
+    const resigningColor = game.turn();
+    const winner = resigningColor === 'w' ? 'b' : 'w';
+    if (isRemoteGame) finishRemoteGame(winner, 'resignation');
+    endGame('resignation', winner);
+    if (isRemoteGame) leaveCurrentGame();
 };
 window.offerDraw = function () {
     if (gameOver || !game) return;
     if (!confirm('Both players agree to a draw?')) return;
+    if (isRemoteGame) finishRemoteGame(null, 'agreement');
     endGame('agreement', null);
+    if (isRemoteGame) leaveCurrentGame();
 };
 
 function endGame(reason, winnerColor) {
@@ -674,6 +719,419 @@ function endGame(reason, winnerColor) {
         revealResultCard();
     }
 }
+
+// ============================================================
+// PHASE 2 — Firebase profiles, online matchmaking & challenges
+// ============================================================
+
+function setOnlineStatus(msg) {
+    const el = document.getElementById('onlineStatus');
+    if (el) el.textContent = msg || '';
+    const el2 = document.getElementById('onlineStatusModal');
+    if (el2) el2.textContent = msg || '';
+}
+function setChallengeStatus(msg) {
+    const el = document.getElementById('challengeStatus');
+    if (el) el.textContent = msg || '';
+}
+function showCancelSearch(show) {
+    const el = document.getElementById('cancelSearchBtn');
+    if (el) el.style.display = show ? 'inline-flex' : 'none';
+}
+
+// ---------------- PROFILE / RATINGS ----------------
+async function ensureProfile(uid, name) {
+    const ref = doc(playersCol, uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) return snap.data();
+    const fresh = { uid, name: name || 'Player', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
+    try { await setDoc(ref, fresh); } catch (e) { console.warn('chess profile create failed', e); }
+    return fresh;
+}
+async function refreshProfileStats() {
+    const p = await ensureProfile(me, myName);
+    if (!p) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('statRating', p.rating);
+    set('statGames', p.games);
+    set('statWins', p.wins);
+    set('statLosses', p.losses);
+    set('ratingChip', 'Rating ' + p.rating);
+}
+function applyElo(a, b, scoreA) {
+    const K = 32;
+    const ea = 1 / (1 + Math.pow(10, (b.rating - a.rating) / 400));
+    a.rating = Math.max(100, Math.round(a.rating + K * (scoreA - ea)));
+    b.rating = Math.max(100, Math.round(b.rating + K * (1 - scoreA - (1 - ea))));
+}
+async function ensureProfileTx(tx, uid, name) {
+    const ref = doc(playersCol, uid);
+    const snap = await tx.get(ref);
+    if (snap.exists()) return snap.data();
+    const fresh = { uid, name: name || 'Player', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
+    tx.set(ref, fresh);
+    return fresh;
+}
+async function recordGameResult(g) {
+    if (recordedGameIds.has(g.id)) return;
+    if (g.winnerColor === undefined) return;
+    if (!g.whiteUid || !g.blackUid) return;
+    recordedGameIds.add(g.id);
+    try {
+        await runTransaction(db, async (tx) => {
+            const gameRef = doc(gamesCol, g.id);
+            const gs = await tx.get(gameRef);
+            if (!gs.exists() || gs.data().resultRecorded) return; // another client already recorded
+            const w = await ensureProfileTx(tx, g.whiteUid, g.whiteName);
+            const b = await ensureProfileTx(tx, g.blackUid, g.blackName);
+            let scoreW;
+            if (g.winnerColor === 'w') { scoreW = 1; w.wins++; b.losses++; }
+            else if (g.winnerColor === 'b') { scoreW = 0; b.wins++; w.losses++; }
+            else { scoreW = 0.5; w.draws++; b.draws++; }
+            w.games++; b.games++;
+            applyElo(w, b, scoreW);
+            tx.set(doc(playersCol, g.whiteUid), w);
+            tx.set(doc(playersCol, g.blackUid), b);
+            const actRef = doc(collection(activityCol));
+            tx.set(actRef, {
+                type: 'game', whiteUid: g.whiteUid, blackUid: g.blackUid,
+                whiteName: g.whiteName, blackName: g.blackName,
+                winnerColor: g.winnerColor, reason: g.reason, createdAt: serverTimestamp()
+            });
+            tx.update(gameRef, { resultRecorded: true });
+        });
+    } catch (e) {
+        console.warn('chess result persist failed', e);
+        recordedGameIds.delete(g.id); // allow a retry on next snapshot
+    }
+    loadRecentGames().catch(() => { });
+    refreshProfileStats().catch(() => { });
+}
+
+// ---------------- RESULT DETECTION ----------------
+function detectResult() {
+    if (!game) return null;
+    if (game.isCheckmate()) return { reason: 'checkmate', winnerColor: game.turn() === 'w' ? 'b' : 'w' };
+    if (game.isStalemate()) return { reason: 'stalemate', winnerColor: null };
+    if (game.isThreefoldRepetition()) return { reason: 'repetition', winnerColor: null };
+    if (game.isInsufficientMaterial()) return { reason: 'insufficient', winnerColor: null };
+    if (game.isDrawByFiftyMoves && game.isDrawByFiftyMoves()) return { reason: 'fifty-move', winnerColor: null };
+    return null;
+}
+function rebuildFromMoves(moves) {
+    const ng = new Chess();
+    (moves || []).forEach(m => { try { ng.move({ from: m.from, to: m.to, promotion: m.promotion || undefined }); } catch (e) { } });
+    game = ng;
+    const last = (moves && moves.length) ? moves[moves.length - 1] : null;
+    lastMove = last ? { from: last.from, to: last.to } : null;
+    selectedSquare = null; legalTargets = [];
+    renderBoard(); renderMoveList(); renderCaptures();
+}
+
+// ---------------- REMOTE GAME SYNC ----------------
+async function finishRemoteGame(winnerColor, reason) {
+    if (!currentGameId) return;
+    try {
+        await updateDoc(doc(gamesCol, currentGameId), {
+            finished: true,
+            winnerColor: winnerColor === undefined ? null : winnerColor,
+            reason: reason || 'agreement'
+        });
+    } catch (e) { console.warn('finishRemoteGame failed', e); }
+}
+async function persistRemoteMove(move) {
+    if (!currentGameId) return;
+    const ref = doc(gamesCol, currentGameId);
+    try {
+        const snap = await getDoc(ref);
+        const g = snap.data();
+        if (!g) return;
+        const now = Date.now();
+        let w = g.whiteMs, b = g.blackMs;
+        const elapsed = Math.max(0, now - (g.lastMoveTs || now));
+        if (move.color === 'w') { w = Math.max(0, w - elapsed); w += incrementMs; }
+        else { b = Math.max(0, b - elapsed); b += incrementMs; }
+        const moves = [...(g.moves || []), { from: move.from, to: move.to, promotion: move.promotion || null }];
+        const nextTurn = move.color === 'w' ? 'b' : 'w';
+        await updateDoc(ref, { moves, turn: nextTurn, whiteMs: w, blackMs: b, lastMoveTs: now });
+    } catch (e) {
+        console.warn('persistRemoteMove failed', e);
+        setOnlineStatus('Sync error: ' + (e.message || e));
+    }
+}
+function onGameSnap(snap) {
+    if (!snap.exists()) return;
+    const g = snap.data();
+    if (startedForId !== currentGameId) {
+        beginGame((g.baseMs || 300000) / 1000, (g.incMs || 0) / 1000);
+        startedForId = currentGameId;
+    }
+    rebuildFromMoves(g.moves);
+    if (g.whiteMs != null) whiteMs = g.whiteMs;
+    if (g.blackMs != null) blackMs = g.blackMs;
+    renderClocks();
+    startClock(game.turn());
+    const res = detectResult();
+    if (g.finished) {
+        if (!gameOver) endGame(g.reason || (res && res.reason) || 'agreement', g.winnerColor);
+        return;
+    }
+    if (res && currentGameId) finishRemoteGame(res.winnerColor, res.reason);
+}
+function joinGame(id) {
+    if (currentGameId === id) return;
+    if (gameUnsub) { gameUnsub(); gameUnsub = null; }
+    currentGameId = id;
+    isRemoteGame = true;
+    startedForId = null;
+    document.getElementById('homeScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('resultCard').style.display = 'none';
+    const ref = doc(gamesCol, id);
+    gameUnsub = onSnapshot(ref, onGameSnap, (err) => {
+        console.warn('game snap err', err);
+        setOnlineStatus('Connection error.');
+    });
+    setOnlineStatus('Connected to game.');
+}
+function leaveCurrentGame() {
+    if (gameUnsub) { gameUnsub(); gameUnsub = null; }
+    currentGameId = null;
+    isRemoteGame = false;
+    startedForId = null;
+    gameOver = false;
+    stopClock();
+}
+async function cancelOnlineSearch() {
+    if (waitingGameId) {
+        try { await deleteDoc(doc(gamesCol, waitingGameId)); } catch (e) { }
+        waitingGameId = null;
+    }
+    showCancelSearch(false);
+    setOnlineStatus('');
+}
+
+// ---------------- ONLINE MATCHMAKING ----------------
+async function findOrCreateOnlineGame(base, inc) {
+    setOnlineStatus('Searching for opponent…');
+    showCancelSearch(false);
+    try {
+        const snap = await getDocs(query(gamesCol, where('status', '==', 'waiting')));
+        let target = null, myWaiting = null;
+        snap.forEach(d => {
+            const g = d.data();
+            if (g.whiteUid === me) myWaiting = { id: d.id };
+            else if (!g.blackUid) target = { id: d.id };
+        });
+        if (myWaiting) {
+            // Reuse my own still-open waiting game
+            waitingGameId = myWaiting.id;
+            setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
+            showCancelSearch(true);
+            return;
+        }
+        if (target) {
+            await updateDoc(doc(gamesCol, target.id), {
+                blackUid: me, blackName: myName, status: 'active', lastMoveTs: Date.now()
+            });
+            setOnlineStatus('Opponent found! Joining…');
+        } else {
+            const ref = await addDoc(gamesCol, {
+                whiteUid: me, whiteName: myName, blackUid: '', blackName: '',
+                status: 'waiting', baseMs: base * 1000, incMs: inc * 1000,
+                moves: [], turn: 'w', whiteMs: base * 1000, blackMs: base * 1000,
+                lastMoveTs: Date.now(), createdAt: serverTimestamp()
+            });
+            waitingGameId = ref.id;
+            setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
+            showCancelSearch(true);
+        }
+    } catch (e) {
+        console.warn('findOrCreateOnlineGame failed', e);
+        setOnlineStatus('Could not start matchmaking: ' + (e.message || e));
+    }
+}
+function setupMyGamesListener() {
+    const handler = (snap) => {
+        snap.forEach(d => {
+            const g = d.data();
+            const id = d.id;
+            if (g.status === 'active' && id !== currentGameId) {
+                joinGame(id);
+            } else if (g.status === 'waiting' && g.whiteUid === me && !currentGameId) {
+                waitingGameId = id;
+                setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
+                showCancelSearch(true);
+            } else if (g.status === 'finished' && !recordedGameIds.has(id)) {
+                recordGameResult({ id, ...g });
+            }
+        });
+    };
+    myGamesUnsubs.push(onSnapshot(query(gamesCol, where('whiteUid', '==', me)), handler));
+    myGamesUnsubs.push(onSnapshot(query(gamesCol, where('blackUid', '==', me)), handler));
+}
+
+// ---------------- CHALLENGES ----------------
+async function sendChessChallenge(opponentInput, tcBase, tcInc) {
+    if (!me) return;
+    setChallengeStatus('Looking up player…');
+    try {
+        const [s1, s2] = await Promise.all([
+            getDocs(query(collection(db, 'users'), where('username', '==', opponentInput))),
+            getDocs(query(collection(db, 'users'), where('email', '==', opponentInput)))
+        ]);
+        let opp = null;
+        if (!s1.empty) opp = { uid: s1.docs[0].id, ...s1.docs[0].data() };
+        else if (!s2.empty) opp = { uid: s2.docs[0].id, ...s2.docs[0].data() };
+        if (!opp) { setChallengeStatus('No player found with that username/email.'); return; }
+        if (opp.uid === me) { setChallengeStatus("You can't challenge yourself."); return; }
+        const oppName = opp.name || opp.username || opp.email;
+        await addDoc(challengesCol, {
+            challengerUid: me, challengerName: myName,
+            opponentUid: opp.uid, opponentName: oppName,
+            status: 'pending', baseMs: tcBase * 1000, incMs: tcInc * 1000,
+            createdAt: serverTimestamp()
+        });
+        setChallengeStatus('Challenge sent to ' + oppName + '.');
+        addDoc(activityCol, {
+            type: 'challenge', uid: me, name: myName,
+            toUid: opp.uid, toName: oppName, createdAt: serverTimestamp()
+        }).catch(() => { });
+    } catch (e) {
+        setChallengeStatus('Could not send challenge: ' + (e.message || e));
+    }
+}
+function setupChallengesListener() {
+    challengesUnsub = onSnapshot(
+        query(challengesCol, where('opponentUid', '==', me)),
+        (snap) => renderIncomingChallenges(snap)
+    );
+}
+function renderIncomingChallenges(snap) {
+    const el = document.getElementById('incomingChallenges');
+    if (!el) return;
+    const pending = snap.docs.filter(d => d.data().status === 'pending');
+    if (!pending.length) { el.innerHTML = '<div class="empty-note">No incoming challenges.</div>'; return; }
+    let html = '';
+    pending.forEach(d => {
+        const c = d.data();
+        html += '<div class="challenge-row"><span>' + (c.challengerName || 'Someone') +
+            ' challenged you</span>' +
+            '<button class="btn-secondary" onclick="acceptChessChallenge(\'' + d.id + '\')">Accept</button>' +
+            '<button class="btn-ghost-chess" onclick="declineChessChallenge(\'' + d.id + '\')">Decline</button></div>';
+    });
+    el.innerHTML = html;
+}
+async function acceptChessChallenge(challengeId) {
+    try {
+        const ref = doc(challengesCol, challengeId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        const c = snap.data();
+        if (c.status !== 'pending') return;
+        const ref2 = await addDoc(gamesCol, {
+            whiteUid: c.challengerUid, whiteName: c.challengerName,
+            blackUid: me, blackName: myName,
+            status: 'active', baseMs: c.baseMs || 300000, incMs: c.incMs || 0,
+            moves: [], turn: 'w', whiteMs: c.baseMs || 300000, blackMs: c.baseMs || 300000,
+            lastMoveTs: Date.now(), createdAt: serverTimestamp(), fromChallenge: challengeId
+        });
+        await updateDoc(ref, { status: 'accepted' });
+        joinGame(ref2.id);
+    } catch (e) {
+        setChallengeStatus('Could not accept: ' + (e.message || e));
+    }
+}
+async function declineChessChallenge(challengeId) {
+    try { await updateDoc(doc(challengesCol, challengeId), { status: 'declined' }); } catch (e) { }
+}
+
+// ---------------- RECENT GAMES ----------------
+async function loadRecentGames() {
+    try {
+        const [s1, s2] = await Promise.all([
+            getDocs(query(gamesCol, where('whiteUid', '==', me), limit(20))),
+            getDocs(query(gamesCol, where('blackUid', '==', me), limit(20)))
+        ]);
+        const map = new Map();
+        s1.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+        s2.forEach(d => map.set(d.id, { id: d.id, ...d.data() }));
+        const games = [...map.values()]
+            .sort((a, b) => (b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0) - (a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0))
+            .slice(0, 10);
+        renderRecentGames(games);
+    } catch (e) { console.warn('loadRecentGames failed', e); }
+}
+function renderRecentGames(games) {
+    const el = document.getElementById('recentGames');
+    if (!el) return;
+    if (!games.length) { el.innerHTML = '<div class="empty-note">No games yet.</div>'; return; }
+    el.innerHTML = games.map(g => {
+        const youAreWhite = g.whiteUid === me;
+        const opp = youAreWhite ? (g.blackName || 'Opponent') : (g.whiteName || 'Opponent');
+        let res = 'In progress';
+        if (g.finished) {
+            res = g.winnerColor == null ? 'Draw'
+                : (g.winnerColor === (youAreWhite ? 'w' : 'b') ? 'You won' : 'You lost');
+        }
+        return '<div class="recent-game"><span>' + (youAreWhite ? 'White' : 'Black') + ' vs ' + opp +
+            '</span><span class="rg-result">' + res + '</span></div>';
+    }).join('');
+}
+
+// ---------------- INIT ----------------
+async function initPhase2(user) {
+    currentUser = user;
+    me = user.uid;
+    myName = user.displayName || user.email || 'Player';
+    try { await refreshProfileStats(); } catch (e) { }
+    setupMyGamesListener();
+    setupChallengesListener();
+    loadRecentGames().catch(() => { });
+}
+
+// ---------------- UI WIRING (window-exposed) ----------------
+window.openOnlineModal = function () {
+    document.getElementById('onlineModal').classList.add('open');
+};
+window.closeOnlineModal = function () {
+    document.getElementById('onlineModal').classList.remove('open');
+};
+window.startOnlineMatch = function () {
+    const sel = document.getElementById('onlineTimeControl').value;
+    let base, inc;
+    if (sel === 'custom') {
+        base = Math.max(1, parseInt(document.getElementById('onlineMinutes').value || '10', 10)) * 60;
+        inc = Math.max(0, parseInt(document.getElementById('onlineIncrement').value || '0', 10));
+    } else {
+        [base, inc] = sel.split('-').map(Number);
+    }
+    closeOnlineModal();
+    findOrCreateOnlineGame(base, inc);
+};
+window.cancelOnlineSearch = cancelOnlineSearch;
+window.openChallengeModal = function () {
+    document.getElementById('challengeStatus').textContent = '';
+    document.getElementById('challengeModal').classList.add('open');
+};
+window.closeChallengeModal = function () {
+    document.getElementById('challengeModal').classList.remove('open');
+};
+window.sendChallengeFromModal = function () {
+    const input = document.getElementById('challengeOpponent').value.trim();
+    const sel = document.getElementById('challengeTimeControl').value;
+    let base, inc;
+    if (sel === 'custom') {
+        base = Math.max(1, parseInt(document.getElementById('challengeMinutes').value || '10', 10)) * 60;
+        inc = Math.max(0, parseInt(document.getElementById('challengeIncrement').value || '0', 10));
+    } else {
+        [base, inc] = sel.split('-').map(Number);
+    }
+    if (!input) { setChallengeStatus('Enter a username or email.'); return; }
+    sendChessChallenge(input, base, inc);
+};
+window.acceptChessChallenge = acceptChessChallenge;
+window.declineChessChallenge = declineChessChallenge;
 
 function setStatus(text, important) {
     const el = document.getElementById('statusLine');

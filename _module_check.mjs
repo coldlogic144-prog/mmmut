@@ -424,7 +424,7 @@
         }
 
         // ========== FIREBASE AI LOGIC SETUP ==========
-        const AI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+        const AI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash'];
 
         let aiModels = [];
         let aiReady = false;

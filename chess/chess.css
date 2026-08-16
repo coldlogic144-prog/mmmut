@@ -646,3 +646,55 @@ a { color: inherit; text-decoration: none; }
     .checkmate-card { padding: 18px 22px; }
     .checkmate-title { font-size: 21px; }
 }
+
+/* ---------- Phase 2: online / challenges / profile ---------- */
+.online-status {
+    font-size: 13px;
+    color: var(--brick);
+    min-height: 18px;
+    margin: 10px 2px 0;
+    font-weight: 600;
+}
+.empty-note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 10px 0;
+}
+.challenge-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--paper-line);
+    flex-wrap: wrap;
+}
+.challenge-row > span { flex: 1; min-width: 120px; font-size: 14px; }
+.challenge-row button { padding: 6px 12px; font-size: 13px; }
+.recent-game {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--paper-line);
+    font-size: 14px;
+}
+.recent-game .rg-result {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+.setup-row { margin-bottom: 14px; }
+.setup-row label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+}
+.setup-row select, .setup-row input {
+    font-size: 14px;
+    font-family: inherit;
+}
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; flex-wrap: wrap; }

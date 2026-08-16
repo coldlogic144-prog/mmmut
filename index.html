@@ -3863,7 +3863,7 @@
         }
 
         // ========== FIREBASE AI LOGIC SETUP ==========
-        const AI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+        const AI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash'];
 
         let aiModels = [];
         let aiReady = false;
@@ -9582,7 +9582,7 @@
                             error: modelError
                         });
                         const msg = (modelError && modelError.message) ? String(modelError.message) : '';
-                        const isModelUnavailable = /not found|404|does not exist|not supported|models\//i.test(msg);
+                        const isModelUnavailable = /not found|404|does not exist|not supported|models\/|no longer available/i.test(msg);
                         if (!isModelUnavailable) {
                             // Not a "model unavailable" problem – no point trying
                             // another model name. Re-throw for the handler below.
@@ -9629,7 +9629,7 @@
                             'I don\'t have permission to access the AI service. Please check the "AI Logic" settings for this web app in the Firebase console and try again.';
                     } else if (/quota|429|rate limit/i.test(msg)) {
                         errorMsg = 'AI service quota exceeded. Please try again later.';
-                    } else if (/not found|404|does not exist|not supported|models\//i.test(msg)) {
+                    } else if (/not found|404|does not exist|not supported|models\/|no longer available/i.test(msg)) {
                         errorMsg = 'The configured AI model is not available for this project. Enable a current Gemini model for the Gemini Developer API on the "AI Logic" page in the Firebase console. See the browser console for the exact model error.';
                     } else if (/blocked|safety|recitation/i.test(msg)) {
                         errorMsg = 'The AI couldn\'t answer that request because it was blocked by safety filters. Please rephrase your question.';
