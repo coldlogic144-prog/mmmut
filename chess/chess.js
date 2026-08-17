@@ -39,6 +39,7 @@ let me = null;
 let myName = "Player";
 
 let isRemoteGame = false;
+let myColor = 'w'; // the local player's colour in an online game ('w' if I host, 'b' if I join)
 let currentGameId = null;
 let gameUnsub = null;
 let startedForId = null;
@@ -357,7 +358,8 @@ function renderBoard() {
 // ---------------- INTERACTION ----------------
 function onSquareClick(id) {
     if (gameOver) return;
-    if (isRemoteGame) return;  // In online mode, moves are made remotely, not by clicking
+    // In an online game, the human player moves their own pieces — but only on their turn.
+    if (isRemoteGame && myColor && game.turn() !== myColor) return;
     if (selectedSquare) {
         if (legalTargets.includes(id)) {
             attemptMove(selectedSquare, id);
@@ -376,7 +378,6 @@ function onSquareClick(id) {
     }
 }
 function selectSquare(id) {
-    if (isRemoteGame) return;  // In online mode, don't allow local square selection
     selectedSquare = id;
     legalTargets = game.moves({ square: id, verbose: true }).map(m => m.to);
     renderBoard();
@@ -390,6 +391,8 @@ function clearSelection() {
 let dragSourceSquare = null;
 function onDragStart(e) {
     if (gameOver) { e.preventDefault(); return; }
+    // In an online game, only allow dragging on your own turn.
+    if (isRemoteGame && myColor && game.turn() !== myColor) { e.preventDefault(); return; }
     const id = e.target.dataset.square;
     const piece = game.get(id);
     if (!piece || piece.color !== game.turn()) { e.preventDefault(); return; }
@@ -667,38 +670,44 @@ window.offerDraw = function () {
     if (isRemoteGame) {
         // In remote game, send draw offer to opponent
         if (!currentGameId) return;
-        pendingDrawOffer = { from: me, ts: Date.now() };
-        // Update game doc to indicate draw offer pending
-        const ref = doc(gamesCol, currentGameId);
-        updateDoc(ref, { drawOfferFrom: me, drawOfferTs: Date.now() });
-        // Show accept/decline buttons for opponent
-        showDrawControls(true);
+        updateDoc(doc(gamesCol, currentGameId), {
+            drawOfferFrom: me,
+            drawOfferTs: Date.now(),
+            drawOfferStatus: 'pending'
+        }).catch((e) => console.warn('draw offer failed', e));
         setOnlineStatus('Draw offer sent to opponent.');
     } else {
-        // Local game: just offer draw - the other player can offer too
-        if (!confirm('Offer draw to opponent?')) return;
+        // Local game: both players share the board — confirm before ending as a draw.
+        if (!confirm('Both players agree to a draw?')) return;
         endGame('agreement', null);
     }
 };
 
-// New function to accept a draw offer from opponent
+// Accept the opponent's pending draw offer (or, locally, end the game by mutual agreement).
 window.acceptDrawOffer = function () {
-    if (isRemoteGame && currentGameId && pendingDrawOffer) {
-        // Send accept draw to server
-        const ref = doc(gamesCol, currentGameId);
-        updateDoc(ref, { drawOfferAccepted: me, drawOfferTs: Date.now() });
-        endGame('agreement', null);
-    } else {
-        endGame('agreement', null);
-    }
-    showDrawControls(false);
-};
-
-// New function to decline a draw offer from opponent
-window.declineDrawOffer = function () {
     pendingDrawOffer = null;
     showDrawControls(false);
-    setOnlineStatus('Draw declined.');
+    if (isRemoteGame && currentGameId) {
+        // Mark the game finished on the server so BOTH sides end and the result is recorded.
+        finishRemoteGame(null, 'agreement');
+        endGame('agreement', null);
+        return;
+    }
+    endGame('agreement', null);
+};
+
+// Decline the opponent's draw offer (or withdraw your own pending offer).
+window.declineDrawOffer = function () {
+    const offerer = pendingDrawOffer ? pendingDrawOffer.from : null;
+    pendingDrawOffer = null;
+    showDrawControls(false);
+    setOnlineStatus(offerer ? 'Draw declined.' : 'Draw offer withdrawn.');
+    if (isRemoteGame && currentGameId) {
+        // Clear the pending offer server-side so the other player stops seeing it too.
+        updateDoc(doc(gamesCol, currentGameId), {
+            drawOfferFrom: null, drawOfferTs: null, drawOfferStatus: null
+        }).catch(() => {});
+    }
 };
 
 // Show/hide draw offer control buttons
@@ -715,6 +724,9 @@ function endGame(reason, winnerColor) {
     if (gameOver) return;
     gameOver = true;
     stopClock();
+    // A finished game must not leave dangling draw controls / a pending offer behind.
+    pendingDrawOffer = null;
+    showDrawControls(false);
 
     const REASON_LABEL = {
         checkmate: 'Checkmate',
@@ -878,6 +890,7 @@ async function finishRemoteGame(winnerColor, reason) {
     try {
         await updateDoc(doc(gamesCol, currentGameId), {
             finished: true,
+            status: 'finished',
             winnerColor: winnerColor === undefined ? null : winnerColor,
             reason: reason || 'agreement'
         });
@@ -906,6 +919,9 @@ async function persistRemoteMove(move) {
 function onGameSnap(snap) {
     if (!snap.exists()) return;
     const g = snap.data();
+    // The local player's colour: white if I created the game, black if I joined it.
+    if (g.whiteUid === me) myColor = 'w';
+    else if (g.blackUid === me) myColor = 'b';
     if (startedForId !== currentGameId) {
         beginGame((g.baseMs || 300000) / 1000, (g.incMs || 0) / 1000);
         startedForId = currentGameId;
@@ -914,16 +930,27 @@ function onGameSnap(snap) {
     if (g.whiteMs != null) whiteMs = g.whiteMs;
     if (g.blackMs != null) blackMs = g.blackMs;
     renderClocks();
-    startClock(game.turn());
-    // Handle draw offer from opponent
+    if (!g.finished) startClock(game.turn());
+
+    // --- draw offer handling ---
     if (g.drawOfferFrom && g.drawOfferFrom !== me && !pendingDrawOffer) {
-        // Opponent offered a draw - show accept/decline buttons
+        // The opponent offered a draw — show accept/decline.
         pendingDrawOffer = { from: g.drawOfferFrom, ts: g.drawOfferTs || Date.now() };
         showDrawControls(true);
+        setOnlineStatus('Opponent offered a draw.');
+    } else if (!g.drawOfferFrom && pendingDrawOffer) {
+        // Offer was declined / withdrawn — drop any stale controls.
+        pendingDrawOffer = null;
+        showDrawControls(false);
     }
+
     const res = detectResult();
     if (g.finished) {
         if (!gameOver) endGame(g.reason || (res && res.reason) || 'agreement', g.winnerColor);
+        // Persist ratings/statistics when a remote game ends (guarded against double-recording).
+        if (currentGameId && !recordedGameIds.has(currentGameId)) {
+            recordGameResult({ id: currentGameId, ...g });
+        }
         return;
     }
     if (res && currentGameId) finishRemoteGame(res.winnerColor, res.reason);
@@ -948,8 +975,11 @@ function leaveCurrentGame() {
     if (gameUnsub) { gameUnsub(); gameUnsub = null; }
     currentGameId = null;
     isRemoteGame = false;
+    myColor = 'w';
     startedForId = null;
     gameOver = false;
+    pendingDrawOffer = null;
+    showDrawControls(false);
     stopClock();
 }
 async function cancelOnlineSearch() {
