@@ -1,0 +1,139 @@
+﻿        async function sendLedgerAIMessage() {
+            const input = document.getElementById('ledgerAiInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+            if (!currentUser) {
+                showToast('Please log in to use Ledger AI.');
+                return;
+            }
+
+            hideAIError();
+
+            // Try to initialize AI if not ready
+            if (!aiReady || aiModels.length === 0) {
+                try {
+                    await initAI();
+                } catch (initError) {
+                    // Show the REAL error message from Firebase
+                    const errorMsg = initError.message || 'Unknown initialization error';
+                    showAIError(`AI initialization failed: ${errorMsg}`);
+                    console.error('Ledger AI init error:', initError);
+                    setAILoading(false);
+                    return;
+                }
+            }
+
+            // Double-check that the model is available
+            if (aiModels.length === 0) {
+                showAIError('Ledger AI is temporarily unavailable. Please check Firebase AI Logic configuration and App Check.');
+                return;
+            }
+
+            addAIMessage(message, true);
+            aiConversationHistory.push({ role: 'user', content: message });
+
+            input.value = '';
+            input.style.height = 'auto';
+            setAILoading(true);
+
+            const typingEl = showTypingIndicator();
+
+            try {
+                const context = gatherUserContext(message);
+                const systemPrompt = buildSystemPrompt(context);
+
+                let fullPrompt = systemPrompt + '\n\n';
+                const historyMessages = aiConversationHistory.slice(-MAX_HISTORY);
+                historyMessages.forEach(msg => {
+                    fullPrompt += `${msg.role === 'user' ? 'User' : 'Ledger AI'}: ${msg.content}\n`;
+                });
+
+                // Try each configured model in order. This automatically handles
+                // unavailable model names by falling back to the next model on
+                // the list, and logs the REAL Firebase error for every failure.
+                let aiResponse = null;
+                let lastModelError = null;
+
+                for (const { name: modelName, model } of aiModels) {
+                    try {
+                        const result = await model.generateContent({
+                            contents: [{ role: 'user', parts: [{ text: fullPrompt }] }]
+                        });
+                        const response = result.response;
+                        const text = response.text();
+                        if (text && text.trim().length >= 2) {
+                            aiResponse = text;
+                            break;
+                        }
+                    } catch (modelError) {
+                        lastModelError = modelError;
+                        // Detailed diagnostics â€“ never hide the actual Firebase error.
+                        console.error("Ledger AI model failed", {
+                            model: modelName,
+                            code: modelError?.code,
+                            message: modelError?.message,
+                            error: modelError
+                        });
+                        const msg = (modelError && modelError.message) ? String(modelError.message) : '';
+                        const isModelUnavailable = /not found|404|does not exist|not supported|models\//i.test(msg);
+                        if (!isModelUnavailable) {
+                            // Not a "model unavailable" problem â€“ no point trying
+                            // another model name. Re-throw for the handler below.
+                            throw modelError;
+                        }
+                        console.warn(`Ledger AI: ${modelName} unavailable, trying next one â†’ ${msg}`);
+                    }
+                }
+
+                if (aiResponse === null) {
+                    if (lastModelError) throw lastModelError;
+                    throw new Error('Ledger AI: no AI model generated a response.');
+                }
+
+                if (!aiResponse || aiResponse.trim().length < 2) {
+                    aiResponse =
+                        "I'm not sure how to answer that. Could you rephrase your question? I can help with attendance, timetable, syllabus, and academic calendar questions.";
+                }
+
+                hideTypingIndicator();
+                addAIMessage(aiResponse, false);
+                aiConversationHistory.push({ role: 'assistant', content: aiResponse });
+
+                if (aiConversationHistory.length > MAX_HISTORY * 2) {
+                    aiConversationHistory = aiConversationHistory.slice(-MAX_HISTORY * 2);
+                }
+
+            } catch (error) {
+                console.error('Ledger AI error:', error);
+                hideTypingIndicator();
+                let errorMsg = 'Sorry, I encountered an error. Please try again later.';
+                if (error.message) {
+                    const msg = String(error.message);
+                    if (/app.?check|attest|INVALID_APP_CREDENTIAL|UNAUTHENTICATED|UNAVAILABLE/i.test(msg)) {
+                        // Log the real App Check error from generateContent so the
+                        // browser console always shows the actual Firebase reason.
+                        console.error(
+                            'Ledger AI: generateContent received an App Check error.',
+                            { code: error?.code || error?.name, message: msg, error }
+                        );
+                        errorMsg = 'App Check rejected the request. On GitHub Pages: confirm the reCAPTCHA Enterprise site key for this domain is configured in the Firebase console (App Check). On localhost: register the debug token shown in the browser console (Firebase Console â†’ App Check â†’ Manage debug tokens).';
+                    } else if (/permission|auth|403|access denied/i.test(msg)) {
+                        errorMsg =
+                            'I don\'t have permission to access the AI service. Please check the "AI Logic" settings for this web app in the Firebase console and try again.';
+                    } else if (/quota|429|rate limit/i.test(msg)) {
+                        errorMsg = 'AI service quota exceeded. Please try again later.';
+                    } else if (/not found|404|does not exist|not supported|models\//i.test(msg)) {
+                        errorMsg = 'The configured AI model is not available for this project. Enable a current Gemini model for the Gemini Developer API on the "AI Logic" page in the Firebase console. See the browser console for the exact model error.';
+                    } else if (/blocked|safety|recitation/i.test(msg)) {
+                        errorMsg = 'The AI couldn\'t answer that request because it was blocked by safety filters. Please rephrase your question.';
+                    } else {
+                        errorMsg = `Error: ${msg}`;
+                    }
+                }
+                showAIError(errorMsg);
+            } finally {
+                setAILoading(false);
+                input.focus();
+            }
+        }
