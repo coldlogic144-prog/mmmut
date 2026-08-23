@@ -5927,17 +5927,18 @@
             // Resolve the roll BEFORE creating any account. The account is created
             // already VERIFIED because its identity is taken straight from the
             // roster — there is no name field for the user to fill in.
-            let rosterName = '', mappedBranch = 'civil';
+            let rosterName = '', mappedBranch = 'civil', rosterSection = '';
             try {
                 const rsnap = await getDoc(doc(studentRosterCollection, rollNumber));
                 if (!rsnap.exists()) {
-                    showError('signupError', 'That roll number is not in the 2026–27 CED/CSD admission roster. Contact an administrator if this is a mistake.');
+                    showError('signupError', 'That roll number is not in the B.Tech 2026–27 admission roster. Contact an administrator if this is a mistake.');
                     return;
                 }
                 const rd = rsnap.data();
                 rosterName = (rd.applicantName || rd.formalName || '').trim();
                 if (!rosterName) { showError('signupError', 'The roster has no applicant name for that roll number. Contact an administrator.'); return; }
                 mappedBranch = rosterBranchToId(rd.branchName || (rd.enrollmentNo || '').slice(4, 7));
+                rosterSection = String(rd.section || '').trim().toUpperCase();
                 const claimSnap = await getDoc(doc(userRollsCollection, rollNumber));
                 if (claimSnap.exists()) {
                     showError('signupError', 'That roll number is already linked to an existing account. Log in with that account or contact an administrator.');
@@ -5955,6 +5956,11 @@
             if (branchSel && branchSel.value !== mappedBranch) {
                 branchSel.value = mappedBranch;
                 populateSectionOptions();
+            }
+            // Prefer the exact section recorded for this roll in the roster.
+            const validSignupSections = ((getBranch(mappedBranch) || {}).sections) || [];
+            if (rosterSection && validSignupSections.includes(rosterSection)) {
+                document.getElementById('suSection').value = rosterSection;
             }
             const section = document.getElementById('suSection').value ||
                 (((getBranch(mappedBranch) || {}).sections || [])[0] || '');
@@ -6392,10 +6398,22 @@
         // this modal and it cannot be dismissed (no ✕, no "skip for now").
         let rollGateLocked = false;
 
-        // Maps a roster branch code (CED / CSD) to the app's branch id:
-        // Civil (CED) rolls -> 'civil'; Computer Science (CSD) rolls -> 'cse'.
+        // Maps a roster branch code to the app's branch id. Codes come from the
+        // enrollment-number prefix in the official 2026-27 admission roster:
+        //   CED Civil · CSD CSE · EED Electrical · ECD ECE · IOT ECE(IoT)
+        //   MED Mechanical · CHD Chemical · ITC IT
+        const ROSTER_BRANCH_TO_ID = {
+            'CED': 'civil',
+            'CSD': 'cse',
+            'EED': 'ee',
+            'ECD': 'ece',
+            'IOT': 'eceiot',
+            'MED': 'me',
+            'CHD': 'chemical',
+            'ITC': 'it',
+        };
         function rosterBranchToId(branchName) {
-            return String(branchName || '').trim().toUpperCase() === 'CSD' ? 'cse' : 'civil';
+            return ROSTER_BRANCH_TO_ID[String(branchName || '').trim().toUpperCase()] || 'civil';
         }
 
         function rollGateActive(user) {
@@ -6521,7 +6539,7 @@
                 rosterEntry = snap.exists() ? snap.data() : null;
             } catch (e) { rollMigrationLog('roster read error', e && e.code); }
             if (!rosterEntry) {
-                fail('That roll number was not found in the 2026–27 admission roster. Only published CED/CSD roll numbers can be verified.');
+                fail('That roll number was not found in the B.Tech 2026–27 admission roster. Only published roll numbers can be verified.');
                 rollMigrationLog('roster miss', { roll: raw });
                 return;
             }
@@ -6535,6 +6553,7 @@
                 return;
             }
             const mappedBranch = rosterBranchToId(rosterEntry.branchName || (rosterEntry.enrollmentNo || '').slice(4, 7));
+            const rosterSection = String(rosterEntry.section || '').trim().toUpperCase();
 
             let claim = null;
             try {
@@ -6543,7 +6562,7 @@
             } catch (e) { rollMigrationLog('claim read failed', e && e.code); }
             if (claim) {
                 if (claim.uid === currentUid && claim.rollNumber === raw) {
-                    await finalizeRollVerification(raw, rosterName, mappedBranch);
+                    await finalizeRollVerification(raw, rosterName, mappedBranch, rosterSection);
                     showToast('✓ Roll number verified: ' + raw);
                     return;
                 }
@@ -6567,17 +6586,23 @@
                 return;
             }
 
-            await finalizeRollVerification(raw, rosterName, mappedBranch);
+            await finalizeRollVerification(raw, rosterName, mappedBranch, rosterSection);
             showToast('✓ Roll number verified: ' + raw);
         }
 
         // Marks the roll as verified AND adopts the roster identity (name + branch)
         // into the user's profile, then unlocks the whole app.
-        async function finalizeRollVerification(raw, rosterName, mappedBranch) {
+        async function finalizeRollVerification(raw, rosterName, mappedBranch, rosterSection) {
             const wasBranch = currentUser.branchId;
+            const wasSection = currentUser.section;
+            // Adopt the roster's exact section when it is valid for this branch.
+            const validVerifySections = ((getBranch(mappedBranch) || {}).sections) || [];
+            const finalSection = (rosterSection && validVerifySections.includes(rosterSection))
+                ? rosterSection : (wasSection || validVerifySections[0] || '');
             await updateDoc(doc(usersCollection, currentUid), {
                 name: rosterName,
                 branchId: mappedBranch,
+                section: finalSection,
                 migrationStatus: 'verified',
                 rollNumber: raw,
                 rollNumberVerified: true,
@@ -6587,6 +6612,7 @@
             });
             currentUser.name = rosterName;
             currentUser.branchId = mappedBranch;
+            currentUser.section = finalSection;
             currentUser.migrationStatus = 'verified';
             currentUser.rollNumber = raw;
             currentUser.rollNumberVerified = true;
@@ -6601,7 +6627,7 @@
                     rosterName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
                 document.getElementById('pillBranch').textContent =
                     branch.name.replace('B.Tech — ', '') + ' · Sec ' + (currentUser.section || '');
-                if (wasBranch !== mappedBranch) {
+                if (wasBranch !== mappedBranch || wasSection !== finalSection) {
                     scheduleCache = buildSchedule(branch, currentUser.section);
                     renderSchedule();
                     renderHistoryView();
@@ -6902,35 +6928,89 @@
             const el = document.getElementById('adminUsersContent');
             try {
                 const snap = await getDocs(usersCollection);
-                const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                let users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const q = String(window.adminUsersSearch || '').trim().toLowerCase();
+                if (q) {
+                    users = users.filter(u =>
+                        String(u.name || '').toLowerCase().includes(q) ||
+                        String(u.username || '').toLowerCase().includes(q) ||
+                        String(u.rollNumber || '').toLowerCase().includes(q) ||
+                        String(u.pendingRollNumber || '').toLowerCase().includes(q));
+                }
                 let html = `
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                <input id="adminUsersSearchBox" style="flex:1;min-width:220px;padding:9px 12px;border-radius:8px;border:1px solid var(--paper-line);background:#fff;font-size:13px;color:var(--ink);" placeholder="Search by name, roll number or username…" value="${escapeHtml(window.adminUsersSearch || '')}" oninput="window.adminUsersSearch=this.value;renderAdminUsers();" />
+                <span style="font-size:12px;color:var(--ink-soft);">${users.length} account(s)</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">⚠️ Delete permanently removes the student's profile and frees their linked roll number. You cannot delete your own signed-in account.</div>
               <div style="overflow-x:auto;max-height:500px;overflow-y:auto;">
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                   <thead style="background:var(--ink);color:#F1ECDD;position:sticky;top:0;">
-                    <tr><th style="padding:10px 8px;text-align:left;">Name</th><th style="padding:10px 8px;text-align:left;">Username</th><th style="padding:10px 8px;text-align:left;">Branch</th><th style="padding:10px 8px;text-align:left;">Section</th><th style="padding:10px 8px;text-align:left;">Hostel</th><th style="padding:10px 8px;text-align:left;">Gender</th><th style="padding:10px 8px;text-align:left;">Admin</th><th style="padding:10px 8px;text-align:left;">Requested</th></tr>
+                    <tr><th style="padding:10px 8px;text-align:left;">Name</th><th style="padding:10px 8px;text-align:left;">Roll No.</th><th style="padding:10px 8px;text-align:left;">Username</th><th style="padding:10px 8px;text-align:left;">Branch</th><th style="padding:10px 8px;text-align:left;">Sec</th><th style="padding:10px 8px;text-align:left;">Hostel</th><th style="padding:10px 8px;text-align:left;">Gender</th><th style="padding:10px 8px;text-align:left;">Admin</th><th style="padding:10px 8px;text-align:left;">Actions</th></tr>
                   </thead>
                   <tbody>
             `;
                 users.forEach(u => {
                     const branch = getBranch(u.branchId);
+                    const roll = u.rollNumber || u.pendingRollNumber || '';
                     html += `
                 <tr style="border-bottom:1px solid var(--paper-line);">
-                  <td style="padding:8px;">${u.name || '—'}</td>
-                  <td style="padding:8px;">${u.username || '—'}</td>
-                  <td style="padding:8px;">${branch ? branch.name : u.branchId}</td>
-                  <td style="padding:8px;">${u.section || '—'}</td>
-                  <td style="padding:8px;">${u.hostel || 'Day Scholar'}</td>
-                  <td style="padding:8px;">${u.gender || 'Not specified'}</td>
+                  <td style="padding:8px;">${escapeHtml(u.name || '—')}</td>
+                  <td style="padding:8px;" class="mono">${roll ? escapeHtml(roll) : '—'}</td>
+                  <td style="padding:8px;" class="mono">${escapeHtml(u.username || '—')}</td>
+                  <td style="padding:8px;">${branch ? escapeHtml(branch.name.replace('B.Tech — ', '').replace('B.Tech - ', '')) : escapeHtml(u.branchId || '—')}</td>
+                  <td style="padding:8px;">${escapeHtml(u.section || '—')}</td>
+                  <td style="padding:8px;">${escapeHtml(u.hostel || 'Day Scholar')}</td>
+                  <td style="padding:8px;">${escapeHtml(u.gender || 'Not specified')}</td>
                   <td style="padding:8px;">${u.isAdmin ? '✅' : '—'}</td>
-                  <td style="padding:8px;">${u.adminRequested ? '⏳' : '—'}</td>
+                  <td style="padding:8px;white-space:nowrap;">${u.id === currentUid
+                      ? '<span style="color:var(--ink-soft);font-size:12px;">you</span>'
+                      : '<button style="background:var(--brick-soft);color:var(--brick);border:none;border-radius:8px;padding:6px 12px;font-weight:600;font-size:12px;cursor:pointer;" onclick="adminDeleteUser(\'' + u.id + '\',\'' + escapeHtml(u.username || '') + '\',\'' + roll + '\')">🗑 Delete</button>'}</td>
                 </tr>
               `;
                 });
                 html += `</tbody></table></div>`;
                 el.innerHTML = html;
+                if (q) {
+                    const sb = document.getElementById('adminUsersSearchBox');
+                    if (sb) { sb.focus(); try { sb.setSelectionRange(sb.value.length, sb.value.length); } catch (e) { /* ignore */ } }
+                }
             } catch (e) {
                 el.innerHTML = `<div class="empty-note">Error loading users: ${e.message}</div>`;
             }
+        }
+
+        // ========== ADMIN: DELETE USER ==========
+        // Permanently removes a user's profile document and frees their claimed
+        // roll number so someone else can link it again. The Firebase Auth record
+        // itself cannot be deleted from the client SDK — but without a
+        // users/{uid} profile the account can no longer load (login shows
+        // "Could not load your profile"), so access is effectively revoked.
+        async function adminDeleteUser(uid, username, roll) {
+            if (!isAdmin) { showToast('You are not an admin.'); return; }
+            if (!uid) return;
+            if (uid === currentUid) { showToast('You cannot delete the account you are currently signed in with.'); return; }
+            const label = username || uid;
+            const msg = 'Permanently delete the account "' + label + '"?' +
+                (roll ? '\n\nTheir roll number ' + roll + ' will also be unlinked so it can be claimed again.' : '') +
+                '\n\nThis action cannot be undone.';
+            if (!window.confirm(msg)) return;
+            try {
+                await deleteDoc(doc(usersCollection, uid));
+            } catch (e) {
+                showToast('Delete failed: ' + e.message);
+                return;
+            }
+            let note = '';
+            if (roll) {
+                try {
+                    await deleteDoc(doc(userRollsCollection, roll));
+                } catch (e) {
+                    note = ' ⚠ Roll ' + roll + ' could not be unlinked automatically — remove it from the userRolls collection manually.';
+                }
+            }
+            showToast('🗑 Account deleted: ' + label + '.' + note);
+            renderAdminUsers();
         }
 
         // ========== ADMIN: TIMETABLE ==========
@@ -9961,6 +10041,7 @@
         window.switchAdminTab = switchAdminTab;
         window.renderAdminDashboard = renderAdminDashboard;
         window.renderAdminUsers = renderAdminUsers;
+        window.adminDeleteUser = adminDeleteUser;
         window.renderAdminTimetable = renderAdminTimetable;
         window.renderAdminCalendar = renderAdminCalendar;
         window.renderAdminHolidays = renderAdminHolidays;

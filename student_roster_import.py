@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 student_roster_import.py — ONE-TIME authoritative import of the B.Tech 1st Year
-2026-27 CED/CSD admission roster (admission_data.csv) into Firestore's
+2026-27 admission roster (admission_data.csv, ALL branches: Civil, CSE,
+Electrical, ECE, ECE-IoT, Mechanical, Chemical, IT) into Firestore's
 `studentRoster` collection (docId = Roll_No).
 
 RECOVERY-SAFE by design:
@@ -19,7 +20,8 @@ RUN (needs the Firebase Admin Python SDK + a service account JSON):
 
 Stored shape at studentRoster/{rollNumber}:
     { rollNumber, enrollmentNo, applicantName(normalized), formalName(raw),
-      branchName(CED|CSD), block, sourceFormNumber, importedAt }
+      branchName(CED|CSD|EED|ECD|IOT|MED|CHD|ITC), section(A..), batch,
+      block, sourceFormNumber, importedAt }
 """
 from __future__ import annotations
 
@@ -32,7 +34,10 @@ import sys
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "admission_data.csv")
 
 ROLL_RE = re.compile(r"^\d{10}$")
-ENROLL_RE = re.compile(r"^2026(CED|CSD)\d{4}$")
+# Every B.Tech 2026-27 branch uses a 3-letter code in the enrollment number:
+#   CED (Civil) CSD (CSE) EED (Electrical) ECD (ECE) IOT (ECE-IoT)
+#   MED (Mechanical) CHD (Chemical) ITC (IT)
+ENROLL_RE = re.compile(r"^2026([A-Z]{3})\d{4}$")
 
 
 def norm_name(raw: str) -> str:
@@ -41,6 +46,12 @@ def norm_name(raw: str) -> str:
         return ""
     s = re.sub(r"[^A-Za-z]", " ", raw.upper())
     return " ".join(s.split())
+
+
+def norm_section(raw: str) -> str:
+    """Excel sections look like CE1A / CSE1B / ECE1C — keep the letter."""
+    s = re.sub(r"\s+", "", str(raw or "")).upper()
+    return s[-1] if s and s[-1].isalpha() else ""
 
 
 def load_rows(path: str):
@@ -53,6 +64,8 @@ def load_rows(path: str):
                 "rollNumber": (r.get("Roll_No") or "").strip(),
                 "enrollmentNo": (r.get("Enrollment_No") or "").strip(),
                 "name": (r.get("Applicant_Name") or "").strip(),
+                "section": norm_section(r.get("Section")),
+                "batch": (r.get("Batch") or "").strip(),
             })
     return rows
 
@@ -84,7 +97,7 @@ def build_records():
         if not m:
             problems.append(
                 f"row {r['row']}: invalid Enrollment_No '{enr}' "
-                f"(expected 2026CEDxxxx or 2026CSDxxxx)")
+                f"(expected 2026 + 3-letter branch code + 4 digits, e.g. 2026CSD0513)")
             continue
         normalized = norm_name(r["name"])
         if not normalized:
@@ -96,6 +109,8 @@ def build_records():
             "applicantName": normalized,
             "formalName": r["name"],
             "branchName": m.group(1),
+            "section": r["section"],
+            "batch": r["batch"],
             "block": block_of.get(roll, 0),
             "sourceFormNumber": r["formNumber"],
         })

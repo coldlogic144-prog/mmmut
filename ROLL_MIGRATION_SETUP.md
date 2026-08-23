@@ -24,15 +24,32 @@ data (attendance, posts, feedback, timetable, syllabus, chess, FCM) is rewritten
 
 - **`studentRoster/{rollNumber}`** — authoritative roster. Written by your admin tool
   (`student_roster_import.py`), read by the claim flow. Fields: `rollNumber`,
-  `enrollmentNo`, `applicantName` (normalized), `formalName`, `branchName` (CED/CSD),
-  `block`, `sourceFormNumber`, `importedAt`.
+  `enrollmentNo`, `applicantName` (normalized), `formalName`, `branchName`
+  (CED|CSD|EED|ECD|IOT|MED|CHD|ITC), `section`, `batch`, `block`,
+  `sourceFormNumber`, `importedAt`.
+  **Scope update:** `admission_data.csv` now contains the FULL B.Tech 2026-27
+  roster (1,189 students, all branches — Civil 138, CSE 292, Electrical 138,
+  ECE 207, ECE-IoT 69, Mechanical 138, Chemical 69, IT 138), generated from the
+  official roll-list workbook via `xlsx_to_roster_csv.py`. Branch codes map to
+  app branch ids in `ROSTER_BRANCH_TO_ID` (CED→civil, CSD→cse, EED→ee,
+  ECD→ece, IOT→eceiot, MED→me, CHD→chemical, ITC→it).
 - **`userRolls/{rollNumber}`** — the “roll → existing account” bridge. Document ID is the
   roll number so a roll can exist only once. Fields: `uid`, `username`, `rollNumber`,
   `verifiedAt`. **Create-only** in the rules, so a roll can never be claimed twice or
-  silently transferred.
+  silently transferred. Admins may DELETE a mapping (see §3b) to free a roll after
+  deleting an account.
 - Existing `users/{uid}` docs are only ever merged via `updateDoc` with
   `rollNumber`, `migrationStatus` (`pending|verified|rejected|manual_review`),
   `rollNumberVerified`, `pendingRollNumber`, `migrationReviewReason`, `rollClaimedAt`.
+
+### Admin: delete a user account (new)
+Admin Panel → 👥 Users now has per-row search (name / roll / username) and a
+🗑 Delete action (`adminDeleteUser`). It deletes `users/{uid}` and best-effort
+deletes the matching `userRolls/{roll}` so the roll can be claimed again. The
+signed-in admin cannot delete themselves. Without a profile doc the deleted
+account can no longer log in ("Could not load your profile"). Requires the new
+`users/{uid}` + `userRolls/{roll}` admin-delete rules from
+`firestore_rules_append.txt` (§3b).
 
 ## 3. One-time steps you must do (MANUAL — nothing is auto-deployed)
 
@@ -43,7 +60,9 @@ set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\serviceAccountKey.json
 python student_roster_import.py --dry-run     # preview
 python student_roster_import.py --commit      # writes studentRoster only
 ```
-The source CSV is `admission_data.csv` (215 students: CED 69, CSD 146).
+The source CSV is `admission_data.csv` (1,189 students across ALL B.Tech
+branches: CED 138, CSD 292, EED 138, ECD 207, IOT 69, MED 138, CHD 69, ITC 138),
+regenerated from the official Excel roll list with `xlsx_to_roster_csv.py`.
 The script refuses to run if the CSV has problems or duplicate roll numbers.
 
 ### b) Add the proposed Firestore rules

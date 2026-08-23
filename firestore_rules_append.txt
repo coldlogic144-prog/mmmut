@@ -33,6 +33,21 @@ match /studentRoster/{roll} {
     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
 }
 
+# ============================================================
+# ADMIN ACCOUNT DELETION (new — required by the 🗑 Delete button
+# in Admin Panel -> 👥 Users). Without these blocks the button
+# shows "Delete failed: Missing or insufficient permissions".
+#
+# 1) Admins may permanently remove a user profile:
+match /users/{uid} {
+  allow delete: if request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+}
+
+# 2) Freeing a claimed roll after deletion: the match /userRolls/{roll}
+#    block further below was UPDATED to allow admin deletes — use that
+#    version instead of the old "allow update, delete: if false;".
+
 # --- Roll-number <-> verified account bridge ---
 # roll -> { uid, username, rollNumber, verifiedAt }
 # The document ID IS the roll number, so a roll can only ever exist once.
@@ -58,9 +73,12 @@ match /userRolls/{roll} {
     request.auth != null &&
     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
 
-  // Never update or delete mappings from clients. Transfers/removals
-  // (e.g., data correction) are done by the admin SDK tool only.
-  allow update, delete: if false;
+  // Update is never allowed from clients; DELETE is reserved for admins
+  // (used to unlink a roll after deleting a student account). Transfers are
+  // still impossible: a roll can never move to a different uid via update.
+  allow update: if false;
+  allow delete: if request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
 }
 
 # ============================================================
