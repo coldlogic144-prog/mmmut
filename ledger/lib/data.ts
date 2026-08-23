@@ -336,3 +336,117 @@ export const ADMIN_STATS: AdminStats = {
   presentToday: 172,
   attendanceRate: 78,
 };
+/* ============ Accounts (admin user management) ============ */
+
+export type AccountStatus = "active" | "pending" | "disabled";
+
+export type LedgerAccount = {
+  id: string;
+  roll: string;
+  name: string;
+  branch: string;
+  branchId: string;
+  section: string;
+  email: string;
+  joinedAt: string;
+  lastActive: string;
+  status: AccountStatus;
+};
+
+export const ACCOUNTS_STORAGE_KEY = "ledger.accounts";
+
+const ACCT_FIRST = [
+  "Aarav", "Aditi", "Rohan", "Priyansh", "Harshita", "Snehal", "Kabir",
+  "Ananya", "Nikhil", "Tara", "Dev", "Meera", "Kunal", "Navya", "Farhan",
+  "Ishita", "Vihaan", "Divya", "Rayan", "Zoya", "Arjun", "Tanvi",
+  "Bhavna", "Manav", "Riya", "Aman", "Asha", "Naina", "Ritika", "Diya",
+];
+
+const ACCT_LAST = [
+  "Sharma", "Verma", "Gupta", "Singh", "Patel", "Mishra", "Tiwari",
+  "Jaiswal", "Chatterjee", "Srivastava", "Nayak", "Choudhary",
+  "Tripathi", "Agrawal", "Malhotra", "Rathore", "Bhakt", "Saxena",
+];
+
+/** Branch config — which sections exist and how many seeded accounts per section. */
+const ACCT_BRANCH: Record<
+  string,
+  { code: string; sections: string[]; per: number }
+> = {
+  civil: { code: "CE", sections: ["A", "B"], per: 7 },
+  cse: { code: "CSD", sections: ["A", "B", "C", "D"], per: 9 },
+  it: { code: "IT", sections: ["A", "B"], per: 7 },
+  ece: { code: "ECE", sections: ["A", "B", "C"], per: 8 },
+  me: { code: "ME", sections: ["A", "B"], per: 7 },
+  bba: { code: "BBA", sections: ["A", "B"], per: 7 },
+};
+
+/** Deterministic demo registry — one seeded account per slot, derived from BRANCHES. */
+function buildSeedAccounts(): LedgerAccount[] {
+  const list: LedgerAccount[] = [];
+  let n = 0;
+  for (const [branchId, cfg] of Object.entries(ACCT_BRANCH)) {
+    const branchName = BRANCHES.find((b) => b.id === branchId)?.name ?? branchId;
+    for (const section of cfg.sections) {
+      for (let i = 1; i <= cfg.per; i++) {
+        const first = ACCT_FIRST[n % ACCT_FIRST.length];
+        const last = ACCT_LAST[(n * 7 + 3) % ACCT_LAST.length];
+        const status: AccountStatus =
+          n % 23 === 0 ? "disabled" : n % 17 === 0 ? "pending" : "active";
+        list.push({
+          id: `acc-${String(n + 1).padStart(3, "0")}`,
+          roll: `2026${cfg.code}${section}${String(i).padStart(2, "0")}`,
+          name: `${first} ${last}`,
+          branch: branchName,
+          branchId,
+          section,
+          email: `${first.toLowerCase()}.${last.toLowerCase()}@mmmutt.ac.in`,
+          joinedAt: `2026-07-${String((n % 28) + 1).padStart(2, "0")}`,
+          lastActive: `2026-08-${String((n % 18) + 1).padStart(2, "0")}`,
+          status,
+        });
+        n += 1;
+      }
+    }
+  }
+  return list;
+}
+
+export const SEED_ACCOUNTS: LedgerAccount[] = buildSeedAccounts();
+
+/**
+ * Read the account registry from localStorage. First visit seeds the
+ * deterministic demo roster; afterwards whatever the admin saved (so deleted
+ * accounts stay deleted across reloads).
+ */
+export function loadAccounts(): LedgerAccount[] {
+  if (typeof window === "undefined") return [...SEED_ACCOUNTS];
+  try {
+    const raw = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter(
+          (a): a is LedgerAccount =>
+            typeof a === "object" &&
+            a !== null &&
+            typeof (a as LedgerAccount).id === "string" &&
+            typeof (a as LedgerAccount).name === "string",
+        );
+        if (valid.length > 0) return valid;
+      }
+    }
+  } catch {
+    /* malformed storage — fall back to seed */
+  }
+  return [...SEED_ACCOUNTS];
+}
+
+export function saveAccounts(accounts: LedgerAccount[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+  } catch {
+    /* storage unavailable — demo keeps state in memory */
+  }
+}
