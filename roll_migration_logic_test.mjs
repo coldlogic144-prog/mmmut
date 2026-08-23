@@ -1,9 +1,10 @@
-// roll_migration_logic_test.mjs — validates the roll-claim identity engine against
-// the real admission_data.csv roster WITHOUT touching the app or Firebase.
-// Mirrors the exact normalization/verdict logic embedded in index.html.
+// roll_migration_logic_test.mjs — validates the roll-verification identity + roster
+// auto-assign logic against the real admission_data.csv roster WITHOUT touching the
+// app or Firebase. Mirrors the exact helpers embedded in index.html (the identity
+// engine `evaluateRollClaim` plus the roster->branch mapping `rosterBranchToId`).
 //
 // Firestore `studentRoster` is the authoritative runtime source — this file only
-// exercises the same identity rules against the CSV the import script uses.
+// exercises the same rules against the CSV the import script uses.
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -127,18 +128,27 @@ function reportValidation() {
 
 // --- Byte-for-byte mirrors of the index.html helpers ---
 function normalizeUserName(s) { return String(s || '').toUpperCase().replace(/[^A-Z]/g, ' ').replace(/\s+/g, ' ').trim(); }
+// Byte-for-byte mirror of index.html rosterBranchToId: CED -> 'civil', CSD -> 'cse',
+// with fallback source = enrollmentNo.slice(4, 7) (the 'CED'/'CSD' letters).
+function rosterBranchToId(branchName) { return String(branchName || '').trim().toUpperCase() === 'CSD' ? 'cse' : 'civil'; }
 function evaluateRollClaim(profile, rosterEntry) {
   if (!rosterEntry) return { verdict: 'notfound', reasons: ['not-in-roster'] };
   const reasons = [];
-  const pName = normalizeUserName(profile.name);
+  const isAdmin = !!(profile && profile.isAdmin);
+  const pName = normalizeUserName(profile ? profile.name : '');
   const rName = normalizeUserName(rosterEntry.applicantName || rosterEntry.formalName || '');
-  if (!pName || !rName || pName !== rName) reasons.push('name-mismatch');
+  const nameMismatch = !pName || !rName || pName !== rName;
+  if (nameMismatch && !isAdmin) reasons.push('name-mismatch');
   const branch = String(rosterEntry.branchName ||
     (rosterEntry.enrollmentNo || '').slice(4, 7) || '').toUpperCase();
   if (branch === 'CED') {
-    if (String(profile.branchId || '').toLowerCase() !== 'civil') reasons.push('branch-mismatch');
+    if (String(profile ? profile.branchId : '').toLowerCase() !== 'civil') {
+      if (!isAdmin) reasons.push('branch-mismatch');
+    }
   } else if (branch === 'CSD') {
-    reasons.push('csd-unmapped-branch');
+    if (String(profile ? profile.branchId : '').toLowerCase() !== 'cse') {
+      if (!isAdmin) reasons.push('branch-mismatch');
+    }
   } else {
     reasons.push('unknown-branch');
   }
@@ -147,23 +157,74 @@ function evaluateRollClaim(profile, rosterEntry) {
 
 const tests = [
   ['AARAV SINGH', 'civil', '2026011001', 'ok', 'ok (CED + civil + name)'],
-  ['Aarav   Singh', 'civil', '2026011001', 'ok', 'ok with messy name spacing'],
+  ['Aarav   SINGH', 'civil', '2026011001', 'ok', 'ok with messy name spacing'],
   ['AARAV SINGH', 'cse', '2026011001', 'manual-review', 'branch mismatch: cse vs CED'],
   ['DELHI UNKNOWN', 'civil', '2026011001', 'manual-review', 'name mismatch'],
   ['ABHISHEK KUMAR', 'civil', '2026011004', 'ok', 'CED ABHISHEK block-1'],
-  ['ABHISHEK KUMAR', 'cse', '2026021003', 'manual-review', 'CSD unmapped branch'],
-  ['ABHISHEK KUMAR', 'cse', '2026021102', 'manual-review', 'CSD unmapped branch'],
+  ['ABHISHEK KUMAR', 'cse', '2026021003', 'ok', 'CSD + cse + name -> ok'],
+  ['ABHISHEK KUMAR', 'cse', '2026021102', 'ok', 'CSD + cse + name -> ok'],
   ['AARAV SINGH', 'civil', '2026021101', 'manual-review', 'name belongs to another roll'],
   ['AARAV SINGH', 'civil', '9999999999', 'notfound', 'not in roster'],
+  // CSD now auto-verifies for a CSE student whose name matches the roster.
+  ['RISHIKESH NANDAN', 'cse', '2026021048', 'ok', 'CSD -> cse auto-verify'],
+  // Admin accounts (e.g. tanish) may self-verify even on name/branch mismatch.
+  ['DIFFERENT NAME', 'civil', '2026011001', 'ok', 'admin name override', true],
+  ['DIFFERENT NAME', 'whatever', '2026011001', 'ok', 'admin branch+name override', true],
+  ['DIFFERENT NAME', 'whatever', '2026021048', 'ok', 'admin CSD override', true],
 ];
 let pass = 0;
 reportValidation();
 console.log('--- identity-engine tests (mirrors index.html evaluateRollClaim) ---');
-for (const [name, branchId, roll, expect, label] of tests) {
-  const got = evaluateRollClaim({ name, branchId }, ROSTER[roll] || null);
+for (const t of tests) {
+  const [name, branchId, roll, expect, label, isAdmin] = t;
+  const profile = { name, branchId };
+  if (isAdmin) profile.isAdmin = true;
+  const got = evaluateRollClaim(profile, ROSTER[roll] || null);
   const ok = got.verdict === expect;
   pass += ok ? 1 : 0;
   console.log(ok ? 'PASS' : 'FAIL', label, `${name}/${branchId}/${roll} -> ${got.verdict} ${JSON.stringify(got.reasons)}`);
 }
-console.log('test', pass + ' / ' + tests.length);
-process.exit(pass === tests.length ? 0 : 1);
+// Every CSD student (matching roster name + cse branch) must now auto-verify.
+let csdOk = 0, csdTotal = 0;
+for (const [roll, enr] of Object.entries(ROSTER)) {
+  if ((enr.branchName || '').toUpperCase() !== 'CSD') continue;
+  csdTotal++;
+  const got = evaluateRollClaim({ name: enr.applicantName, branchId: 'cse' }, enr);
+  csdOk += got.verdict === 'ok' ? 1 : 0;
+}
+pass += csdOk === csdTotal ? 1 : 0;
+console.log(csdOk === csdTotal ? 'PASS' : 'FAIL', `all CSD students auto-verify (${csdOk}/${csdTotal})`);
+
+// --- NEW: roster->branch auto-assign mapping (used by the hard gate + signup) ---
+const branchMapTests = [
+  ['CED', 'civil', 'CED -> civil'],
+  ['CSD', 'cse', 'CSD -> cse'],
+  ['ced', 'civil', 'lowercase ced -> civil'],
+  ['csd', 'cse', 'lowercase csd -> cse'],
+  ['', 'civil', 'empty/unknown -> civil fallback'],
+  [null, 'civil', 'null -> civil fallback'],
+];
+for (const [input, expect, label] of branchMapTests) {
+  const got = rosterBranchToId(input);
+  const ok = got === expect;
+  pass += ok ? 1 : 0;
+  console.log(ok ? 'PASS' : 'FAIL', label, `rosterBranchToId(${JSON.stringify(input)}) -> ${got} (expected ${expect})`);
+}
+
+// Every roster entry must resolve to a known branch id + a non-empty auto-name,
+// otherwise the hard gate could stall on a legitimate roll.
+let mapOk = 0, mapTotal = 0;
+for (const [, enr] of Object.entries(ROSTER)) {
+  mapTotal++;
+  const id = rosterBranchToId(enr.branchName);
+  const okName = !!(enr.applicantName || enr.formalName || '').trim();
+  const okBranch = id === 'civil' || id === 'cse';
+  if (okName && okBranch) mapOk++;
+}
+pass += mapOk === mapTotal ? 1 : 0;
+console.log(mapOk === mapTotal ? 'PASS' : 'FAIL',
+  `all roster rolls resolve name+branch (${mapOk}/${mapTotal})`);
+
+const total = tests.length + 1 + branchMapTests.length + 1;
+console.log('test', pass + ' / ' + total);
+process.exit(pass === total ? 0 : 1);
