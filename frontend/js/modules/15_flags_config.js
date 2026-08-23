@@ -17,7 +17,13 @@
         // It NEVER deletes/recreates Firebase users, changes UIDs/emails/
         // passwords, nor touches attendance, chess, notices, feedback,
         // timetable, syllabus or FCM data.
-        const ROLL_MIGRATION_ENABLED = true; // master kill-switch
+        //
+        // SAFETY (2026-08 incident): set to FALSE while Firestore studentRoster
+        // still lacks the six non-CED/CSD branches (759 students). Re-enable
+        // ONLY after student_roster_import.py --commit succeeds against the
+        // full admission_data.csv AND the acceptance matrix passes — see
+        // docs/ROLL_VERIFICATION_INCIDENT.md.
+        const ROLL_MIGRATION_ENABLED = false; // master kill-switch
         // Roll-number linking is now enabled FOR EVERYONE (TEST_MODE = false).
         // Every signed-in user is asked for their roll number and can sign in
         // with it once verified. The TEST list is consulted only while

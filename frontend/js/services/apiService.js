@@ -5,9 +5,15 @@
 // editing API_BASE_URL below (empty string = disabled, app behaves as before).
 const API_BASE_URL = localStorage.getItem('mmmut_api_base') || '';
 
+// OPTIONAL one-line deployment hook: after deploying the backend (e.g. Render),
+// paste its origin here and redeploy the frontend so EVERY user gets the D2
+// fallback without touching localStorage. Keep '' while no backend is deployed.
+const BAKED_API_BASE = '';
+
 function base() {
     const override = localStorage.getItem('mmmut_api_base');
-    return (override !== null ? override : API_BASE_URL).replace(/\/$/, '');
+    return ((override !== null && override !== '') ? override
+        : (BAKED_API_BASE || API_BASE_URL)).replace(/\/$/, '');
 }
 
 async function getJson(url, timeoutMs = 6000) {

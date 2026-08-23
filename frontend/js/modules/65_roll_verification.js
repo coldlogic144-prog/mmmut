@@ -159,21 +159,14 @@
             else if (nameMismatch && isAdmin) rollMigrationLog('admin name override', { roll: rosterEntry.rollNumber });
             const branch = String(rosterEntry.branchName ||
                 (rosterEntry.enrollmentNo || '').slice(4, 7) || '').toUpperCase();
-            if (branch === 'CED') {
-                // Civil Engineering.
-                if (String(profile ? profile.branchId : '').toLowerCase() !== 'civil') {
-                    if (!isAdmin) reasons.push('branch-mismatch');
-                    else rollMigrationLog('admin branch override', { roll: rosterEntry.rollNumber });
-                }
-            } else if (branch === 'CSD') {
-                // The app has no 'csd' branch id — CSD rolls map to 'cse' here so
-                // computer-science students are verified instead of being stalled.
-                if (String(profile ? profile.branchId : '').toLowerCase() !== 'cse') {
-                    if (!isAdmin) reasons.push('branch-mismatch');
-                    else rollMigrationLog('admin branch override', { roll: rosterEntry.rollNumber });
-                }
-            } else {
-                reasons.push('unknown-branch');
+            // Map ANY roster branch via the authoritative table (was hardcoded to
+            // CED/CSD only, producing 'unknown-branch' for the other six branches
+            // in the legacy admin-override path — now consistent with verify()).
+            const mapped = rosterBranchToId(
+                rosterEntry.branchName || (rosterEntry.enrollmentNo || '').slice(4, 7) || branch);
+            if (String(profile ? profile.branchId : '').toLowerCase() !== mapped) {
+                if (!isAdmin) reasons.push('branch-mismatch');
+                else rollMigrationLog('admin branch override', { roll: rosterEntry.rollNumber, mapped });
             }
             return reasons.length === 0
                 ? { verdict: 'ok', reasons, branch }
@@ -192,23 +185,52 @@
 
             rollMigrationLog('verify start', { uid: currentUid, roll: raw });
 
+            // ===== DIAGNOSTICS (temporary, safe fields only — never credentials) =====
+            const diag = {
+                roll: raw,
+                fsResult: 'not-attempted',     // hit | miss | error:<code>
+                backendAttempted: false,
+                backendResult: 'not-attempted',// hit | miss | unavailable | disabled
+                decision: ''
+            };
+            const diagDecision = (reason) => {
+                diag.decision = reason;
+                rollMigrationLog('verify decision', diag);
+            };
+
             let rosterEntry = null;
             try {
                 const snap = await getDoc(doc(studentRosterCollection, raw));
                 rosterEntry = snap.exists() ? snap.data() : null;
-            } catch (e) { rollMigrationLog('roster read error', e && e.code); }
+                diag.fsResult = rosterEntry ? 'hit' : 'miss';
+            } catch (e) {
+                diag.fsResult = 'error:' + ((e && e.code) || 'unknown');
+                rollMigrationLog('roster read error', e && e.code);
+            }
             // FIX (D2): backend API mirror of admission_data.csv — keeps verification
-            // working when the studentRoster read fails (rules/CDN/App Check hiccups).
+            // working when the studentRoster read fails or the doc is missing
+            // (e.g. stale partial import / rules / CDN / App Check hiccups).
             if (!rosterEntry) {
-                const apiRec = (typeof apiFetchRoster === 'function') ? await apiFetchRoster(raw) : null;
-                if (apiRec && apiRec.applicantName) {
-                    rosterEntry = apiRec;
-                    rollMigrationLog('roster resolved via backend API', { roll: raw });
+                diag.backendAttempted = true;
+                if (typeof apiFetchRoster !== 'function') {
+                    diag.backendResult = 'disabled';
+                } else {
+                    const apiRec = await apiFetchRoster(raw);
+                    if (apiRec && apiRec.applicantName) {
+                        rosterEntry = apiRec;
+                        diag.backendResult = 'hit';
+                        rollMigrationLog('roster resolved via backend API', { roll: raw });
+                    } else {
+                        // apiService returns null both for "backend not configured"
+                        // and for genuine misses; distinguish via its base URL.
+                        diag.backendResult =
+                            (localStorage.getItem('mmmut_api_base') || '') ? 'miss' : 'unconfigured';
+                    }
                 }
             }
             if (!rosterEntry) {
                 fail('That roll number was not found in the B.Tech 2026–27 admission roster. Only published roll numbers can be verified.');
-                rollMigrationLog('roster miss', { roll: raw });
+                diagDecision('rejected:not-in-roster');
                 return;
             }
 
@@ -227,16 +249,22 @@
             try {
                 const cSnap = await getDoc(doc(userRollsCollection, raw));
                 claim = cSnap.exists() ? cSnap.data() : null;
-            } catch (e) { rollMigrationLog('claim read failed', e && e.code); }
+                diag.claimRead = claim ? 'hit' : 'miss';
+            } catch (e) {
+                diag.claimRead = 'error:' + ((e && e.code) || 'unknown');
+                rollMigrationLog('claim read failed', e && e.code);
+            }
             if (claim) {
                 if (claim.uid === currentUid && claim.rollNumber === raw) {
                     await finalizeRollVerification(raw, rosterName, mappedBranch, rosterSection);
                     showToast('✓ Roll number verified: ' + raw);
+                    diagDecision('verified:already-own-claim');
                     return;
                 }
                 fail('This roll number is already linked to a different account. Contact an administrator if you believe this is an error.');
                 await setMigrationState('rejected', raw, 'already-claimed');
                 renderMigrationStatus();
+                diagDecision('rejected:already-claimed-by-other');
                 return;
             }
 
@@ -256,22 +284,26 @@
                 if (code === 'permission-denied') {
                     rollMigrationLog('claim write permission-denied', { roll: raw });
                     fail('Verification could not be saved: Firestore refused the write to "userRolls". The admin needs to publish the staged rules from firestore_rules_append.txt. Your account is NOT marked as rejected — please try again after the rules are live.');
+                    diagDecision('blocked:permission-denied-on-claim-write');
                     return;
                 }
                 rollMigrationLog('claim write failed', { roll: raw, code: code || String(e) });
                 if (code !== 'already-exists') {
                     // Unknown failure — surface it honestly, keep the user pending.
                     fail('Verification could not be saved right now (' + (code || 'network error') + '). Your account is unchanged — please try again.');
+                    diagDecision('error:claim-write-' + (code || 'network'));
                     return;
                 }
                 fail('This roll number was claimed by another account at the same moment. It has been flagged for manual review.');
                 await setMigrationState('manual_review', raw, 'claim-race');
                 renderMigrationStatus();
+                diagDecision('manual-review:claim-race');
                 return;
             }
 
             await finalizeRollVerification(raw, rosterName, mappedBranch, rosterSection);
             showToast('✓ Roll number verified: ' + raw);
+            diagDecision('verified:new-claim-created');
         }
 
         // Marks the roll as verified AND adopts the roster identity (name + branch)
