@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ledger — MMMUT Attendance & Syllabus</title>
+    <!-- Styles split from the original monolithic <style> block.
+         Link ORDER preserves the original cascade exactly. -->
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/layout.css" />
+    <link rel="stylesheet" href="./css/components.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
+</head>
+
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-ring"></div>
+        <div class="loading-msg" id="loadingMsg">Opening the attendance ledger…</div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <div id="authScreen" style="display:none;">
+        <div class="auth-wrap">
+            <div class="auth-side">
+                <div>
+                    <div class="auth-mark">MMMUT · Gorakhpur</div>
+                    <div class="auth-title display">The <em>Ledger.</em><br />Your semester,<br />period by period.</div>
+                    <div class="auth-sub">Sign in to see today's timetable, mark attendance as it happens, and track where every subject stands before the next minor test.</div>
+                    <div class="period-strip">
+                        <div class="period-chip">I</div><div class="period-chip">II</div><div class="period-chip">III</div>
+                        <div class="period-chip">IV</div><div class="period-chip">V</div><div class="period-chip">VI</div>
+                        <div class="period-chip">VII</div><div class="period-chip">VIII</div>
+                    </div>
+                </div>
+                <div class="auth-foot">Session 2026–27 · First Year B.Tech / BBA / B.Pharm</div>
+            </div>
+            <div class="auth-main">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Log in</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Sign up</button>
+                </div>
+
+                <div id="loginForm">
+                    <div class="auth-tabs" id="loginMethodTabs" style="margin-bottom:14px;width:100%;">
+                        <button class="auth-tab active" id="loginMethodUser" type="button" onclick="setLoginMethod('user')">👤 Username</button>
+                        <button class="auth-tab" id="loginMethodRoll" type="button" onclick="setLoginMethod('roll')">🎓 Roll Number</button>
+                    </div>
+                    <div class="field"><label id="loginIdentifierLabel" for="loginUsername">Username</label><input id="loginUsername" placeholder="e.g. rahul.cse26" autocomplete="username" /></div>
+                    <div class="field"><label>Password</label><input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" /></div>
+                    <button class="btn-primary" onclick="handleLogin()">Log in</button>
+                    <div class="auth-error" id="loginError"></div>
+                </div>
+
+                <div id="signupForm" style="display:none;">
+                    <div class="field"><label>Roll Number (compulsory)</label><input id="suRollNumber" placeholder="e.g. 2026011001" maxlength="12" autocomplete="off" /></div>
+                    <div style="font-size:12.5px;color:var(--ink-soft);line-height:1.5;margin:-4px 0 14px;">Your full name and branch are set automatically from the 2026–27 admission roster for this roll number.</div>
+                    <div class="field-row">
+                        <div class="field"><label>Username</label><input id="suUsername" placeholder="rahul.cse26" /></div>
+                        <div class="field"><label>Password</label><input id="suPassword" type="password" placeholder="••••••••" /></div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field"><label>Branch (auto-set from roll)</label>
+                            <select id="suBranch" onchange="populateSectionOptions()"></select>
+                        </div>
+                        <div class="field"><label>Section</label>
+                            <select id="suSection"></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Hostel</label>
+                        <select id="suHostel">
+                            <option value="Day Scholar">Day Scholar</option>
+                            <option value="Tagore Hostel">Tagore Hostel</option>
+                            <option value="VS Hostel">VS Hostel</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Gender</label>
+                        <select id="suGender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="handleSignup()">Create account</button>
+                    <div class="auth-error" id="signupError"></div>
+                    <div class="auth-hint">This is a student-built tracker — data is stored so classmates using this same link can also log in. Please don't reuse a sensitive password.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app">
+        <div class="topbar">
+            <div class="brand">
+                <div class="brand-mark">L</div>
+                <div>
+                    <div class="brand-name">The Ledger</div>
+                    <div class="brand-sub" id="todayLabel">—</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank" class="btn-download-app">📱 Download App</a>
+                <button class="btn-icon" id="notifBell" onclick="scrollToPosts()" title="Announcements">
+                    🔔
+                    <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
+                <button class="btn-ghost" id="pushNotifBtn" style="display:none;" onclick="enablePushNotifications()">🔔 Enable Notifications</button>
+                <div class="user-pill" onclick="openProfileModal()">
+                    <div>
+                        <div class="user-pill-name" id="pillName">—</div>
+                        <div class="user-pill-branch" id="pillBranch">—</div>
+                    </div>
+                    <div class="avatar" id="pillAvatar">—</div>
+                </div>
+                <button class="btn-ghost" onclick="handleLogout()">Log out</button>
+            </div>
+        </div>
+
+        <div class="shell" id="mainShell">
+            <!-- Announcements -->
+            <div class="card" id="postsTopCard">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">📢 Announcements</div>
+                        <div class="card-title display" style="margin-bottom:0;">Latest</div>
+                    </div>
+                    <button class="btn-secondary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="renderPostsFeed(true)">View all</button>
+                </div>
+                <div id="postsFeedContent"></div>
+            </div>
+
+            <!-- Main grid -->
+            <div class="shell-grid">
+                <div>
+                    <div class="card">
+                        <div class="card-head">
+                            <div>
+                                <div class="card-eyebrow">Bell schedule</div>
+                                <div class="card-title display">Today's periods</div>
+                            </div>
+                            <div class="tabbar">
+                                <button class="tab-btn active" id="tabToday" onclick="setScheduleView('today')">Today</button>
+                                <button class="tab-btn" id="tabWeek" onclick="setScheduleView('week')">Full week</button>
+                                <button class="tab-btn" id="tabImage" onclick="setScheduleView('image')">Image</button>
+                            </div>
+                        </div>
+                        <div id="todayView"></div>
+                        <div id="weekView" style="display:none;"></div>
+                        <div id="imageView" style="display:none;">
+                            <div style="overflow-x:auto; border-radius:10px; border:1px solid var(--paper-line);">
+                                <canvas id="ttCanvas"></canvas>
+                            </div>
+                            <button class="btn-primary" style="margin-top:14px;" onclick="downloadTimetableImage()">Download PNG</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-eyebrow">Semester so far</div>
+                        <div class="card-title display" style="margin-bottom:16px;">Attendance</div>
+                        <div class="target-row">
+                            <label>Target attendance</label>
+                            <select id="targetPct" onchange="renderAttendanceStats()">
+                                <option value="75" selected>75%</option>
+                                <option value="80">80%</option>
+                                <option value="90">90%</option>
+                            </select>
+                        </div>
+                        <div class="overall-ring-wrap">
+                            <div>
+                                <div class="overall-num" id="overallPct">—</div>
+                                <div class="overall-sub">overall, this semester</div>
+                            </div>
+                            <div style="font-size:12px;color:var(--ink-soft);line-height:1.6;" id="overallCounts">—</div>
+                        </div>
+                        <div class="overall-leave" id="overallLeave"></div>
+                        <div id="subjectStats"></div>
+                    </div>
+
+                    <!-- Attendance History -->
+                    <div class="card" id="historyCard">
+                        <div class="card-eyebrow">📋 Past &amp; future</div>
+                        <div class="card-title display" style="margin-bottom:12px;">Attendance History</div>
+                        <div class="history-nav">
+                            <button class="nav-btn" id="histPrev" onclick="navigateHistoryDate(-1)" title="Previous day">‹</button>
+                            <span class="date-display" id="histDateDisplay">—</span>
+                            <button class="nav-btn" id="histNext" onclick="navigateHistoryDate(1)" title="Next day">›</button>
+                            <button class="nav-btn today-btn" onclick="goToTodayHistory()">Today</button>
+                        </div>
+                        <div id="historyView"></div>
+                    </div>
+
+                    <!-- ===== HELP & FEEDBACK CARD ===== -->
+                    <div class="card feedback-highlight" id="feedbackCard">
+                        <div class="card-head">
+                            <div>
+                                <div class="card-eyebrow">💬 Help &amp; Feedback</div>
+                                <div class="card-title display" style="margin-bottom:0;">Get Support</div>
+                            </div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <button class="btn-primary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="openFeedbackForm()">➕ New</button>
+                                <button class="btn-secondary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="openMyFeedback()">📋 My Feedback</button>
+                                <button class="btn-secondary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="openRatingModal()">⭐ Rate ERP</button>
+                            </div>
+                        </div>
+                        <div id="feedbackPreviewContent" style="font-size:13px;color:var(--ink-soft);">
+                            <div style="display:flex;gap:16px;flex-wrap:wrap;padding:4px 0;">
+                                <span>📌 <span id="fbTotalCount">0</span> total</span>
+                                <span>🟡 <span id="fbOpenCount">0</span> open</span>
+                                <span>🟢 <span id="fbResolvedCount">0</span> resolved</span>
+                                <span style="cursor:pointer;color:var(--teal);font-weight:600;" onclick="openMyFeedback()">View all →</span>
+                            </div>
+                            <div id="fbLatestPreview" style="margin-top:6px;font-size:12px;color:var(--ink-soft);">No feedback yet.</div>
+                        </div>
+                    </div>
+
+                    <!-- ===== COMMUNITY POSTS CARD ===== -->
+                    <div class="card" id="communityPostsCard">
+                        <div class="card-head">
+                            <div>
+                                <div class="card-eyebrow">📝 Community</div>
+                                <div class="card-title display" style="margin-bottom:0;">Announcements &amp; Updates</div>
+                            </div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <button class="btn-primary" id="cpNewPostBtn" style="margin:0;padding:6px 14px;font-size:12px;display:none;" onclick="openCreatePost()">✏️ New Post</button>
+                            </div>
+                        </div>
+                        <div id="communityPostsFeed" style="max-height:450px;overflow-y:auto;padding-right:4px;">
+                            <div style="text-align:center;padding:20px 0;color:var(--ink-soft);">Loading posts…</div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SYLLABUS CARD ===== -->
+                    <div class="syllabus-card" id="syllabusCard">
+                        <div class="card-head">
+                            <div>
+                                <div class="card-eyebrow">📖 Curriculum</div>
+                                <div class="card-title display" style="margin-bottom:0;">Your Syllabus</div>
+                            </div>
+                            <button class="btn-secondary" style="margin:0;padding:6px 14px;font-size:12px;" onclick="openSyllabusFullView()">📄 Full View</button>
+                        </div>
+                        <div class="syllabus-branch-selector" id="syllabusSelector">
+                            <div class="field">
+                                <label>Branch</label>
+                                <select id="syllabusBranch" onchange="loadSyllabus()"></select>
+                            </div>
+                            <div class="field">
+                                <label>Year</label>
+                                <select id="syllabusYear" onchange="loadSyllabus()">
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="syllabus-content" id="syllabusContent">
+                            <div class="syllabus-loading">Select your branch to view the syllabus.</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-eyebrow">Quick Resources</div>
+                        <div class="card-title display" style="margin-bottom:16px;">MMMUT Links</div>
+                        <button class="btn-primary" onclick="window.open('https://drive.google.com/file/d/1mHw1emQ9i92HIoq7jw6YWKGpPnFV7wMO/view?usp=drivesdk','_blank')">📄 Time Table PDF</button>
+                        <button class="btn-primary" style="margin-top:10px;" onclick="window.open('https://share.google/uOrpx8BFFizpBu9C2','_blank')">📢 MMMUT Notices</button>
+                        <button class="btn-primary" style="margin-top:10px;" onclick="window.open('https://drive.google.com/file/d/1vENgYXFOKl-1O6eAALAfBYHR95a8b8EX/view?usp=drivesdk','_blank')">📖 Academic Calendar</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-eyebrow">Academic calendar 2026–27</div>
+                        <div class="card-title display" style="margin-bottom:14px;">Upcoming</div>
+                        <div id="eventsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="app-foot">M.M.M. University of Technology, Gorakhpur — Session 2026–27</footer>
+    </div>
+
+    <!-- ===== CHESS CLUB VIEW ===== -->
+    <div id="chessClubView">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 style="font-family:'Fraunces',serif; font-size:28px; font-weight:600;">♟️ Chess Club</h1>
+                <p style="color:var(--ink-soft); font-size:14px; margin-top:2px;">Think. Play. Improve.</p>
+            </div>
+            <button class="btn-secondary" onclick="toggleChessClub(false)" style="margin:0;">← Back to Ledger</button>
+        </div>
+
+        <div class="chess-tabs" id="chessTabs">
+            <button class="tab-btn active" data-tab="home" onclick="switchChessTab('home')">🏠 Home</button>
+            <button class="tab-btn" data-tab="members" onclick="switchChessTab('members')">👥 Members</button>
+            <button class="tab-btn" data-tab="leaderboard" onclick="switchChessTab('leaderboard')">🏆 Leaderboard</button>
+            <button class="tab-btn" data-tab="events" onclick="switchChessTab('events')">📅 Events</button>
+            <button class="tab-btn" data-tab="challenges" onclick="switchChessTab('challenges')">⚔️ Challenges</button>
+            <button class="tab-btn" data-tab="games" onclick="switchChessTab('games')">🎮 My Games</button>
+            <button class="tab-btn" data-tab="activity" onclick="switchChessTab('activity')">📜 Activity</button>
+        </div>
+
+        <!-- Home -->
+        <div id="chessTab-home" class="chess-tab-content">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">♟️ Chess Club</div>
+                        <div class="card-title display">Welcome to the Chess Club</div>
+                    </div>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+                    <div style="flex:1; min-width:200px;">
+                        <p style="font-size:14px; color:var(--ink-soft); margin-bottom:12px;">
+                            A community for chess enthusiasts at MMMUT. Join, challenge others, track your rating, and participate in events.
+                        </p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn-primary" id="chessJoinBtn" style="width:auto; padding:10px 28px; margin:0;" onclick="handleChessJoin()">Join Club</button>
+                            <button class="btn-danger" id="chessLeaveBtn" style="width:auto; padding:10px 28px; margin:0; display:none;" onclick="handleChessLeave()">Leave Club</button>
+                        </div>
+                        <div style="margin-top:16px; font-size:14px;">
+                            <span>👥 <span id="chessMemberCount">0</span> members</span>
+                        </div>
+                    </div>
+                    <div style="flex:1; min-width:200px; background:var(--paper); border-radius:12px; padding:16px;">
+                        <div style="font-weight:600; margin-bottom:8px;">🏆 Upcoming Tournament</div>
+                        <div id="chessNextEvent">
+                            <div style="font-size:13px; color:var(--ink-soft);">No upcoming events.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🏅 Leaderboard</div>
+                        <div class="card-title display">Top 3</div>
+                    </div>
+                    <button class="btn-secondary" style="margin:0; padding:6px 14px; font-size:12px;" onclick="switchChessTab('leaderboard')">View all</button>
+                </div>
+                <div id="chessLeaderboardPreview">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members -->
+        <div id="chessTab-members" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">👥 Members</div>
+                        <div class="card-title display">All Club Members</div>
+                    </div>
+                    <span id="chessMemberCount2" style="font-size:13px; color:var(--ink-soft);">0 members</span>
+                </div>
+                <div id="chessMembersList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="chessTab-leaderboard" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🏆 Leaderboard</div>
+                        <div class="card-title display">Club Rankings</div>
+                    </div>
+                </div>
+                <div id="chessLeaderboardFull">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events -->
+        <div id="chessTab-events" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">📅 Events</div>
+                        <div class="card-title display">Upcoming & Past</div>
+                    </div>
+                    <button class="btn-primary" id="chessEventCreateBtn" style="margin:0; padding:6px 14px; font-size:12px; display:none;" onclick="openChessEventForm()">➕ New Event</button>
+                </div>
+                <div id="chessEventsList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+            <!-- Event creation form (admin) -->
+            <div id="chessEventForm" style="display:none; margin-top:20px;">
+                <div class="chess-card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-eyebrow">✏️ Create Event</div>
+                            <div class="card-title display">New Chess Event</div>
+                        </div>
+                        <button class="btn-secondary" onclick="closeChessEventForm()">Cancel</button>
+                    </div>
+                    <form onsubmit="submitChessEvent(event)">
+                        <div class="field"><label>Title</label><input id="chessEventTitle" placeholder="e.g. Sunday Blitz" required /></div>
+                        <div class="field-row">
+                            <div class="field"><label>Date</label><input type="date" id="chessEventDate" required /></div>
+                            <div class="field"><label>Time</label><input type="time" id="chessEventTime" required /></div>
+                        </div>
+                        <div class="field"><label>Time Control</label><input id="chessEventTimeControl" placeholder="e.g. 10+5" /></div>
+                        <div class="field"><label>Description</label><textarea id="chessEventDesc" rows="2" placeholder="Event description"></textarea></div>
+                        <button type="submit" class="btn-primary" style="width:auto; padding:10px 28px; margin:0;">Create Event</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenges -->
+        <div id="chessTab-challenges" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">⚔️ Challenges</div>
+                        <div class="card-title display">Challenge a Member</div>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-weight:600; font-size:13px;">Select opponent:</label>
+                    <select id="chessChallengeOpponent" style="padding:8px 12px; border-radius:8px; border:1px solid var(--paper-line); background:#fff; font-size:13px; margin-left:8px;"></select>
+                    <button class="btn-primary" style="width:auto; padding:8px 20px; margin:0 0 0 10px;" onclick="sendChessChallenge()">Challenge</button>
+                </div>
+                <div id="chessChallengesList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Games -->
+        <div id="chessTab-games" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">🎮 My Games</div>
+                        <div class="card-title display">Game History</div>
+                    </div>
+                </div>
+                <div id="chessGamesList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity -->
+        <div id="chessTab-activity" class="chess-tab-content" style="display:none;">
+            <div class="chess-card">
+                <div class="card-head">
+                    <div>
+                        <div class="card-eyebrow">📜 Activity</div>
+                        <div class="card-title display">Recent Club Activity</div>
+                    </div>
+                </div>
+                <div id="chessActivityList">
+                    <div style="padding:12px 0; color:var(--ink-soft);">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CREATE POST OVERLAY (Admin only) ===== -->
+    <div class="feedback-overlay" id="createPostOverlay">
+        <div class="feedback-panel cp-modal" style="max-width:560px;">
+            <div class="feedback-panel-header">
+                <h2>✏️ Create Post</h2>
+                <button class="close-btn" onclick="closeCreatePost()">✕</button>
+            </div>
+            <div class="feedback-panel-body">
+                <form id="createPostForm" onsubmit="submitCommunityPost(event)">
+                    <div class="field">
+                        <label>Title</label>
+                        <input id="cpTitle" placeholder="Post title" maxlength="100" required />
+                    </div>
+                    <div class="field">
+                        <label>Content</label>
+                        <textarea id="cpContent" placeholder="What's on your mind?" rows="4" required></textarea>
+                    </div>
+                    <div class="field">
+                        <label>Image <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+                        <input type="file" id="cpImage" accept="image/*" onchange="previewCommunityPostImage()" />
+                        <img id="cpImagePreview" class="cp-image-preview" style="display:none;" />
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                        <button type="submit" class="btn-primary" style="width:auto;padding:12px 32px;margin:0;">Post</button>
+                        <button type="button" class="btn-secondary" style="margin:0;" onclick="closeCreatePost()">Cancel</button>
+                    </div>
+                    <div id="cpFormError" style="margin-top:12px;font-size:13px;color:var(--brick);display:none;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FEEDBACK FORM OVERLAY ===== -->
+    <div class="feedback-overlay" id="feedbackFormOverlay">
+        <div class="feedback-panel">
+            <div class="feedback-panel-header">
+                <h2>💬 Submit Feedback</h2>
+                <button class="close-btn" onclick="closeFeedbackForm()">✕</button>
+            </div>
+            <div class="feedback-panel-body">
+                <form id="feedbackForm" onsubmit="submitFeedback(event)">
+                    <div class="field">
+                        <label>Category</label>
+                        <select id="fbCategory" required>
+                            <option value="">Select a category…</option>
+                            <option value="bug">🐞 Bug Report</option>
+                            <option value="feature">💡 Feature Suggestion</option>
+                            <option value="timetable">📅 Timetable Issue</option>
+                            <option value="calendar">📆 Academic Calendar Issue</option>
+                            <option value="notice">📢 Notice Issue</option>
+                            <option value="help">❓ Need Help</option>
+                            <option value="general">📝 General Feedback</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Subject <span style="font-weight:400;color:var(--ink-soft);">(max 100 chars)</span></label>
+                        <input id="fbSubject" placeholder="Brief subject line" maxlength="100" required />
+                    </div>
+                    <div class="field">
+                        <label>Description <span style="font-weight:400;color:var(--ink-soft);">(20–2000 chars)</span></label>
+                        <textarea id="fbMessage" placeholder="Describe your issue or suggestion in detail…" rows="4" required></textarea>
+                        <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;" id="fbCharCount">0 / 2000</div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Priority</label>
+                            <select id="fbPriority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Screenshot <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+                            <input type="file" id="fbScreenshot" accept="image/*" />
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                        <button type="submit" class="btn-primary" style="width:auto;padding:12px 32px;margin:0;">Submit Feedback</button>
+                        <button type="button" class="btn-secondary" style="margin:0;" onclick="closeFeedbackForm()">Cancel</button>
+                    </div>
+                    <div id="fbFormError" style="margin-top:12px;font-size:13px;color:var(--brick);display:none;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MY FEEDBACK OVERLAY ===== -->
+    <div class="feedback-overlay" id="myFeedbackOverlay">
+        <div class="feedback-panel" style="max-width:720px;">
+            <div class="feedback-panel-header">
+                <h2>📋 My Feedback</h2>
+                <button class="close-btn" onclick="closeMyFeedback()">✕</button>
+            </div>
+            <div class="feedback-panel-body" id="myFeedbackBody">
+                <div style="text-align:center;padding:32px 0;color:var(--ink-soft);">Loading…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RATING MODAL ===== -->
+    <div class="feedback-overlay" id="ratingModal">
+        <div class="feedback-panel" style="max-width:480px;">
+            <div class="feedback-panel-header">
+                <h2>⭐ Rate ERP</h2>
+                <button class="close-btn" onclick="closeRatingModal()">✕</button>
+            </div>
+            <div class="feedback-panel-body">
+                <p style="font-size:14px;color:var(--ink-soft);margin-bottom:12px;">How would you rate your experience with The Ledger?</p>
+                <div class="feedback-rating-stars" id="ratingStars">
+                    <span data-val="1" class="star-off">★</span>
+                    <span data-val="2" class="star-off">★</span>
+                    <span data-val="3" class="star-off">★</span>
+                    <span data-val="4" class="star-off">★</span>
+                    <span data-val="5" class="star-off">★</span>
+                </div>
+                <div class="field" style="margin-top:12px;">
+                    <label>Comment <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+                    <textarea id="ratingComment" placeholder="Share your thoughts…" rows="3"></textarea>
+                </div>
+                <button class="btn-primary" style="width:auto;padding:12px 32px;margin-top:4px;" onclick="submitRating()">Submit Rating</button>
+                <div id="ratingFormError" style="margin-top:12px;font-size:13px;color:var(--brick);display:none;"></div>
+                <div id="ratingExisting" style="margin-top:14px;font-size:13px;color:var(--ink-soft);display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="profile-overlay" id="profileModal">
+        <div class="profile-panel">
+            <button class="close-btn" onclick="closeProfileModal()">✕</button>
+            <h2>Edit Profile &amp; Security</h2>
+            <div class="field">
+                <label>Name</label>
+                <input id="profileName" disabled style="background:var(--paper);" />
+            </div>
+            <div class="field">
+                <label>Username</label>
+                <input id="profileUsername" disabled style="background:var(--paper);" />
+            </div>
+            <div class="field">
+                <label>Branch</label>
+                <input id="profileBranch" disabled style="background:var(--paper);" />
+            </div>
+            <div class="field">
+                <label>Section</label>
+                <select id="profileSection"></select>
+            </div>
+            <div class="field">
+                <label>Hostel</label>
+                <select id="profileHostel">
+                    <option value="Day Scholar">Day Scholar</option>
+                    <option value="Tagore Hostel">Tagore Hostel</option>
+                    <option value="VS Hostel">VS Hostel</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Gender</label>
+                <select id="profileGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                    <option value="Not specified">Not specified</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Roll Number</label>
+                <input id="profileRollNumber" disabled style="background:var(--paper);" placeholder="—" />
+            </div>
+            <div class="field">
+                <label>Migration Status</label>
+                <input id="profileMigrationStatus" disabled style="background:var(--paper);" placeholder="—" />
+            </div>
+            <div style="margin:0 0 14px;">
+                <button class="btn-secondary" id="profileLinkRollBtn" style="display:none;" onclick="openMigrationModal()">🔗 Link my roll number</button>
+            </div>
+            <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
+
+            <hr />
+
+            <div class="field">
+                <label>Current Password</label>
+                <input id="profileOldPassword" type="password" placeholder="Enter current password" />
+            </div>
+            <div class="field">
+                <label>New Password</label>
+                <input id="profileNewPassword" type="password" placeholder="New password (min 6 characters)" />
+            </div>
+            <div class="field">
+                <label>Confirm New Password</label>
+                <input id="profileConfirmPassword" type="password" placeholder="Confirm new password" />
+            </div>
+            <button class="btn-primary" onclick="changePassword()" style="margin-top:0;">Change Password</button>
+        </div>
+    </div>
+
+    <!-- HARD Roll-Number Verification Gate — blocks ALL app functionality until the
+         signed-in account's roll number is verified against the admission roster.
+         Non-dismissible: the app (and every feature in it) stays hidden until
+         verification succeeds. -->
+    <div class="profile-overlay" id="migrationModal">
+        <div class="profile-panel">
+            <h2>🎓 Verify your MMMUT Roll Number</h2>
+            <div style="font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px;">
+                This attendance ledger is for MMMUT students of the 2026–27 batch.
+                Verify your college roll number to continue — your <b>full name and
+                branch are set automatically</b> from the admission roster, so you
+                won't be asked to type your name. This does <b>not</b> create a new
+                account or change your username/password.
+            </div>
+            <div class="field">
+                <label>Roll Number</label>
+                <input id="migrationRollInput" placeholder="e.g. 2026011001" maxlength="12" autocomplete="off" />
+            </div>
+            <button class="btn-primary" onclick="verifyRollNumber()" style="width:100%;">Verify Roll Number</button>
+            <div style="margin-top:14px;text-align:center;">
+                <span style="font-size:12.5px;color:var(--ink-soft);">Need a different account?</span>
+                <a href="javascript:void(0)" style="font-size:12.5px;color:var(--ink-soft);text-decoration:underline;margin-left:6px;"
+                   onclick="handleLogout()">Log out</a>
+            </div>
+            <div class="auth-error" id="migrationError" style="display:none;"></div>
+            <div id="migrationStatus" style="margin-top:12px;font-size:13px;text-align:center;"></div>
+        </div>
+    </div>
+
+    <div class="admin-overlay" id="adminPanel">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h2>⚙️ Admin Panel</h2>
+                <button class="close-btn" onclick="closeAdminPanel()">✕</button>
+            </div>
+            <div class="admin-tabs" id="adminTabs">
+                <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">📊 Dashboard</button>
+                <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
+                <button class="admin-tab" data-tab="timetable" onclick="switchAdminTab('timetable')">📅 Timetable</button>
+                <button class="admin-tab" data-tab="calendar" onclick="switchAdminTab('calendar')">📆 Calendar</button>
+                <button class="admin-tab" data-tab="holidays" onclick="switchAdminTab('holidays')">🏖️ Holidays</button>
+                <button class="admin-tab" data-tab="posts" onclick="switchAdminTab('posts')">📢 Announcements</button>
+                <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin Requests</button>
+                <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+                <button class="admin-tab" data-tab="rollverify" onclick="switchAdminTab('rollverify')">🎓 Roll Verify</button>
+            </div>
+            <div class="admin-panel-body" id="adminBody">
+                <div class="tab-content active" id="tab-dashboard"><div id="adminDashboardContent">Loading dashboard…</div></div>
+                <div class="tab-content" id="tab-users"><div id="adminUsersContent">Loading users…</div></div>
+                <div class="tab-content" id="tab-timetable"><div id="adminTimetableContent">Loading timetable editor…</div></div>
+                <div class="tab-content" id="tab-calendar"><div id="adminCalendarContent">Loading calendar editor…</div></div>
+                <div class="tab-content" id="tab-holidays"><div id="adminHolidaysContent">Loading holidays…</div></div>
+                <div class="tab-content" id="tab-posts"><div id="adminPostsContent">Loading announcements…</div></div>
+                <div class="tab-content" id="tab-requests"><div id="adminRequestsContent">Loading requests…</div></div>
+                <div class="tab-content" id="tab-feedback"><div id="adminFeedbackContent">Loading feedback…</div></div>
+                <div class="tab-content" id="tab-rollverify"><div id="adminRollVerifyContent">Loading roll verification…</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN REPLY MODAL (inline) ===== -->
+    <div class="feedback-overlay" id="adminReplyModal">
+        <div class="feedback-panel" style="max-width:540px;">
+            <div class="feedback-panel-header">
+                <h2>💬 Reply to Feedback</h2>
+                <button class="close-btn" onclick="closeAdminReplyModal()">✕</button>
+            </div>
+            <div class="feedback-panel-body fb-reply-modal">
+                <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;" id="replyTicketInfo">Ticket: —</div>
+                <textarea class="reply-textarea" id="adminReplyText" placeholder="Type your reply…"></textarea>
+                <div class="reply-actions">
+                    <button class="btn-primary" style="width:auto;padding:10px 28px;margin:0;" onclick="submitAdminReply()">Send Reply</button>
+                    <button class="btn-secondary" style="margin:0;" onclick="closeAdminReplyModal()">Cancel</button>
+                </div>
+                <div id="adminReplyError" style="margin-top:10px;font-size:13px;color:var(--brick);display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== LEDGER AI CHAT UI ===================================== -->
+    <!-- ============================================================ -->
+
+    <button class="ledger-ai-fab" id="ledgerAiFab" onclick="toggleLedgerAI()" aria-label="Toggle Ledger AI chat">
+        🤖
+        <span class="badge-dot" id="aiBadgeDot" style="display:none;">•</span>
+    </button>
+
+    <div class="ledger-ai-chat" id="ledgerAiChat">
+        <div class="ledger-ai-header">
+            <div class="brand">
+                <span class="icon">🤖</span>
+                <div>
+                    <div class="title">Ledger AI</div>
+                    <div class="sub">Academic Assistant</div>
+                </div>
+            </div>
+            <div class="actions">
+                <button onclick="clearLedgerAI()" title="Clear conversation">🗑️</button>
+                <button onclick="toggleLedgerAI()" title="Close chat">✕</button>
+            </div>
+        </div>
+
+        <div class="ledger-ai-messages" id="ledgerAiMessages">
+            <div class="empty-state" id="ledgerAiEmpty">
+                <div class="big-icon">📚</div>
+                <div>Ask me anything about your academics</div>
+                <div class="sub">Attendance · Timetable · Syllabus · Study plans</div>
+            </div>
+        </div>
+
+        <div class="ledger-ai-error" id="ledgerAiError"></div>
+
+        <div class="ledger-ai-input">
+            <textarea id="ledgerAiInput" rows="1" placeholder="Ask Ledger AI…" onkeydown="handleLedgerAIKeydown(event)" oninput="autoResizeLedgerInput(this)"></textarea>
+            <button class="send-btn" id="ledgerAiSendBtn" onclick="sendLedgerAIMessage()" title="Send message">➤</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js",
+                "firebase/storage": "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app-check.js",
+                "firebase/ai": "https://www.gstatic.com/firebasejs/12.17.1/firebase-ai.js",
+                "firebase/messaging": "https://www.gstatic.com/firebasejs/12.17.1/firebase-messaging.js"
+            }
+        }
+    </script>
+
+    <!-- Application entry point. Generated by tools/build_frontend.mjs
+         from the source sections in ./js/modules/. Do not hand-edit app.js;
+         edit the section file, then run:  node tools/build_frontend.mjs -->
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>

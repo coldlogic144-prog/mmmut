@@ -1,2 +1,22 @@
 # Secrets — never commit the Firebase Admin SDK service-account key.
 firebase-service-account.json
+*.service-account.json
+serviceAccountKey*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local env / logs
+.env
+backend/dev_err.log
+backend/dev_out.log
+dev.log
+
+# Node
+node_modules/
+
+# Legacy Next.js experiment (unrelated to the ERP; kept for reference only)
+ledger/.next/

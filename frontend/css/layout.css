@@ -1,0 +1,448 @@
+/* Auth screens, app shell, topbar, shell grid */
+#authScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+        .auth-wrap {
+            width: 100%;
+            max-width: 920px;
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
+            background: var(--paper-raised);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--paper-line);
+        }
+        .auth-side {
+            background: linear-gradient(165deg, var(--ink) 0%, #1E3A50 60%, #234459 100%);
+            color: #F1ECDD;
+            padding: 44px 38px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-side::after {
+            content: "";
+            position: absolute;
+            right: -60px;
+            bottom: -60px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 1px solid rgba(241, 236, 221, .18);
+        }
+        .auth-side::before {
+            content: "";
+            position: absolute;
+            right: -10px;
+            bottom: -10px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 1px solid rgba(241, 236, 221, .14);
+        }
+        .auth-mark {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--brass-soft);
+        }
+        .auth-title {
+            font-size: 38px;
+            line-height: 1.08;
+            margin-top: 18px;
+        }
+        .auth-title em {
+            font-style: italic;
+            color: var(--brass-soft);
+        }
+        .auth-sub {
+            margin-top: 14px;
+            font-size: 14.5px;
+            line-height: 1.55;
+            color: #CBD6DD;
+            max-width: 34ch;
+        }
+        .period-strip {
+            display: flex;
+            gap: 6px;
+            margin-top: 28px;
+            position: relative;
+            z-index: 1;
+        }
+        .period-chip {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10.5px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(241, 236, 221, .35);
+            color: #E8E2CE;
+        }
+        .auth-foot {
+            font-size: 11.5px;
+            color: #93A5AF;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-main {
+            padding: 40px 38px;
+            display: flex;
+            flex-direction: column;
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--paper);
+            border-radius: 999px;
+            padding: 4px;
+            margin-bottom: 26px;
+            width: fit-content;
+        }
+        .auth-tab {
+            border: none;
+            background: transparent;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink-soft);
+        }
+        .auth-tab.active {
+            background: var(--ink);
+            color: #F1ECDD;
+        }
+        .field {
+            margin-bottom: 15px;
+        }
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--ink-soft);
+            margin-bottom: 6px;
+        }
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 11px 13px;
+            border-radius: 10px;
+            border: 1px solid var(--paper-line);
+            background: #fff;
+            font-size: 14.5px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color .15s;
+        }
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--brass);
+        }
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .btn-primary {
+            margin-top: 8px;
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            border: none;
+            background: var(--ink);
+            color: #F1ECDD;
+            font-weight: 600;
+            font-size: 14.5px;
+            letter-spacing: .01em;
+            transition: background .15s, transform .1s;
+        }
+        .btn-primary:hover {
+            background: #1E3A50;
+        }
+        .btn-primary:active {
+            transform: scale(.99);
+        }
+        .btn-secondary {
+            margin-top: 8px;
+            padding: 11px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--paper-line);
+            background: var(--paper-raised);
+            color: var(--ink);
+            font-weight: 600;
+            font-size: 13px;
+            transition: background .15s;
+        }
+        .btn-secondary:hover {
+            background: var(--paper);
+        }
+        .btn-danger {
+            margin-top: 8px;
+            padding: 11px 20px;
+            border-radius: 10px;
+            border: none;
+            background: var(--brick);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background .15s;
+        }
+        .btn-danger:hover {
+            background: #8a2e1e;
+        }
+        .btn-success {
+            margin-top: 8px;
+            padding: 11px 20px;
+            border-radius: 10px;
+            border: none;
+            background: var(--moss);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background .15s;
+        }
+        .btn-success:hover {
+            background: #3a5f36;
+        }
+        .auth-error {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--brick);
+            background: var(--brick-soft);
+            padding: 9px 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        .auth-hint {
+            margin-top: 16px;
+            font-size: 11.5px;
+            color: #8B8676;
+            line-height: 1.5;
+        }
+
+        #app {
+            display: none;
+            min-height: 100vh;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            border-bottom: 1px solid var(--paper-line);
+            background: var(--paper-raised);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brass-soft);
+            font-family: 'Fraunces', serif;
+            font-weight: 700;
+        }
+        .brand-name {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 17px;
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--ink-soft);
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: .04em;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--paper);
+            border-radius: 999px;
+            padding: 6px 6px 6px 14px;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .user-pill:hover {
+            background: var(--paper-line);
+        }
+        .user-pill-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .user-pill-branch {
+            font-size: 11px;
+            color: var(--ink-soft);
+        }
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--brass);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .btn-ghost {
+            border: 1px solid var(--paper-line);
+            background: transparent;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink-soft);
+        }
+        .btn-ghost:hover {
+            border-color: var(--ink-soft);
+            color: var(--ink);
+        }
+        .btn-chess {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            border: 1px solid var(--brass);
+            background: var(--brass-soft);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .btn-chess:hover {
+            background: var(--brass);
+            color: #fff;
+        }
+        .btn-admin {
+            border: 1px solid var(--brass);
+            background: var(--brass-soft);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .btn-admin:hover {
+            background: var(--brass);
+            color: #fff;
+        }
+        .btn-request-admin {
+            border: 1px solid var(--teal);
+            background: var(--teal-soft);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--teal);
+        }
+        .btn-request-admin:hover {
+            background: var(--teal);
+            color: #fff;
+        }
+        .btn-download-app {
+            border: 1px solid var(--moss);
+            background: var(--moss-soft);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--moss);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-download-app:hover {
+            background: var(--moss);
+            color: #fff;
+        }
+        .btn-icon {
+            border: 1px solid var(--paper-line);
+            background: transparent;
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: background .15s;
+        }
+        .btn-icon:hover {
+            background: var(--paper);
+        }
+        .badge-dot {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--brick);
+            color: #fff;
+            border-radius: 999px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            min-width: 16px;
+            text-align: center;
+            line-height: 1.2;
+            border: 1px solid var(--paper-raised);
+        }
+
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+        .shell-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 22px;
+        }
+        @media (max-width: 920px) {
+            .shell-grid {
+                grid-template-columns: 1fr;
+                padding: 0;
+            }
+            .shell {
+                padding: 16px;
+            }
+        }

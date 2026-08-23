@@ -1,0 +1,96 @@
+# ============================================================
+# PROPOSED FIRESTORE RULES — ADDITIVE ONLY (NOT YET APPLIED)
+# ============================================================
+# Roll-number migration additions for the Ledger / MMMUT ERP app.
+#
+# IMPORTANT:
+#   * Nothing here edits existing allow rules. The current ruleset in the
+#     Firebase console stays EXACTLY as-is; you only APPEND these blocks.
+#   * The two collections below address the claim-flow and roll-login needs:
+#       studentRoster  ->  rollNumber -> allowed applicant name/branch
+#                         (records admin-migrated by student_roster_import.py)
+#       userRolls      ->  rollNumber -> { uid, username } bridge
+#                         (create-only: a roll number can belong to ONE uid)
+#   * create-only for userRolls is the database primitive that makes
+#     "a roll number can never be claimed twice / silently transferred"
+#     enforceable even if two claims race.
+#
+# HOW TO APPLY (manual, you do this in the console; nothing is auto-deployed):
+#   Firebase Console -> Firestore -> Rules -> paste your current rules,
+#   append the blocks below under your existing `service cloud.firestore`
+#   section, Publish. Keep the exact match paths.
+#
+# ============================================================
+
+# --- Authoritative student roster (imported once by an admin tool) ---
+match /studentRoster/{roll} {
+  // Reads: any signed-in user may check whether a roll number is valid.
+  allow read: if request.auth != null;
+
+  // Writes: only admins (matches the app's existing single-admin model:
+  // users/{uid}.isAdmin == true).
+  allow write: if request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+}
+
+# ============================================================
+# ADMIN ACCOUNT DELETION (new — required by the 🗑 Delete button
+# in Admin Panel -> 👥 Users). Without these blocks the button
+# shows "Delete failed: Missing or insufficient permissions".
+#
+# 1) Admins may permanently remove a user profile:
+match /users/{uid} {
+  allow delete: if request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+}
+
+# 2) Freeing a claimed roll after deletion: the match /userRolls/{roll}
+#    block further below was UPDATED to allow admin deletes — use that
+#    version instead of the old "allow update, delete: if false;".
+
+# --- Roll-number <-> verified account bridge ---
+# roll -> { uid, username, rollNumber, verifiedAt }
+# The document ID IS the roll number, so a roll can only ever exist once.
+match /userRolls/{roll} {
+  // Reads: PUBLIC (no auth) — this is what lets the LOGIN screen resolve a
+  // roll number to its verified account username BEFORE the user signs in.
+  // Trade-off note: roll numbers are public institute data and the mapped
+  // username (e.g. rahul.cse26@mmmut.local) is the same info users already
+  // share in community posts / signup, so this does not expose passwords,
+  // tokens, or private keys — only the alias for the existing login box.
+  allow read: if true;
+
+  // Create-only: a roll number is claimed exactly once, by its owner
+  // (or by an admin manually verifying the owner). UID must match the
+  // requester; the doc must NOT already exist.
+  allow create: if request.auth != null &&
+    request.resource.data.uid == request.auth.uid &&
+    request.resource.data.rollNumber == roll &&
+    !exists(/databases/$(database)/documents/userRolls/$(roll))
+    ||
+    // Admin-approval path (users/{uid}.isAdmin) — once a claim is
+    // manually verified by an admin, the mapping may be created.
+    request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+
+  // Update is never allowed from clients; DELETE is reserved for admins
+  // (used to unlink a roll after deleting a student account). Transfers are
+  // still impossible: a roll can never move to a different uid via update.
+  allow update: if false;
+  allow delete: if request.auth != null &&
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+}
+
+# ============================================================
+# SECURITY NOTES (unchanged behavior vs today)
+#   - A student CANNOT set another student's roll number (userRolls
+#     create is UID-locked and create-only).
+#   - A student CANNOT change their own UID/email/password via this
+#     feature (no auth-user mutations at all).
+#   - A student CANNOT mark themselves admin (no such write path
+#     exists; isAdmin changes come only from the existing admin
+#     approval flow, which already works in the current ruleset).
+#   - Manual verification of a student's own claim is never
+#     self-approvable: users/{uid}.isAdmin can only be true for an
+#     existing admin account.
+# ============================================================
