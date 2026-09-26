@@ -30,6 +30,7 @@
         } from "firebase/auth";
         import {
             getFirestore,
+            initializeFirestore,
             doc,
             setDoc,
             getDoc,
@@ -138,7 +139,9 @@
         }
 
         const auth = getAuth(firebaseApp);
-        const db = getFirestore(firebaseApp);
+        const db = initializeFirestore(firebaseApp, {
+            experimentalAutoDetectLongPolling: true
+        });
         const storage = getStorage(firebaseApp);
         const usersCollection = collection(db, "users");
         const attendanceCollection = collection(db, "attendance");
@@ -6558,7 +6561,7 @@
 
         async function boot() {
             populateBranchOptions();
-            await fetchHolidays();
+            fetchHolidays().catch(e => console.warn('Failed to fetch holidays during boot:', e));
 
             // Pre-initialize AI in the background – if it fails, log the error but don't break the app
             initAI().then(() => {

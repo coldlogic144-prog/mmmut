@@ -20,6 +20,7 @@
         } from "firebase/auth";
         import {
             getFirestore,
+            initializeFirestore,
             doc,
             setDoc,
             getDoc,
@@ -125,7 +126,9 @@
         }
 
         const auth = getAuth(firebaseApp);
-        const db = getFirestore(firebaseApp);
+        const db = initializeFirestore(firebaseApp, {
+            experimentalAutoDetectLongPolling: true
+        });
         const storage = getStorage(firebaseApp);
         const usersCollection = collection(db, "users");
         const attendanceCollection = collection(db, "attendance");

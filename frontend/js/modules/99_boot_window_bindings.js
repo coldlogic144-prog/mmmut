@@ -8,7 +8,7 @@
 
         async function boot() {
             populateBranchOptions();
-            await fetchHolidays();
+            fetchHolidays().catch(e => console.warn('Failed to fetch holidays during boot:', e));
 
             // Pre-initialize AI in the background – if it fails, log the error but don't break the app
             initAI().then(() => {
