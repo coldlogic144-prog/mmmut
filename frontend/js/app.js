@@ -1549,7 +1549,11 @@
         // ========== HELPERS ==========
         function getBranch(id) { return BRANCHES.find(b => b.id === id); }
 
-        function authEmail(username) { return username + '@mmmut.local'; }
+        function authEmail(username) {
+            username = String(username || '').trim().toLowerCase();
+            if (username.endsWith('@mmmut.local')) return username;
+            return username + '@mmmut.local';
+        }
 
         function dateKey(d) { return d.toISOString().slice(0, 10); }
 
@@ -2383,6 +2387,7 @@
 
         // ========== HOLIDAYS ==========
         async function fetchHolidays() {
+            if (!auth.currentUser && !currentUser) return;
             try {
                 const snap = await getDocs(holidaysCollection);
                 holidays = new Set(snap.docs.map(d => d.data().date));
@@ -2633,6 +2638,17 @@
             let username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showError('loginError', 'Enter your username and password.'); return; }
+
+            // If user entered a 10-digit roll number, check if it maps to their registered username
+            if (/^\d{10}$/.test(username)) {
+                try {
+                    const rollSnap = await getDoc(doc(userRollsCollection, username));
+                    if (rollSnap.exists() && rollSnap.data().username) {
+                        username = rollSnap.data().username.toLowerCase();
+                    }
+                } catch (e) { /* continue with raw entered username */ }
+            }
+
             try {
                 const credential = await signInWithEmailAndPassword(auth, authEmail(username), password);
                 const record = await loadUserProfile(credential.user.uid);
@@ -2642,6 +2658,7 @@
                 }
                 await loginAs(record, credential.user.uid);
             } catch (e) {
+                console.warn('Login failed:', e?.code, e?.message);
                 showError('loginError', friendlyAuthError(e, 'login'));
             }
         }

@@ -76,6 +76,17 @@
             let username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showError('loginError', 'Enter your username and password.'); return; }
+
+            // If user entered a 10-digit roll number, check if it maps to their registered username
+            if (/^\d{10}$/.test(username)) {
+                try {
+                    const rollSnap = await getDoc(doc(userRollsCollection, username));
+                    if (rollSnap.exists() && rollSnap.data().username) {
+                        username = rollSnap.data().username.toLowerCase();
+                    }
+                } catch (e) { /* continue with raw entered username */ }
+            }
+
             try {
                 const credential = await signInWithEmailAndPassword(auth, authEmail(username), password);
                 const record = await loadUserProfile(credential.user.uid);
@@ -85,6 +96,7 @@
                 }
                 await loginAs(record, credential.user.uid);
             } catch (e) {
+                console.warn('Login failed:', e?.code, e?.message);
                 showError('loginError', friendlyAuthError(e, 'login'));
             }
         }

@@ -9,7 +9,11 @@
         // ========== HELPERS ==========
         function getBranch(id) { return BRANCHES.find(b => b.id === id); }
 
-        function authEmail(username) { return username + '@mmmut.local'; }
+        function authEmail(username) {
+            username = String(username || '').trim().toLowerCase();
+            if (username.endsWith('@mmmut.local')) return username;
+            return username + '@mmmut.local';
+        }
 
         function dateKey(d) { return d.toISOString().slice(0, 10); }
 

@@ -42,6 +42,7 @@
 
         // ========== HOLIDAYS ==========
         async function fetchHolidays() {
+            if (!auth.currentUser && !currentUser) return;
             try {
                 const snap = await getDocs(holidaysCollection);
                 holidays = new Set(snap.docs.map(d => d.data().date));
