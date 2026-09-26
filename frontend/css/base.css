@@ -1,96 +1,230 @@
-/* Design tokens (:root), resets, typography, loading screen */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* ============================================================================
+   MMMUT ERP / THE LEDGER — BASE DESIGN SYSTEM & TOKENS
+   Modern University SaaS Aesthetic: Clean, spacious, accessible, responsive
+   ============================================================================ */
 
-        :root {
-            --ink: #152A3B;
-            --ink-soft: #2C4258;
-            --paper: #EDEAE0;
-            --paper-raised: #F7F5EE;
-            --paper-line: #D9D4C4;
-            --brass: #B08A3E;
-            --brass-soft: #E4D2A4;
-            --teal: #2F5D5A;
-            --teal-soft: #DCE9E6;
-            --brick: #A3402E;
-            --brick-soft: #F2DCD6;
-            --moss: #4C7A47;
-            --moss-soft: #DCE8D6;
-            --shadow: 0 1px 2px rgba(21, 42, 59, .06), 0 8px 24px rgba(21, 42, 59, .08);
-            --radius: 14px;
-            font-size: 16px;
-        }
-        * {
-            box-sizing: border-box;
-        }
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background: var(--paper);
-            background-image: radial-gradient(circle at 1px 1px, rgba(21, 42, 59, .045) 1px, transparent 0);
-            background-size: 22px 22px;
-            color: var(--ink);
-            font-family: 'IBM Plex Sans', sans-serif;
-            min-height: 100vh;
-        }
-        ::selection {
-            background: var(--brass-soft);
-        }
-        h1,
-        h2,
-        h3,
-        .display {
-            font-family: 'Fraunces', serif;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--ink);
-            margin: 0;
-        }
-        .mono {
-            font-family: 'IBM Plex Mono', monospace;
-        }
-        button {
-            font-family: inherit;
-            cursor: pointer;
-        }
-        input,
-        select,
-        textarea {
-            font-family: inherit;
-        }
-        a {
-            color: inherit;
-        }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-        #loadingScreen {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 14px;
-            background: var(--paper);
-            z-index: 999;
-        }
-        .loader-ring {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 3px solid var(--paper-line);
-            border-top-color: var(--brass);
-            animation: spin 0.9s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .loading-msg {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 13px;
-            color: var(--ink-soft);
-            letter-spacing: .02em;
-        }
+:root {
+    /* Canvas & Surfaces */
+    --bg-canvas: #f8fafc;
+    --surface: #ffffff;
+    --surface-subtle: #f1f5f9;
+    --surface-hover: #e2e8f0;
+    --surface-border: #e2e8f0;
+    --surface-border-subtle: #f1f5f9;
+
+    /* University Brand Palette (Deep Navy / Royal Blue + Azure) */
+    --primary: #1e3a8a;
+    --primary-hover: #1e40af;
+    --primary-active: #172554;
+    --primary-light: #eff6ff;
+    --primary-subtle: #dbeafe;
+    --primary-focus: rgba(30, 58, 138, 0.18);
+
+    --accent: #0284c7;
+    --accent-hover: #0369a1;
+    --accent-light: #f0f9ff;
+    --accent-subtle: #e0f2fe;
+
+    /* Text & Typography */
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --text-light: #94a3b8;
+    --text-inverse: #ffffff;
+
+    /* Semantic Status */
+    --success: #059669;
+    --success-bg: #ecfdf5;
+    --success-text: #065f46;
+    --success-border: #a7f3d0;
+
+    --warning: #d97706;
+    --warning-bg: #fffbeb;
+    --warning-text: #92400e;
+    --warning-border: #fde68a;
+
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --danger-text: #991b1b;
+    --danger-border: #fecaca;
+
+    --info: #2563eb;
+    --info-bg: #eff6ff;
+    --info-text: #1d4ed8;
+    --info-border: #bfdbfe;
+
+    /* Backward compatibility mappings for existing feature classes */
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --paper: #f8fafc;
+    --paper-raised: #ffffff;
+    --paper-line: #e2e8f0;
+    --brass: #0284c7;
+    --brass-soft: #e0f2fe;
+    --teal: #0f766e;
+    --teal-soft: #ccfbf1;
+    --brick: #dc2626;
+    --brick-soft: #fee2e2;
+    --moss: #059669;
+    --moss-soft: #d1fae5;
+
+    /* Elevation & Shadows */
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+
+    /* Radii */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-full: 9999px;
+
+    /* Touch & Layout Standards */
+    --touch-min: 44px;
+    --sidebar-width: 260px;
+    --header-height: 64px;
+    --mobile-nav-height: 60px;
+
+    /* Typography scale */
+    font-size: 16px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: light;
+}
+
+/* Base Resets */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    background-color: var(--bg-canvas);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+::selection {
+    background: var(--primary-subtle);
+    color: var(--primary);
+}
+
+/* Typography elements */
+h1, h2, h3, h4, h5, h6, .display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    line-height: 1.25;
+}
+
+.mono {
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    font-feature-settings: 'tnum' on, 'zero' on;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: 14.5px;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Accessible focus visible outlines */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Modern Loading Screen */
+#loadingScreen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--surface);
+    z-index: 9999;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.loader-ring {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 3.5px solid var(--surface-subtle);
+    border-top-color: var(--primary);
+    animation: erp-spin 0.8s cubic-bezier(0.6, 0.2, 0.4, 0.9) infinite;
+}
+
+@keyframes erp-spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-msg {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

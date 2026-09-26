@@ -8,7 +8,15 @@
 // Sections composed: 10_firebase_boot.js, 15_flags_config.js, 20_notifications_push.js, 25_ai_init.js, 30_data_tables.js, 35_schedule_engine.js, 40_syllabus_data.js, 45_syllabus_ui.js, 50_state_toast_holidays_profile.js, 55_auth_core.js, 60_session_loginAs.js, 65_roll_verification.js, 70_notif_badge_admin_request.js, 75_admin_panel.js, 80_feed_attendance_events_image_history.js, 85_chess_club.js, 90_community_feedback_rating.js, 95_ledger_ai_chat.js, 99_boot_window_bindings.js
 // ============================================================================
 
-// ===== FIREBASE IMPORTS =====
+// ============================================================================
+// SECTION: 10_firebase_boot.js
+// SDK imports, firebaseConfig, App Check, auth/db/storage + all Firestore collection refs
+// Source: index.html lines 3446-3583 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
+        // ===== FIREBASE IMPORTS =====
         import { initializeApp } from "firebase/app";
         import {
             getAuth,
@@ -150,6 +158,14 @@
         const chessActivityCollection = collection(db, "chessActivity");
         const chessGamesCollection = collection(db, "chessGames");
 
+// ============================================================================
+// SECTION: 15_flags_config.js
+// Roll-migration kill-switches/pattern + FCM VAPID key & SW path
+// Source: index.html lines 3584-3605, 3607-3620 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
 
         // ========== ROLL-NUMBER MIGRATION (recovery-safe, additive) ==========
         // Master switches. FLIP ROLL_MIGRATION_ENABLED to false to instantly
@@ -192,6 +208,14 @@
         // page (same directory as index.html), per Part 1.
         const FCM_SW_PATH = 'firebase-messaging-sw.js';
 
+
+// ============================================================================
+// SECTION: 20_notifications_push.js
+// Firebase Cloud Messaging web-push module
+// Source: index.html lines 3621-3877 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         let messagingInstance = null;
         let fcmSwRegistration = null;
@@ -451,6 +475,14 @@
         let aiReady = false;
 
 
+// ============================================================================
+// SECTION: 25_ai_init.js
+// Ledger AI (Gemini) model init
+// Source: index.html lines 3878-3906 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         async function initAI() {
             if (aiReady) return;
 
@@ -480,6 +512,14 @@
             }
         }
 
+
+// ============================================================================
+// SECTION: 30_data_tables.js
+// PERIODS/BRANCHES/BUILTIN_EVENTS/PDF_TIMETABLES static data
+// Source: index.html lines 3907-4919 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         // ========== DATA ==========
         const PERIODS = [
@@ -1495,6 +1535,14 @@
         };
 
 
+// ============================================================================
+// SECTION: 35_schedule_engine.js
+// Helpers + seeded timetable generator
+// Source: index.html lines 4920-5042 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         // ========== HELPERS ==========
         function getBranch(id) { return BRANCHES.find(b => b.id === id); }
 
@@ -1618,6 +1666,14 @@
             return grid;
         }
 
+
+// ============================================================================
+// SECTION: 40_syllabus_data.js
+// Per-branch/year syllabus dataset
+// Source: index.html lines 5043-5612 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         // ========== SYLLABUS DATA (from PDFs) ==========
         const syllabusData = {
@@ -2190,6 +2246,14 @@
         };
 
 
+// ============================================================================
+// SECTION: 45_syllabus_ui.js
+// Syllabus viewer
+// Source: index.html lines 5613-5693 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         // ========== SYLLABUS FUNCTIONS ==========
         function loadSyllabus() {
             const branchId = document.getElementById('syllabusBranch').value;
@@ -2271,6 +2335,14 @@
                 win.document.close();
             }
         }
+
+// ============================================================================
+// SECTION: 50_state_toast_holidays_profile.js
+// Shared state lets, toast, holidays, profile modal, branch options
+// Source: index.html lines 5694-5912 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
 
         // ========== STATE ==========
@@ -2491,6 +2563,14 @@
 
         function hideError(id) { document.getElementById(id).style.display = 'none'; }
 
+
+// ============================================================================
+// SECTION: 55_auth_core.js
+// Signup / Login / Logout / profile loaders / friendlyAuthError
+// Source: index.html lines 5913-6160 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         // ========== AUTH ==========
         async function handleSignup() {
@@ -2762,6 +2842,14 @@
                 'Could not log in — please try again.';
         }
 
+// ============================================================================
+// SECTION: 60_session_loginAs.js
+// loginAs() session starter wiring all listeners + gates
+// Source: index.html lines 6161-6349 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
 
         // ========== LOGIN AS ==========
         async function loginAs(record, uid) {
@@ -2951,6 +3039,14 @@
         //     usable first, and the gate cannot be dismissed.
         //   * the full name is NEVER asked — it is auto-assigned from the roster.
         //   * verified users keep working with their normal username/password login.
+
+// ============================================================================
+// SECTION: 65_roll_verification.js
+// Roll-number hard gate, claim, finalize (roll-login core)
+// Source: index.html lines 6350-6646 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         function rollMigrationActive(user) {
             if (!ROLL_MIGRATION_ENABLED) return false;
@@ -3307,6 +3403,14 @@
         }
 
 
+// ============================================================================
+// SECTION: 70_notif_badge_admin_request.js
+// Notification badge, posts-read, admin role request, admin roll-verify tab
+// Source: index.html lines 6647-6864 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         // ========== NOTIFICATION ==========
         function updateNotificationBadge() {
             const badge = document.getElementById('notifBadge');
@@ -3525,6 +3629,14 @@
         // ========== ADMIN PANEL ==========
         let adminTab = 'dashboard';
 
+
+// ============================================================================
+// SECTION: 75_admin_panel.js
+// Admin dashboard/users/timetable-editor/calendar/holidays/posts/requests
+// Source: index.html lines 6865-7450 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         function openAdminPanel() {
             if (!isAdmin) { showToast('You are not an admin.'); return; }
@@ -4113,6 +4225,14 @@
 
         // ========== RENDER: Posts Feed ==========
 
+// ============================================================================
+// SECTION: 80_feed_attendance_events_image_history.js
+// Posts feed, topbar, schedule render+marking, stats, events, canvas image, history
+// Source: index.html lines 7451-8012 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         async function renderPostsFeed(viewAll = false) {
             const content = document.getElementById('postsFeedContent');
             if (!content) return;
@@ -4675,6 +4795,14 @@
         // ============================================================
         // ========== CHESS CLUB ======================================
         // ============================================================
+
+// ============================================================================
+// SECTION: 85_chess_club.js
+// Chess club manager (members/events/challenges/games/activity)
+// Source: index.html lines 8013-8578 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
 
         function toggleChessClub(show) {
@@ -5242,6 +5370,14 @@
         // ========== COMMUNITY POSTS ==================================
         // ============================================================
 
+
+// ============================================================================
+// SECTION: 90_community_feedback_rating.js
+// Community posts, feedback tickets, ratings
+// Source: index.html lines 8579-9346 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         function openCreatePost() {
             if (!currentUser) { showToast('Please log in first.'); return; }
@@ -6012,6 +6148,14 @@
         const MAX_HISTORY = 20;
 
 
+// ============================================================================
+// SECTION: 95_ledger_ai_chat.js
+// Ledger AI chat UI, context builder, prompts
+// Source: index.html lines 9347-9893 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
+
         function toggleLedgerAI() {
             const chat = document.getElementById('ledgerAiChat');
             const isOpen = chat.classList.contains('open');
@@ -6559,6 +6703,14 @@
         }
 
         // ========== BOOT – UPDATED TO HANDLE AI INIT GRACEFULLY ==========
+
+// ============================================================================
+// SECTION: 99_boot_window_bindings.js
+// boot(), auth-state router, window.* bindings for inline onclick, DOMContentLoaded
+// Source: index.html lines 9894-10132 (verbatim)
+// NOTE: sections share one module scope after composition — plain code, no
+// imports/exports here by design. Rebuild app.js after editing.
+// ============================================================================
 
         async function boot() {
             populateBranchOptions();

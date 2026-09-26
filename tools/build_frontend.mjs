@@ -5,8 +5,11 @@
 // (they share one module scope by design).
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const FE = 'e:/mmmut/frontend';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const FE = path.resolve(__dirname, '..', 'frontend');
 const MODS = path.join(FE, 'js', 'modules');
 
 const files = fs.readdirSync(MODS).filter(f => f.endsWith('.js')).sort();
