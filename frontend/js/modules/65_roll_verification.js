@@ -7,17 +7,12 @@
 // ============================================================================
 
         function rollMigrationActive(user) {
-            if (!ROLL_MIGRATION_ENABLED) return false;
-            if (!ROLL_MIGRATION_TEST_MODE) return true;
-            const username = String((user && user.username) || '').toLowerCase();
-            return ROLL_MIGRATION_TEST_USERS.map(u => u.toLowerCase()).includes(username);
+            return false;
         }
 
         function rollMigrationLog(...args) {
             if (ROLL_MIGRATION_ENABLED && ROLL_MIGRATION_DEBUG) {
                 try {
-                    // Migration diagnostics ONLY — never passwords, auth tokens,
-                    // FCM tokens, private keys, or service-account credentials.
                     console.debug('[roll-mig]', ...args);
                 } catch (e) { /* ignore */ }
             }
@@ -53,14 +48,9 @@
             }
         }
 
-        // HARD-GATE STATE — while the roll number is unverified the app is hidden behind
-        // this modal and it cannot be dismissed (no ✕, no "skip for now").
+        // HARD-GATE STATE — disabled
         let rollGateLocked = false;
 
-        // Maps a roster branch code to the app's branch id. Codes come from the
-        // enrollment-number prefix in the official 2026-27 admission roster:
-        //   CED Civil · CSD CSE · EED Electrical · ECD ECE · IOT ECE(IoT)
-        //   MED Mechanical · CHD Chemical · ITC IT
         const ROSTER_BRANCH_TO_ID = {
             'CED': 'civil',
             'CSD': 'cse',
@@ -76,45 +66,24 @@
         }
 
         function rollGateActive(user) {
-            return ROLL_MIGRATION_ENABLED && rollMigrationActive(user) &&
-                String(user && user.migrationStatus) !== 'verified';
+            return false;
         }
 
         function enforceRollGate() {
+            rollGateLocked = false;
             const app = document.getElementById('app');
             const modal = document.getElementById('migrationModal');
-            if (!currentUser) {
-                rollGateLocked = false;
-                if (app) app.style.display = 'block';
-                if (modal) modal.classList.remove('open');
-                return;
-            }
-            rollGateLocked = rollGateActive(currentUser);
-            if (app) app.style.display = rollGateLocked ? 'none' : 'block';
-            if (rollGateLocked) {
-                openMigrationModal();
-            } else if (modal) {
-                modal.classList.remove('open');
-            }
+            if (app) app.style.display = 'block';
+            if (modal) modal.classList.remove('open');
         }
 
         function openMigrationModal() {
-            const modal = document.getElementById('migrationModal');
-            if (!modal || !currentUser) return;
-            if (!rollMigrationActive(currentUser)) return;
-            if (currentUser.migrationStatus === 'verified') return;
-            const input = document.getElementById('migrationRollInput');
-            if (input) input.value = currentUser.pendingRollNumber || currentUser.rollNumber || '';
-            const errEl = document.getElementById('migrationError');
-            if (errEl) errEl.style.display = 'none';
-            renderMigrationStatus();
-            modal.classList.add('open');
+            // Disabled while roll number system is removed
+            return;
         }
 
         function closeMigrationModal() {
-            // The verification gate CANNOT be dismissed while it is blocking the
-            // app — but it is always allowed to close during sign-out (no user).
-            if (rollGateLocked && currentUser) return;
+            rollGateLocked = false;
             const modal = document.getElementById('migrationModal');
             if (modal) modal.classList.remove('open');
         }

@@ -60,13 +60,9 @@
 
                 <!-- Login Form -->
                 <div id="loginForm">
-                    <div class="auth-tabs" id="loginMethodTabs" style="margin-bottom:18px;width:100%;">
-                        <button class="auth-tab active" id="loginMethodUser" type="button" onclick="setLoginMethod('user')">👤 Username</button>
-                        <button class="auth-tab" id="loginMethodRoll" type="button" onclick="setLoginMethod('roll')">🎓 Roll Number</button>
-                    </div>
                     <div class="field">
-                        <label id="loginIdentifierLabel" for="loginUsername">Username / Roll Number</label>
-                        <input id="loginUsername" placeholder="e.g. rahul.cse26 or 2026011001" autocomplete="username" />
+                        <label id="loginIdentifierLabel" for="loginUsername">Username</label>
+                        <input id="loginUsername" placeholder="e.g. rahul.cse26" autocomplete="username" />
                     </div>
                     <div class="field">
                         <label for="loginPassword">Password</label>
@@ -82,11 +78,8 @@
                 <!-- Signup Form -->
                 <div id="signupForm" style="display:none;">
                     <div class="field">
-                        <label for="suRollNumber">MMMUT Roll Number (10 digits)</label>
-                        <input id="suRollNumber" placeholder="e.g. 2026011001" maxlength="12" autocomplete="off" />
-                    </div>
-                    <div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:-6px 0 16px;">
-                        Full name and branch are automatically assigned from the 2026–27 admission roster.
+                        <label for="suName">Full Name</label>
+                        <input id="suName" placeholder="e.g. Rahul Kumar" autocomplete="name" />
                     </div>
                     <div class="field-row">
                         <div class="field">
@@ -813,19 +806,6 @@
                     </select>
                 </div>
             </div>
-            <div class="field-row">
-                <div class="field">
-                    <label for="profileRollNumber">Roll Number</label>
-                    <input id="profileRollNumber" disabled placeholder="—" />
-                </div>
-                <div class="field">
-                    <label for="profileMigrationStatus">Status</label>
-                    <input id="profileMigrationStatus" disabled placeholder="—" />
-                </div>
-            </div>
-            <div style="margin:4px 0 16px;">
-                <button class="btn-secondary" id="profileLinkRollBtn" style="display:none;" onclick="openMigrationModal()">🔗 Link my roll number</button>
-            </div>
             <button class="btn-primary" onclick="saveProfile()">Save Profile</button>
 
             <hr />
@@ -847,27 +827,6 @@
         </div>
     </div>
 
-    <!-- Hard Roll Verification Modal -->
-    <div class="profile-overlay" id="migrationModal">
-        <div class="profile-panel">
-            <h2>🎓 Verify Your MMMUT Roll Number</h2>
-            <div style="font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-bottom:16px;">
-                Verify your 10-digit MMMUT roll number to continue. Your <b>full name and branch are set automatically</b> from the admission roster.
-            </div>
-            <div class="field">
-                <label for="migrationRollInput">College Roll Number</label>
-                <input id="migrationRollInput" placeholder="e.g. 2026011001" maxlength="12" autocomplete="off" />
-            </div>
-            <button class="btn-primary" onclick="verifyRollNumber()" style="width:100%;">Verify Roll Number</button>
-            <div style="margin-top:16px;text-align:center;">
-                <span style="font-size:13px;color:var(--text-muted);">Need a different account?</span>
-                <a href="javascript:void(0)" style="font-size:13px;color:var(--primary);font-weight:600;margin-left:6px;" onclick="handleLogout()">Log out</a>
-            </div>
-            <div class="auth-error" id="migrationError" style="display:none;" role="alert"></div>
-            <div id="migrationStatus" style="margin-top:12px;font-size:13px;text-align:center;"></div>
-        </div>
-    </div>
-
     <!-- Admin Panel Drawer -->
     <div class="admin-overlay" id="adminPanel">
         <div class="admin-panel">
@@ -884,7 +843,6 @@
                 <button class="admin-tab" data-tab="posts" onclick="switchAdminTab('posts')">📢 Announcements</button>
                 <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin Requests</button>
                 <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
-                <button class="admin-tab" data-tab="rollverify" onclick="switchAdminTab('rollverify')">🎓 Roll Verify</button>
             </div>
             <div class="admin-panel-body" id="adminBody">
                 <div class="tab-content active" id="tab-dashboard"><div id="adminDashboardContent">Loading dashboard…</div></div>
@@ -895,7 +853,6 @@
                 <div class="tab-content" id="tab-posts"><div id="adminPostsContent">Loading announcements…</div></div>
                 <div class="tab-content" id="tab-requests"><div id="adminRequestsContent">Loading requests…</div></div>
                 <div class="tab-content" id="tab-feedback"><div id="adminFeedbackContent">Loading feedback…</div></div>
-                <div class="tab-content" id="tab-rollverify"><div id="adminRollVerifyContent">Loading roll verification…</div></div>
             </div>
         </div>
     </div>

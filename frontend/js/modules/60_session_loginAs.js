@@ -17,10 +17,8 @@
             lastReadPosts = record.lastReadPosts || 0;
 
             document.getElementById('authScreen').style.display = 'none';
-            // HARD roll-number gate — the whole app stays hidden until the account
-            // is verified, so NO feature is usable before verification succeeds.
-            rollGateLocked = ROLL_MIGRATION_ENABLED && rollMigrationActive(record) && record.migrationStatus !== 'verified';
-            document.getElementById('app').style.display = rollGateLocked ? 'none' : 'block';
+            rollGateLocked = false;
+            document.getElementById('app').style.display = 'block';
 
             const branch = getBranch(record.branchId);
             document.getElementById('pillName').textContent = record.name;
@@ -180,8 +178,7 @@
             // automatically — see PART 4/9). Runs after auth is fully established.
             updatePushButtonUI();
             initializePushNotifications().catch(e => console.warn('Push init skipped:', e));
-            // Hard roll-number gate — non-dismissible; unlocks only on verification.
-            enforceRollGate();
+            rollGateLocked = false;
         }
 
         // ========== ROLL-NUMBER VERIFICATION — CORE (hard-gate, additive) ==========

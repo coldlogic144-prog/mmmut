@@ -194,22 +194,10 @@
             sel.innerHTML = branch.sections.map(s => `<option value="${s}">Section ${s}</option>`).join('');
         }
 
-        // Toggle between "Login with Username" and "Login with Roll Number".
-        let loginMethod = 'user'; // 'user' | 'roll'
+        // Login method (retained as safe stub while roll number system is removed)
+        let loginMethod = 'user';
         function setLoginMethod(m) {
-            loginMethod = (m === 'roll') ? 'roll' : 'user';
-            const userBtn = document.getElementById('loginMethodUser');
-            const rollBtn = document.getElementById('loginMethodRoll');
-            const lbl = document.getElementById('loginIdentifierLabel');
-            const inp = document.getElementById('loginUsername');
-            if (userBtn) userBtn.classList.toggle('active', loginMethod === 'user');
-            if (rollBtn) rollBtn.classList.toggle('active', loginMethod === 'roll');
-            if (lbl) lbl.textContent = loginMethod === 'roll' ? 'Roll Number' : 'Username';
-            if (inp) {
-                inp.value = '';
-                inp.placeholder = loginMethod === 'roll' ? 'e.g. 2026011001' : 'e.g. rahul.cse26';
-                inp.autocomplete = loginMethod === 'roll' ? 'off' : 'username';
-            }
+            loginMethod = 'user';
         }
 
         function switchAuthTab(which) {

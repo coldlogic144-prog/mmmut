@@ -9,72 +9,28 @@
         // ========== AUTH ==========
         async function handleSignup() {
             hideError('signupError');
+            const nameEl = document.getElementById('suName');
+            const name = (nameEl ? nameEl.value : '').trim();
             const username = document.getElementById('suUsername').value.trim().toLowerCase();
             const password = document.getElementById('suPassword').value;
-            const rollNumber = normalizeRollInput(document.getElementById('suRollNumber') ? document.getElementById('suRollNumber').value : '');
-            if (!username || !password) { showError('signupError', 'Fill in your username and password.'); return; }
-            if (username.length < 3) { showError('signupError', 'Username should be at least 3 characters.'); return; }
-            if (password.length < 6) { showError('signupError', 'Password should be at least 6 characters.'); return; }
-            // Roll number is COMPULSORY and drives the whole account: the full name
-            // and branch are AUTO-ASSIGNED from the admission roster (never typed).
-            if (!ROLL_NUMBER_PATTERN.test(rollNumber)) { showError('signupError', 'Roll Number is compulsory — enter your valid 10-digit college roll number (e.g. 2026011001).'); return; }
+            const branchId = document.getElementById('suBranch').value;
+            const section = document.getElementById('suSection').value;
+            const hostel = document.getElementById('suHostel').value;
+            const gender = document.getElementById('suGender').value;
+
+            if (!name || !username || !password) {
+                showError('signupError', 'Fill in your name, username and password.');
+                return;
+            }
+            if (username.length < 3) {
+                showError('signupError', 'Username should be at least 3 characters.');
+                return;
+            }
+            if (password.length < 6) {
+                showError('signupError', 'Password should be at least 6 characters.');
+                return;
+            }
             const isAdminFlag = (username === 'tanish');
-
-            // Resolve the roll BEFORE creating any account. The account is created
-            // already VERIFIED because its identity is taken straight from the
-            // roster — there is no name field for the user to fill in.
-            let rosterName = '', mappedBranch = 'civil', rosterSection = '';
-            // FIX (D2): Firestore is the primary source; if it errors or misses we
-            // fall back to the Python backend's mirror of admission_data.csv so a
-            // missing/lagging security rule can never lock a legitimate student out.
-            let rd = null;
-            try {
-                const rsnap = await getDoc(doc(studentRosterCollection, rollNumber));
-                if (rsnap.exists()) rd = rsnap.data();
-            } catch (e) {
-                rollMigrationLog('signup roster lookup failed', e && e.code);
-            }
-            if (!rd) {
-                const apiRec = (typeof apiFetchRoster === 'function') ? await apiFetchRoster(rollNumber) : null;
-                if (apiRec && apiRec.applicantName) {
-                    rd = apiRec;
-                    rollMigrationLog('signup roster resolved via backend API', { roll: rollNumber });
-                }
-            }
-            if (!rd) {
-                showError('signupError', 'That roll number is not in the B.Tech 2026–27 admission roster. Contact an administrator if this is a mistake.');
-                return;
-            }
-            try {
-                rosterName = (rd.applicantName || rd.formalName || '').trim();
-                if (!rosterName) { showError('signupError', 'The roster has no applicant name for that roll number. Contact an administrator.'); return; }
-                mappedBranch = rosterBranchToId(rd.branchName || (rd.enrollmentNo || '').slice(4, 7));
-                rosterSection = String(rd.section || '').trim().toUpperCase();
-                const claimSnap = await getDoc(doc(userRollsCollection, rollNumber));
-                if (claimSnap.exists()) {
-                    showError('signupError', 'That roll number is already linked to an existing account. Log in with that account or contact an administrator.');
-                    return;
-                }
-            } catch (e) {
-                rollMigrationLog('signup claim check failed', e && e.code);
-                showError('signupError', 'Could not check the admission roster right now. Please try again in a moment.');
-                return;
-            }
-
-            // Reflect the roster-derived branch in the form so what the user sees
-            // matches what is actually saved.
-            const branchSel = document.getElementById('suBranch');
-            if (branchSel && branchSel.value !== mappedBranch) {
-                branchSel.value = mappedBranch;
-                populateSectionOptions();
-            }
-            // Prefer the exact section recorded for this roll in the roster.
-            const validSignupSections = ((getBranch(mappedBranch) || {}).sections) || [];
-            if (rosterSection && validSignupSections.includes(rosterSection)) {
-                document.getElementById('suSection').value = rosterSection;
-            }
-            const section = document.getElementById('suSection').value ||
-                (((getBranch(mappedBranch) || {}).sections || [])[0] || '');
 
             signingUp = true;
             try {
@@ -89,43 +45,23 @@
                     throw e;
                 }
                 const record = {
-                    name: rosterName,
+                    name,
                     username,
-                    branchId: mappedBranch,
+                    branchId,
                     section,
-                    hostel: document.getElementById('suHostel').value,
-                    gender: document.getElementById('suGender').value,
+                    hostel,
+                    gender,
                     isAdmin: isAdminFlag,
                     adminRequested: false,
                     migrationStatus: 'verified',
-                    rollNumber,
-                    rollNumberVerified: true,
+                    rollNumber: '',
+                    rollNumberVerified: false,
                     pendingRollNumber: '',
                     migrationReviewReason: '',
                     createdAt: Date.now(),
                     lastReadPosts: 0
                 };
                 await setDoc(doc(usersCollection, credential.user.uid), record, { merge: true });
-                try {
-                    await setDoc(doc(userRollsCollection, rollNumber), {
-                        uid: credential.user.uid,
-                        username,
-                        rollNumber,
-                        verifiedAt: serverTimestamp()
-                    }, { merge: false });
-                } catch (e) {
-                    // The roll was claimed in a race — keep the account but flag it
-                    // for review; the hard gate will explain the situation on login.
-                    rollMigrationLog('signup roll claim race', { roll: rollNumber });
-                    await updateDoc(doc(usersCollection, credential.user.uid), {
-                        migrationStatus: 'pending',
-                        pendingRollNumber: rollNumber,
-                        migrationReviewReason: 'claim-race'
-                    });
-                    record.migrationStatus = 'pending';
-                    record.pendingRollNumber = rollNumber;
-                    record.migrationReviewReason = 'claim-race';
-                }
                 try { await setDoc(doc(attendanceCollection, credential.user.uid), { attendance: {} }); } catch (e) {}
                 await loginAs(record, credential.user.uid);
             } catch (e) {
@@ -137,56 +73,9 @@
 
         async function handleLogin() {
             hideError('loginError');
-            const loginMode = (typeof loginMethod !== 'undefined') ? loginMethod : 'user';
             let username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) { showError('loginError', 'Enter your username and password.'); return; }
-            // TWO LOGIN OPTIONS:
-            //   * 'user' mode — normal username login.
-            //   * 'roll' mode — the box holds a 10-digit roll number, resolved to
-            //     the VERIFIED existing account (userRolls/{roll} -> uid + username).
-            // Real sign-in STILL uses that account's normal email/password — no new
-            // credential system, no secrets in the frontend. Username mode also
-            // auto-detects a plain 10-digit roll for backward compatibility.
-            const enteredRoll = ROLL_NUMBER_PATTERN.test(username);
-            const useRollPath = loginMode === 'roll';
-            if (useRollPath && !enteredRoll) { showError('loginError', 'Roll Number mode expects a 10-digit roll number (e.g. 2026011001).'); return; }
-            if (ROLL_MIGRATION_ENABLED && (useRollPath || enteredRoll)) {
-                try {
-                    const rollSnap = await getDoc(doc(userRollsCollection, username));
-                    if (rollSnap.exists()) {
-                        const r = rollSnap.data();
-                        // Best-effort check that the mapped account still exists;
-                        // if the users read is blocked by rules, trust the verified mapping.
-                        let accountOk = false;
-                        try {
-                            const ue = await getDoc(doc(usersCollection, r.uid));
-                            accountOk = ue.exists();
-                        } catch (e) { accountOk = true; }
-                        if (accountOk && r.username) {
-                            // Roll login works for any verified mapping (no test-mode gate).
-                            username = r.username;
-                            rollMigrationLog('roll login resolution', { mappedUid: r.uid });
-                        } else {
-                            showError('loginError', 'That roll number is linked to an account that could not be loaded. Contact an administrator.');
-                            return;
-                        }
-                    } else {
-                        // FIX (D3): clearer guidance — the user is hard-gated, so
-                        // "link it from your profile" was unreachable advice.
-                        showError('loginError', 'That roll number is not linked to an account yet. Sign in with your USERNAME first; when the Verify Roll Number screen appears, enter this roll number once. Afterwards you can log in with it directly.');
-                        return;
-                    }
-                } catch (e) {
-                    rollMigrationLog('roll lookup failed', e && e.code);
-                    if (e && e.code === 'permission-denied') {
-                        showError('loginError', 'Roll-number lookup blocked by Firestore rules. Ask the admin to publish the public-read rule for the "userRolls" collection (see firestore_rules_append.txt). Until then, log in with your username.');
-                    } else {
-                        showError('loginError', 'Roll-number login is unavailable right now. Use your username to log in.');
-                    }
-                    return;
-                }
-            }
             try {
                 const credential = await signInWithEmailAndPassword(auth, authEmail(username), password);
                 const record = await loadUserProfile(credential.user.uid);
