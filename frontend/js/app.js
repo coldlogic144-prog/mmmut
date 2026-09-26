@@ -2627,6 +2627,7 @@
                 try { await setDoc(doc(attendanceCollection, credential.user.uid), { attendance: {} }); } catch (e) {}
                 await loginAs(record, credential.user.uid);
             } catch (e) {
+                console.warn('Signup profile write error:', e);
                 showError('signupError', friendlyAuthError(e, 'signup'));
             } finally {
                 signingUp = false;

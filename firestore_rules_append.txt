@@ -38,10 +38,20 @@ match /studentRoster/{roll} {
 # in Admin Panel -> 👥 Users). Without these blocks the button
 # shows "Delete failed: Missing or insufficient permissions".
 #
-# 1) Admins may permanently remove a user profile:
+# 1) Users collection: creation on signup, update by owner/admin, deletion by admin:
 match /users/{uid} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && request.auth.uid == uid;
+  allow update: if request.auth != null && (
+    request.auth.uid == uid ||
+    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+  );
   allow delete: if request.auth != null &&
     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+
+  match /notificationTokens/{tokenId} {
+    allow read, write: if request.auth != null && request.auth.uid == uid;
+  }
 }
 
 # 2) Freeing a claimed roll after deletion: the match /userRolls/{roll}
