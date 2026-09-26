@@ -3064,7 +3064,8 @@
             if (err) err.style.display = 'none';
             if (!currentUser) { fail('You are not logged in.'); return; }
             if (!rollMigrationActive(currentUser)) { fail('Roll-number verification is not enabled for this session yet.'); return; }
-            const raw = normalizeRollInput(document.getElementById('migrationRollInput').value);
+            const input = document.getElementById('migrationRollInput');
+            const raw = normalizeRollInput(input ? input.value : '');
             if (!raw) return fail('Enter your roll number.');
             if (!ROLL_NUMBER_PATTERN.test(raw)) return fail('That does not look like a 10-digit roll number (e.g. 2026011001).');
 

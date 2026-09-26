@@ -5832,22 +5832,9 @@
             sel.innerHTML = branch.sections.map(s => `<option value="${s}">Section ${s}</option>`).join('');
         }
 
-        // Toggle between "Login with Username" and "Login with Roll Number".
-        let loginMethod = 'user'; // 'user' | 'roll'
+        let loginMethod = 'user';
         function setLoginMethod(m) {
-            loginMethod = (m === 'roll') ? 'roll' : 'user';
-            const userBtn = document.getElementById('loginMethodUser');
-            const rollBtn = document.getElementById('loginMethodRoll');
-            const lbl = document.getElementById('loginIdentifierLabel');
-            const inp = document.getElementById('loginUsername');
-            if (userBtn) userBtn.classList.toggle('active', loginMethod === 'user');
-            if (rollBtn) rollBtn.classList.toggle('active', loginMethod === 'roll');
-            if (lbl) lbl.textContent = loginMethod === 'roll' ? 'Roll Number' : 'Username';
-            if (inp) {
-                inp.value = '';
-                inp.placeholder = loginMethod === 'roll' ? 'e.g. 2026011001' : 'e.g. rahul.cse26';
-                inp.autocomplete = loginMethod === 'roll' ? 'off' : 'username';
-            }
+            loginMethod = 'user';
         }
 
         function switchAuthTab(which) {
@@ -5864,10 +5851,6 @@
         function hideError(id) { document.getElementById(id).style.display = 'none'; }
 
         // ========== AUTH ==========
-        let loginMethod = 'user';
-        function setLoginMethod(m) {
-            loginMethod = 'user';
-        }
 
         async function handleSignup() {
             hideError('signupError');
@@ -6352,7 +6335,8 @@
             if (err) err.style.display = 'none';
             if (!currentUser) { fail('You are not logged in.'); return; }
             if (!rollMigrationActive(currentUser)) { fail('Roll-number verification is not enabled for this session yet.'); return; }
-            const raw = normalizeRollInput(document.getElementById('migrationRollInput').value);
+            const input = document.getElementById('migrationRollInput');
+            const raw = normalizeRollInput(input ? input.value : '');
             if (!raw) return fail('Enter your roll number.');
             if (!ROLL_NUMBER_PATTERN.test(raw)) return fail('That does not look like a 10-digit roll number (e.g. 2026011001).');
 
