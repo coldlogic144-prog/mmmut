@@ -78,17 +78,25 @@
                     updatePushButtonUI();
                     return;
                 }
+                // If user is already loaded and active (e.g. handleLogin or handleSignup just finished), don't duplicate
+                if (currentUid === user.uid && currentUser) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    return;
+                }
                 try {
                     const record = await loadUserProfile(user.uid);
                     if (record.username === 'tanish' && !record.isAdmin) {
-                        await updateDoc(doc(usersCollection, user.uid), { isAdmin: true });
-                        record.isAdmin = true;
+                        try {
+                            await updateDoc(doc(usersCollection, user.uid), { isAdmin: true });
+                            record.isAdmin = true;
+                        } catch (e) {}
                     }
                     await loginAs(record, user.uid);
                     document.getElementById('loadingScreen').style.display = 'none';
                     setTimeout(() => renderPostsFeed(), 500);
                 } catch (e) {
                     if (signingUp) return;
+                    console.warn('onAuthStateChanged loadUserProfile failed:', e);
                     await signOut(auth);
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('app').style.display = 'none';

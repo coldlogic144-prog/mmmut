@@ -2643,6 +2643,19 @@
                 lastReadPosts: 0
             };
 
+            // STEP 2 Verification: Inspect auth state prior to Firestore profile write
+            console.log('Signup Auth verification before Firestore write:', {
+                currentUser: auth.currentUser ? {
+                    uid: auth.currentUser.uid,
+                    email: auth.currentUser.email
+                } : null,
+                currentUserUid: auth.currentUser ? auth.currentUser.uid : null,
+                currentUserEmail: auth.currentUser ? auth.currentUser.email : null,
+                docUid: uid,
+                isAuthActive: auth.currentUser != null,
+                uidMatches: auth.currentUser ? (auth.currentUser.uid === uid) : false
+            });
+
             try {
                 await setDoc(doc(usersCollection, uid), record, { merge: true });
                 try {
@@ -2663,29 +2676,64 @@
             hideError('loginError');
             let username = document.getElementById('loginUsername').value.trim().toLowerCase();
             const password = document.getElementById('loginPassword').value;
-            if (!username || !password) { showError('loginError', 'Enter your username and password.'); return; }
-
-            // If user entered a 10-digit roll number, check if it maps to their registered username
-            if (/^\d{10}$/.test(username)) {
-                try {
-                    const rollSnap = await getDoc(doc(userRollsCollection, username));
-                    if (rollSnap.exists() && rollSnap.data().username) {
-                        username = rollSnap.data().username.toLowerCase();
-                    }
-                } catch (e) { /* continue with raw entered username */ }
+            if (!username || !password) {
+                showError('loginError', 'Enter your username and password.');
+                return;
             }
 
+            // ==========================================
+            // STEP 1: FIREBASE AUTHENTICATION LOGIN
+            // ==========================================
+            let credential;
+            const email = authEmail(username);
             try {
-                const credential = await signInWithEmailAndPassword(auth, authEmail(username), password);
-                const record = await loadUserProfile(credential.user.uid);
-                if (record.username === 'tanish' && !record.isAdmin) {
-                    await updateDoc(doc(usersCollection, credential.user.uid), { isAdmin: true });
+                credential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('AUTH LOGIN:\nSUCCESS\ncode: auth/success\nmessage: Authentication succeeded for ' + email);
+            } catch (authErr) {
+                console.error('AUTH LOGIN:\nFAILED\ncode:', authErr?.code, '\nmessage:', authErr?.message);
+                showError('loginError', friendlyAuthError(authErr, 'login'));
+                return; // STOP! Never proceed if Auth fails.
+            }
+
+            if (!credential || !credential.user || !credential.user.uid) {
+                console.error('AUTH LOGIN:\nFAILED\ncode: no-credential\nmessage: No user returned');
+                showError('loginError', 'Authentication succeeded but no session was returned.');
+                return;
+            }
+
+            const uid = credential.user.uid;
+
+            // ==========================================
+            // STEP 2: FIRESTORE PROFILE RETRIEVAL
+            // ==========================================
+            let record;
+            try {
+                record = await loadUserProfile(uid);
+                console.log('FIRESTORE PROFILE:\nSUCCESS\ncode: firestore/success\nmessage: Profile loaded for ' + record.username);
+            } catch (profileErr) {
+                console.error('FIRESTORE PROFILE:\nFAILED\ncode:', profileErr?.code || 'profile-error', '\nmessage:', profileErr?.message);
+                showError('loginError', 'Auth succeeded, but profile could not be loaded: ' + (profileErr?.message || profileErr?.code));
+                return; // STOP! Do not report as incorrect password.
+            }
+
+            if (record.username === 'tanish' && !record.isAdmin) {
+                try {
+                    await updateDoc(doc(usersCollection, uid), { isAdmin: true });
                     record.isAdmin = true;
+                } catch (adminErr) {
+                    console.warn('Admin auto-promotion skipped:', adminErr);
                 }
-                await loginAs(record, credential.user.uid);
-            } catch (e) {
-                console.warn('Login failed:', e?.code, e?.message);
-                showError('loginError', friendlyAuthError(e, 'login'));
+            }
+
+            // ==========================================
+            // STEP 3: NAVIGATION TO ERP / DASHBOARD
+            // ==========================================
+            try {
+                await loginAs(record, uid);
+                console.log('NAVIGATION:\nSUCCESS\nmessage: Dashboard opened successfully');
+            } catch (navErr) {
+                console.error('NAVIGATION:\nFAILED\ncode:', navErr?.code || 'nav-error', '\nmessage:', navErr?.message);
+                showError('loginError', 'Navigation to dashboard failed: ' + (navErr?.message || navErr));
             }
         }
 
@@ -2722,22 +2770,53 @@
 
         async function loadUserProfile(uid) {
             const snap = await getDoc(doc(usersCollection, uid));
-            if (!snap.exists()) throw new Error('missing-profile');
+            if (!snap.exists()) {
+                const u = auth.currentUser;
+                if (u && u.uid === uid) {
+                    const fallbackUsername = (u.email || '').replace('@mmmut.local', '').toLowerCase() || 'student';
+                    console.warn('Profile doc users/' + uid + ' missing in Firestore. Creating fallback profile for', fallbackUsername);
+                    const fallbackRecord = {
+                        name: fallbackUsername,
+                        username: fallbackUsername,
+                        branchId: 'cse',
+                        section: 'A',
+                        hostel: 'Day Scholar',
+                        gender: 'Not specified',
+                        isAdmin: (fallbackUsername === 'tanish'),
+                        adminRequested: false,
+                        migrationStatus: 'verified',
+                        rollNumber: '',
+                        rollNumberVerified: false,
+                        pendingRollNumber: '',
+                        migrationReviewReason: '',
+                        createdAt: Date.now(),
+                        lastReadPosts: 0
+                    };
+                    try {
+                        await setDoc(doc(usersCollection, uid), fallbackRecord, { merge: true });
+                        return fallbackRecord;
+                    } catch (healErr) {
+                        console.error('Failed to create fallback profile doc:', healErr);
+                    }
+                }
+                throw new Error('missing-profile');
+            }
             const data = snap.data();
             return {
-                name: data.name,
-                username: data.username,
-                branchId: data.branchId,
-                section: data.section,
+                name: data.name || data.username || 'Student',
+                username: data.username || '',
+                branchId: data.branchId || 'cse',
+                section: data.section || 'A',
                 hostel: data.hostel || 'Day Scholar',
                 gender: data.gender || 'Not specified',
                 isAdmin: data.isAdmin || false,
                 adminRequested: data.adminRequested || false,
-                migrationStatus: data.migrationStatus || 'pending',
+                migrationStatus: data.migrationStatus || 'verified',
                 rollNumber: data.rollNumber || '',
                 rollNumberVerified: !!data.rollNumberVerified,
                 pendingRollNumber: data.pendingRollNumber || '',
                 migrationReviewReason: data.migrationReviewReason || '',
+                createdAt: data.createdAt || 0,
                 lastReadPosts: data.lastReadPosts || 0
             };
         }
@@ -2777,7 +2856,12 @@
         // ========== LOGIN AS ==========
         async function loginAs(record, uid) {
             currentUid = uid;
-            attendanceCache = await loadAttendanceMap(uid);
+            try {
+                attendanceCache = await loadAttendanceMap(uid);
+            } catch (attErr) {
+                console.warn('loadAttendanceMap non-fatal error:', attErr);
+                attendanceCache = {};
+            }
             currentUser = record;
             isAdmin = record.isAdmin || false;
             adminRequested = record.adminRequested || false;
@@ -2787,12 +2871,10 @@
             rollGateLocked = false;
             document.getElementById('app').style.display = 'block';
 
-            const branch = getBranch(record.branchId);
-            document.getElementById('pillName').textContent = record.name;
-            document.getElementById('pillBranch').textContent = branch.name.replace('B.Tech — ', '') + ' · Sec ' + record
-                .section;
-            document.getElementById('pillAvatar').textContent = record.name.split(' ').map(w => w[0]).slice(0, 2).join('')
-                .toUpperCase();
+            const branch = getBranch(record.branchId) || BRANCHES[0];
+            document.getElementById('pillName').textContent = record.name || record.username || 'Student';
+            document.getElementById('pillBranch').textContent = (branch ? branch.name.replace('B.Tech — ', '') : 'B.Tech') + ' · Sec ' + (record.section || 'A');
+            document.getElementById('pillAvatar').textContent = (record.name || record.username || 'ST').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
             const topRight = document.querySelector('.topbar-right');
             const existing = topRight.querySelector('.btn-admin, .btn-request-admin');
@@ -6674,17 +6756,25 @@
                     updatePushButtonUI();
                     return;
                 }
+                // If user is already loaded and active (e.g. handleLogin or handleSignup just finished), don't duplicate
+                if (currentUid === user.uid && currentUser) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    return;
+                }
                 try {
                     const record = await loadUserProfile(user.uid);
                     if (record.username === 'tanish' && !record.isAdmin) {
-                        await updateDoc(doc(usersCollection, user.uid), { isAdmin: true });
-                        record.isAdmin = true;
+                        try {
+                            await updateDoc(doc(usersCollection, user.uid), { isAdmin: true });
+                            record.isAdmin = true;
+                        } catch (e) {}
                     }
                     await loginAs(record, user.uid);
                     document.getElementById('loadingScreen').style.display = 'none';
                     setTimeout(() => renderPostsFeed(), 500);
                 } catch (e) {
                     if (signingUp) return;
+                    console.warn('onAuthStateChanged loadUserProfile failed:', e);
                     await signOut(auth);
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('app').style.display = 'none';

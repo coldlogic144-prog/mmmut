@@ -10,7 +10,12 @@
         // ========== LOGIN AS ==========
         async function loginAs(record, uid) {
             currentUid = uid;
-            attendanceCache = await loadAttendanceMap(uid);
+            try {
+                attendanceCache = await loadAttendanceMap(uid);
+            } catch (attErr) {
+                console.warn('loadAttendanceMap non-fatal error:', attErr);
+                attendanceCache = {};
+            }
             currentUser = record;
             isAdmin = record.isAdmin || false;
             adminRequested = record.adminRequested || false;
@@ -20,12 +25,10 @@
             rollGateLocked = false;
             document.getElementById('app').style.display = 'block';
 
-            const branch = getBranch(record.branchId);
-            document.getElementById('pillName').textContent = record.name;
-            document.getElementById('pillBranch').textContent = branch.name.replace('B.Tech — ', '') + ' · Sec ' + record
-                .section;
-            document.getElementById('pillAvatar').textContent = record.name.split(' ').map(w => w[0]).slice(0, 2).join('')
-                .toUpperCase();
+            const branch = getBranch(record.branchId) || BRANCHES[0];
+            document.getElementById('pillName').textContent = record.name || record.username || 'Student';
+            document.getElementById('pillBranch').textContent = (branch ? branch.name.replace('B.Tech — ', '') : 'B.Tech') + ' · Sec ' + (record.section || 'A');
+            document.getElementById('pillAvatar').textContent = (record.name || record.username || 'ST').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
             const topRight = document.querySelector('.topbar-right');
             const existing = topRight.querySelector('.btn-admin, .btn-request-admin');
