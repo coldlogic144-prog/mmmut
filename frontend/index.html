@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1e3a8a" />
-    <meta name="description" content="MMMUT ERP — The Ledger. Academic portal for attendance tracking, timetables, syllabus, notices and student services." />
+    <meta name="description"
+        content="MMMUT ERP — The Ledger. Academic portal for attendance tracking, timetables, syllabus, notices and student services." />
     <title>MMMUT ERP — Academic Portal &amp; Student Ledger</title>
-    
+
     <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
 
     <!-- Modern Modular CSS Architecture -->
     <link rel="stylesheet" href="./css/base.css" />
@@ -41,11 +45,17 @@
                 <div>
                     <div class="auth-mark">MMMUT · Gorakhpur</div>
                     <div class="auth-title">The <em>Ledger.</em><br />Your academic life,<br />organized.</div>
-                    <div class="auth-sub">Track attendance lecture by lecture, preview daily timetables, and monitor academic progress with clarity.</div>
+                    <div class="auth-sub">Track attendance lecture by lecture, preview daily timetables, and monitor
+                        academic progress with clarity.</div>
                     <div class="period-strip">
-                        <div class="period-chip">I</div><div class="period-chip">II</div><div class="period-chip">III</div>
-                        <div class="period-chip">IV</div><div class="period-chip">V</div><div class="period-chip">VI</div>
-                        <div class="period-chip">VII</div><div class="period-chip">VIII</div>
+                        <div class="period-chip">I</div>
+                        <div class="period-chip">II</div>
+                        <div class="period-chip">III</div>
+                        <div class="period-chip">IV</div>
+                        <div class="period-chip">V</div>
+                        <div class="period-chip">VI</div>
+                        <div class="period-chip">VII</div>
+                        <div class="period-chip">VIII</div>
                     </div>
                 </div>
                 <div class="auth-foot">Session 2026–27 · M.M.M. University of Technology</div>
@@ -66,12 +76,14 @@
                     </div>
                     <div class="field">
                         <label for="loginPassword">Password</label>
-                        <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+                        <input id="loginPassword" type="password" placeholder="••••••••"
+                            autocomplete="current-password" />
                     </div>
                     <button class="btn-primary" onclick="handleLogin()">Sign in to ERP</button>
                     <div class="auth-error" id="loginError" role="alert"></div>
                     <div class="auth-hint">
-                        Don't have an account yet? <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color:var(--primary);font-weight:600;">Create one here</a>
+                        Don't have an account yet? <a href="javascript:void(0)" onclick="switchAuthTab('signup')"
+                            style="color:var(--primary);font-weight:600;">Create one here</a>
                     </div>
                 </div>
 
@@ -122,7 +134,8 @@
                     <button class="btn-primary" onclick="handleSignup()">Create student account</button>
                     <div class="auth-error" id="signupError" role="alert"></div>
                     <div class="auth-hint">
-                        Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('login')" style="color:var(--primary);font-weight:600;">Sign in here</a>
+                        Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('login')"
+                            style="color:var(--primary);font-weight:600;">Sign in here</a>
                     </div>
                 </div>
             </div>
@@ -181,7 +194,8 @@
                 </nav>
 
                 <div class="sidebar-footer">
-                    <div class="user-pill" onclick="openProfileModal()" style="width:100%;justify-content:space-between;background:transparent;border:none;padding:0;">
+                    <div class="user-pill" onclick="openProfileModal()"
+                        style="width:100%;justify-content:space-between;background:transparent;border:none;padding:0;">
                         <div style="display:flex;align-items:center;gap:10px;">
                             <div class="avatar" id="sidebarAvatar">—</div>
                             <div style="text-align:left;">
@@ -202,7 +216,8 @@
                 <!-- Topbar Header -->
                 <header class="topbar">
                     <div class="topbar-left">
-                        <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Menu">☰</button>
+                        <button class="sidebar-toggle-btn" onclick="toggleSidebar()"
+                            aria-label="Toggle Navigation Menu">☰</button>
                         <div class="brand">
                             <div class="brand-mark">M</div>
                             <div>
@@ -213,13 +228,16 @@
                     </div>
 
                     <div class="topbar-right">
-                        <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank" class="btn-download-app">📱 APK</a>
-                        <button class="btn-icon" id="notifBell" onclick="scrollToPosts()" title="Announcements" aria-label="Announcements">
+                        <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank"
+                            class="btn-download-app">📱 APK</a>
+                        <button class="btn-icon" id="notifBell" onclick="scrollToPosts()" title="Announcements"
+                            aria-label="Announcements">
                             🔔
                             <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
                         </button>
                         <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
-                        <button class="btn-ghost" id="pushNotifBtn" style="display:none;" onclick="enablePushNotifications()">🔔 Notifications</button>
+                        <button class="btn-ghost" id="pushNotifBtn" style="display:none;"
+                            onclick="enablePushNotifications()">🔔 Notifications</button>
                         <div class="user-pill" onclick="openProfileModal()">
                             <div>
                                 <div class="user-pill-name" id="pillName">—</div>
@@ -253,7 +271,8 @@
                                 <div class="card-eyebrow">📢 Official Notices</div>
                                 <div class="card-title">Latest Announcements</div>
                             </div>
-                            <button class="btn-secondary" style="padding:6px 14px;font-size:12.5px;" onclick="renderPostsFeed(true)">View all</button>
+                            <button class="btn-secondary" style="padding:6px 14px;font-size:12.5px;"
+                                onclick="renderPostsFeed(true)">View all</button>
                         </div>
                         <div id="postsFeedContent"></div>
                     </div>
@@ -269,18 +288,23 @@
                                         <div class="card-title">Today's Periods</div>
                                     </div>
                                     <div class="tabbar">
-                                        <button class="tab-btn active" id="tabToday" onclick="setScheduleView('today')">Today</button>
-                                        <button class="tab-btn" id="tabWeek" onclick="setScheduleView('week')">Full week</button>
-                                        <button class="tab-btn" id="tabImage" onclick="setScheduleView('image')">Image</button>
+                                        <button class="tab-btn active" id="tabToday"
+                                            onclick="setScheduleView('today')">Today</button>
+                                        <button class="tab-btn" id="tabWeek" onclick="setScheduleView('week')">Full
+                                            week</button>
+                                        <button class="tab-btn" id="tabImage"
+                                            onclick="setScheduleView('image')">Image</button>
                                     </div>
                                 </div>
                                 <div id="todayView"></div>
                                 <div id="weekView" style="display:none;"></div>
                                 <div id="imageView" style="display:none;">
-                                    <div style="overflow-x:auto; border-radius:var(--radius-sm); border:1px solid var(--surface-border);">
+                                    <div
+                                        style="overflow-x:auto; border-radius:var(--radius-sm); border:1px solid var(--surface-border);">
                                         <canvas id="ttCanvas"></canvas>
                                     </div>
-                                    <button class="btn-primary" style="margin-top:14px;" onclick="downloadTimetableImage()">Download PNG</button>
+                                    <button class="btn-primary" style="margin-top:14px;"
+                                        onclick="downloadTimetableImage()">Download PNG</button>
                                 </div>
                             </div>
                         </div>
@@ -304,7 +328,8 @@
                                         <div class="overall-num" id="overallPct">—</div>
                                         <div class="overall-sub">cumulative attendance</div>
                                     </div>
-                                    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6;" id="overallCounts">—</div>
+                                    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6;"
+                                        id="overallCounts">—</div>
                                 </div>
                                 <div class="overall-leave" id="overallLeave"></div>
                                 <div id="subjectStats" style="margin-top:16px;"></div>
@@ -315,9 +340,11 @@
                                 <div class="card-eyebrow">📋 Past &amp; Upcoming</div>
                                 <div class="card-title" style="margin-bottom:14px;">Attendance History</div>
                                 <div class="history-nav">
-                                    <button class="nav-btn" id="histPrev" onclick="navigateHistoryDate(-1)" title="Previous day" aria-label="Previous day">‹</button>
+                                    <button class="nav-btn" id="histPrev" onclick="navigateHistoryDate(-1)"
+                                        title="Previous day" aria-label="Previous day">‹</button>
                                     <span class="date-display" id="histDateDisplay">—</span>
-                                    <button class="nav-btn" id="histNext" onclick="navigateHistoryDate(1)" title="Next day" aria-label="Next day">›</button>
+                                    <button class="nav-btn" id="histNext" onclick="navigateHistoryDate(1)"
+                                        title="Next day" aria-label="Next day">›</button>
                                     <button class="nav-btn today-btn" onclick="goToTodayHistory()">Today</button>
                                 </div>
                                 <div id="historyView"></div>
@@ -331,9 +358,12 @@
                                         <div class="card-title">Help &amp; Feedback</div>
                                     </div>
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                        <button class="btn-primary" style="padding:6px 14px;font-size:12px;width:auto;" onclick="openFeedbackForm()">➕ New</button>
-                                        <button class="btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="openMyFeedback()">📋 My Tickets</button>
-                                        <button class="btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="openRatingModal()">⭐ Rate</button>
+                                        <button class="btn-primary" style="padding:6px 14px;font-size:12px;width:auto;"
+                                            onclick="openFeedbackForm()">➕ New</button>
+                                        <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
+                                            onclick="openMyFeedback()">📋 My Tickets</button>
+                                        <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
+                                            onclick="openRatingModal()">⭐ Rate</button>
                                     </div>
                                 </div>
                                 <div id="feedbackPreviewContent" style="font-size:13px;color:var(--text-muted);">
@@ -341,9 +371,12 @@
                                         <span>📌 <span id="fbTotalCount">0</span> total</span>
                                         <span>🟡 <span id="fbOpenCount">0</span> open</span>
                                         <span>🟢 <span id="fbResolvedCount">0</span> resolved</span>
-                                        <span style="cursor:pointer;color:var(--primary);font-weight:600;" onclick="openMyFeedback()">View all →</span>
+                                        <span style="cursor:pointer;color:var(--primary);font-weight:600;"
+                                            onclick="openMyFeedback()">View all →</span>
                                     </div>
-                                    <div id="fbLatestPreview" style="margin-top:8px;font-size:12.5px;color:var(--text-muted);">No feedback yet.</div>
+                                    <div id="fbLatestPreview"
+                                        style="margin-top:8px;font-size:12.5px;color:var(--text-muted);">No feedback
+                                        yet.</div>
                                 </div>
                             </div>
 
@@ -355,11 +388,15 @@
                                         <div class="card-title">Campus Feed</div>
                                     </div>
                                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                        <button class="btn-primary" id="cpNewPostBtn" style="padding:6px 14px;font-size:12px;width:auto;display:none;" onclick="openCreatePost()">✏️ New Post</button>
+                                        <button class="btn-primary" id="cpNewPostBtn"
+                                            style="padding:6px 14px;font-size:12px;width:auto;display:none;"
+                                            onclick="openCreatePost()">✏️ New Post</button>
                                     </div>
                                 </div>
-                                <div id="communityPostsFeed" style="max-height:450px;overflow-y:auto;padding-right:4px;">
-                                    <div style="text-align:center;padding:24px 0;color:var(--text-muted);">Loading posts…</div>
+                                <div id="communityPostsFeed"
+                                    style="max-height:450px;overflow-y:auto;padding-right:4px;">
+                                    <div style="text-align:center;padding:24px 0;color:var(--text-muted);">Loading
+                                        posts…</div>
                                 </div>
                             </div>
 
@@ -370,7 +407,8 @@
                                         <div class="card-eyebrow">📖 Curriculum</div>
                                         <div class="card-title">Course Syllabus</div>
                                     </div>
-                                    <button class="btn-secondary" style="padding:6px 14px;font-size:12px;" onclick="openSyllabusFullView()">📄 Full View</button>
+                                    <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
+                                        onclick="openSyllabusFullView()">📄 Full View</button>
                                 </div>
                                 <div class="syllabus-branch-selector" id="syllabusSelector">
                                     <div class="field">
@@ -396,9 +434,17 @@
                             <div class="card">
                                 <div class="card-eyebrow">Official Resources</div>
                                 <div class="card-title" style="margin-bottom:16px;">MMMUT Portals</div>
-                                <button class="btn-secondary" style="width:100%;justify-content:flex-start;" onclick="window.open('https://drive.google.com/file/d/1mHw1emQ9i92HIoq7jw6YWKGpPnFV7wMO/view?usp=drivesdk','_blank')">📄 Time Table PDF</button>
-                                <button class="btn-secondary" style="width:100%;justify-content:flex-start;margin-top:8px;" onclick="window.open('https://share.google/uOrpx8BFFizpBu9C2','_blank')">📢 MMMUT Notices Portal</button>
-                                <button class="btn-secondary" style="width:100%;justify-content:flex-start;margin-top:8px;" onclick="window.open('https://drive.google.com/file/d/1vENgYXFOKl-1O6eAALAfBYHR95a8b8EX/view?usp=drivesdk','_blank')">📖 Academic Calendar 2026–27</button>
+                                <button class="btn-secondary" style="width:100%;justify-content:flex-start;"
+                                    onclick="window.open('https://drive.google.com/file/d/1mHw1emQ9i92HIoq7jw6YWKGpPnFV7wMO/view?usp=drivesdk','_blank')">📄
+                                    Time Table PDF</button>
+                                <button class="btn-secondary"
+                                    style="width:100%;justify-content:flex-start;margin-top:8px;"
+                                    onclick="window.open('https://share.google/uOrpx8BFFizpBu9C2','_blank')">📢 MMMUT
+                                    Notices Portal</button>
+                                <button class="btn-secondary"
+                                    style="width:100%;justify-content:flex-start;margin-top:8px;"
+                                    onclick="window.open('https://drive.google.com/file/d/1vENgYXFOKl-1O6eAALAfBYHR95a8b8EX/view?usp=drivesdk','_blank')">📖
+                                    Academic Calendar 2026–27</button>
                             </div>
 
                             <!-- Upcoming Calendar Events -->
@@ -448,7 +494,8 @@
     <!-- CHESS CLUB VIEW                                               -->
     <!-- ============================================================ -->
     <div id="chessClubView">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
             <div>
                 <h1 style="font-size:26px; font-weight:800;">♟️ Chess Club</h1>
                 <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Think. Play. Improve.</p>
@@ -459,7 +506,8 @@
         <div class="chess-tabs" id="chessTabs">
             <button class="tab-btn active" data-tab="home" onclick="switchChessTab('home')">🏠 Home</button>
             <button class="tab-btn" data-tab="members" onclick="switchChessTab('members')">👥 Members</button>
-            <button class="tab-btn" data-tab="leaderboard" onclick="switchChessTab('leaderboard')">🏆 Leaderboard</button>
+            <button class="tab-btn" data-tab="leaderboard" onclick="switchChessTab('leaderboard')">🏆
+                Leaderboard</button>
             <button class="tab-btn" data-tab="events" onclick="switchChessTab('events')">📅 Events</button>
             <button class="tab-btn" data-tab="challenges" onclick="switchChessTab('challenges')">⚔️ Challenges</button>
             <button class="tab-btn" data-tab="games" onclick="switchChessTab('games')">🎮 My Games</button>
@@ -478,17 +526,22 @@
                 <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
                     <div style="flex:1; min-width:200px;">
                         <p style="font-size:14px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
-                            A community for chess enthusiasts at MMMUT. Join, challenge others, track your rating, and participate in events.
+                            A community for chess enthusiasts at MMMUT. Join, challenge others, track your rating, and
+                            participate in events.
                         </p>
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="btn-primary" id="chessJoinBtn" style="width:auto; padding:10px 24px;" onclick="handleChessJoin()">Join Club</button>
-                            <button class="btn-danger" id="chessLeaveBtn" style="width:auto; padding:10px 24px; display:none;" onclick="handleChessLeave()">Leave Club</button>
+                            <button class="btn-primary" id="chessJoinBtn" style="width:auto; padding:10px 24px;"
+                                onclick="handleChessJoin()">Join Club</button>
+                            <button class="btn-danger" id="chessLeaveBtn"
+                                style="width:auto; padding:10px 24px; display:none;" onclick="handleChessLeave()">Leave
+                                Club</button>
                         </div>
                         <div style="margin-top:16px; font-size:13.5px; font-weight:600;">
                             <span>👥 <span id="chessMemberCount">0</span> members</span>
                         </div>
                     </div>
-                    <div style="flex:1; min-width:200px; background:var(--surface-subtle); border-radius:var(--radius-sm); padding:16px; border:1px solid var(--surface-border);">
+                    <div
+                        style="flex:1; min-width:200px; background:var(--surface-subtle); border-radius:var(--radius-sm); padding:16px; border:1px solid var(--surface-border);">
                         <div style="font-weight:700; margin-bottom:8px; font-size:13.5px;">🏆 Upcoming Tournament</div>
                         <div id="chessNextEvent">
                             <div style="font-size:13px; color:var(--text-muted);">No upcoming events.</div>
@@ -503,7 +556,8 @@
                         <div class="card-eyebrow">🏅 Leaderboard</div>
                         <div class="card-title">Top 3 Players</div>
                     </div>
-                    <button class="btn-secondary" style="padding:6px 14px; font-size:12px;" onclick="switchChessTab('leaderboard')">View all</button>
+                    <button class="btn-secondary" style="padding:6px 14px; font-size:12px;"
+                        onclick="switchChessTab('leaderboard')">View all</button>
                 </div>
                 <div id="chessLeaderboardPreview">
                     <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
@@ -519,7 +573,8 @@
                         <div class="card-eyebrow">👥 Members</div>
                         <div class="card-title">All Club Members</div>
                     </div>
-                    <span id="chessMemberCount2" style="font-size:13px; color:var(--text-muted); font-weight:600;">0 members</span>
+                    <span id="chessMemberCount2" style="font-size:13px; color:var(--text-muted); font-weight:600;">0
+                        members</span>
                 </div>
                 <div id="chessMembersList">
                     <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
@@ -550,7 +605,9 @@
                         <div class="card-eyebrow">📅 Events</div>
                         <div class="card-title">Upcoming &amp; Past</div>
                     </div>
-                    <button class="btn-primary" id="chessEventCreateBtn" style="padding:6px 14px; font-size:12px; width:auto; display:none;" onclick="openChessEventForm()">➕ New Event</button>
+                    <button class="btn-primary" id="chessEventCreateBtn"
+                        style="padding:6px 14px; font-size:12px; width:auto; display:none;"
+                        onclick="openChessEventForm()">➕ New Event</button>
                 </div>
                 <div id="chessEventsList">
                     <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
@@ -567,14 +624,20 @@
                         <button class="btn-secondary" onclick="closeChessEventForm()">Cancel</button>
                     </div>
                     <form onsubmit="submitChessEvent(event)">
-                        <div class="field"><label>Title</label><input id="chessEventTitle" placeholder="e.g. Sunday Blitz" required /></div>
+                        <div class="field"><label>Title</label><input id="chessEventTitle"
+                                placeholder="e.g. Sunday Blitz" required /></div>
                         <div class="field-row">
-                            <div class="field"><label>Date</label><input type="date" id="chessEventDate" required /></div>
-                            <div class="field"><label>Time</label><input type="time" id="chessEventTime" required /></div>
+                            <div class="field"><label>Date</label><input type="date" id="chessEventDate" required />
+                            </div>
+                            <div class="field"><label>Time</label><input type="time" id="chessEventTime" required />
+                            </div>
                         </div>
-                        <div class="field"><label>Time Control</label><input id="chessEventTimeControl" placeholder="e.g. 10+5" /></div>
-                        <div class="field"><label>Description</label><textarea id="chessEventDesc" rows="2" placeholder="Event description"></textarea></div>
-                        <button type="submit" class="btn-primary" style="width:auto; padding:10px 24px;">Create Event</button>
+                        <div class="field"><label>Time Control</label><input id="chessEventTimeControl"
+                                placeholder="e.g. 10+5" /></div>
+                        <div class="field"><label>Description</label><textarea id="chessEventDesc" rows="2"
+                                placeholder="Event description"></textarea></div>
+                        <button type="submit" class="btn-primary" style="width:auto; padding:10px 24px;">Create
+                            Event</button>
                     </form>
                 </div>
             </div>
@@ -591,8 +654,10 @@
                 </div>
                 <div style="margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <label style="font-weight:600; font-size:13.5px;">Select opponent:</label>
-                    <select id="chessChallengeOpponent" style="padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--surface-border); background:#fff; font-size:13px;"></select>
-                    <button class="btn-primary" style="width:auto; padding:8px 20px;" onclick="sendChessChallenge()">Challenge</button>
+                    <select id="chessChallengeOpponent"
+                        style="padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--surface-border); background:#fff; font-size:13px;"></select>
+                    <button class="btn-primary" style="width:auto; padding:8px 20px;"
+                        onclick="sendChessChallenge()">Challenge</button>
                 </div>
                 <div id="chessChallengesList">
                     <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
@@ -653,7 +718,8 @@
                         <textarea id="cpContent" placeholder="What's the update?" rows="4" required></textarea>
                     </div>
                     <div class="field">
-                        <label for="cpImage">Image <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+                        <label for="cpImage">Image <span
+                                style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
                         <input type="file" id="cpImage" accept="image/*" onchange="previewCommunityPostImage()" />
                         <img id="cpImagePreview" class="cp-image-preview" style="display:none;" alt="Preview" />
                     </div>
@@ -661,7 +727,8 @@
                         <button type="submit" class="btn-primary" style="width:auto;padding:10px 28px;">Publish</button>
                         <button type="button" class="btn-secondary" onclick="closeCreatePost()">Cancel</button>
                     </div>
-                    <div id="cpFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;"></div>
+                    <div id="cpFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;">
+                    </div>
                 </form>
             </div>
         </div>
@@ -690,13 +757,17 @@
                         </select>
                     </div>
                     <div class="field">
-                        <label for="fbSubject">Subject <span style="font-weight:400;color:var(--text-muted);">(max 100 chars)</span></label>
+                        <label for="fbSubject">Subject <span style="font-weight:400;color:var(--text-muted);">(max 100
+                                chars)</span></label>
                         <input id="fbSubject" placeholder="Brief subject line" maxlength="100" required />
                     </div>
                     <div class="field">
-                        <label for="fbMessage">Description <span style="font-weight:400;color:var(--text-muted);">(20–2000 chars)</span></label>
-                        <textarea id="fbMessage" placeholder="Describe the issue or feedback in detail…" rows="4" required></textarea>
-                        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;" id="fbCharCount">0 / 2000</div>
+                        <label for="fbMessage">Description <span
+                                style="font-weight:400;color:var(--text-muted);">(20–2000 chars)</span></label>
+                        <textarea id="fbMessage" placeholder="Describe the issue or feedback in detail…" rows="4"
+                            required></textarea>
+                        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;" id="fbCharCount">0 / 2000
+                        </div>
                     </div>
                     <div class="field-row">
                         <div class="field">
@@ -708,15 +779,18 @@
                             </select>
                         </div>
                         <div class="field">
-                            <label for="fbScreenshot">Screenshot <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+                            <label for="fbScreenshot">Screenshot <span
+                                    style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
                             <input type="file" id="fbScreenshot" accept="image/*" />
                         </div>
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
-                        <button type="submit" class="btn-primary" style="width:auto;padding:10px 28px;">Submit Ticket</button>
+                        <button type="submit" class="btn-primary" style="width:auto;padding:10px 28px;">Submit
+                            Ticket</button>
                         <button type="button" class="btn-secondary" onclick="closeFeedbackForm()">Cancel</button>
                     </div>
-                    <div id="fbFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;"></div>
+                    <div id="fbFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;">
+                    </div>
                 </form>
             </div>
         </div>
@@ -743,7 +817,8 @@
                 <button class="close-btn" onclick="closeRatingModal()" aria-label="Close">✕</button>
             </div>
             <div class="feedback-panel-body">
-                <p style="font-size:14px;color:var(--text-muted);margin-bottom:14px;">How would you rate your experience with The Ledger?</p>
+                <p style="font-size:14px;color:var(--text-muted);margin-bottom:14px;">How would you rate your experience
+                    with The Ledger?</p>
                 <div class="feedback-rating-stars" id="ratingStars">
                     <span data-val="1" class="star-off">★</span>
                     <span data-val="2" class="star-off">★</span>
@@ -752,12 +827,16 @@
                     <span data-val="5" class="star-off">★</span>
                 </div>
                 <div class="field" style="margin-top:14px;">
-                    <label for="ratingComment">Comment <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+                    <label for="ratingComment">Comment <span
+                            style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
                     <textarea id="ratingComment" placeholder="Share your suggestions…" rows="3"></textarea>
                 </div>
-                <button class="btn-primary" style="width:auto;padding:10px 28px;margin-top:6px;" onclick="submitRating()">Submit Rating</button>
-                <div id="ratingFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;"></div>
-                <div id="ratingExisting" style="margin-top:14px;font-size:13px;color:var(--text-muted);display:none;"></div>
+                <button class="btn-primary" style="width:auto;padding:10px 28px;margin-top:6px;"
+                    onclick="submitRating()">Submit Rating</button>
+                <div id="ratingFormError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;">
+                </div>
+                <div id="ratingExisting" style="margin-top:14px;font-size:13px;color:var(--text-muted);display:none;">
+                </div>
             </div>
         </div>
     </div>
@@ -835,24 +914,43 @@
                 <button class="close-btn" onclick="closeAdminPanel()" aria-label="Close">✕</button>
             </div>
             <div class="admin-tabs" id="adminTabs">
-                <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">📊 Dashboard</button>
+                <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">📊
+                    Dashboard</button>
                 <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
-                <button class="admin-tab" data-tab="timetable" onclick="switchAdminTab('timetable')">📅 Timetable</button>
+                <button class="admin-tab" data-tab="timetable" onclick="switchAdminTab('timetable')">📅
+                    Timetable</button>
                 <button class="admin-tab" data-tab="calendar" onclick="switchAdminTab('calendar')">📆 Calendar</button>
                 <button class="admin-tab" data-tab="holidays" onclick="switchAdminTab('holidays')">🏖️ Holidays</button>
                 <button class="admin-tab" data-tab="posts" onclick="switchAdminTab('posts')">📢 Announcements</button>
-                <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin Requests</button>
+                <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin
+                    Requests</button>
                 <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
             </div>
             <div class="admin-panel-body" id="adminBody">
-                <div class="tab-content active" id="tab-dashboard"><div id="adminDashboardContent">Loading dashboard…</div></div>
-                <div class="tab-content" id="tab-users"><div id="adminUsersContent">Loading users…</div></div>
-                <div class="tab-content" id="tab-timetable"><div id="adminTimetableContent">Loading timetable editor…</div></div>
-                <div class="tab-content" id="tab-calendar"><div id="adminCalendarContent">Loading calendar editor…</div></div>
-                <div class="tab-content" id="tab-holidays"><div id="adminHolidaysContent">Loading holidays…</div></div>
-                <div class="tab-content" id="tab-posts"><div id="adminPostsContent">Loading announcements…</div></div>
-                <div class="tab-content" id="tab-requests"><div id="adminRequestsContent">Loading requests…</div></div>
-                <div class="tab-content" id="tab-feedback"><div id="adminFeedbackContent">Loading feedback…</div></div>
+                <div class="tab-content active" id="tab-dashboard">
+                    <div id="adminDashboardContent">Loading dashboard…</div>
+                </div>
+                <div class="tab-content" id="tab-users">
+                    <div id="adminUsersContent">Loading users…</div>
+                </div>
+                <div class="tab-content" id="tab-timetable">
+                    <div id="adminTimetableContent">Loading timetable editor…</div>
+                </div>
+                <div class="tab-content" id="tab-calendar">
+                    <div id="adminCalendarContent">Loading calendar editor…</div>
+                </div>
+                <div class="tab-content" id="tab-holidays">
+                    <div id="adminHolidaysContent">Loading holidays…</div>
+                </div>
+                <div class="tab-content" id="tab-posts">
+                    <div id="adminPostsContent">Loading announcements…</div>
+                </div>
+                <div class="tab-content" id="tab-requests">
+                    <div id="adminRequestsContent">Loading requests…</div>
+                </div>
+                <div class="tab-content" id="tab-feedback">
+                    <div id="adminFeedbackContent">Loading feedback…</div>
+                </div>
             </div>
         </div>
     </div>
@@ -865,13 +963,16 @@
                 <button class="close-btn" onclick="closeAdminReplyModal()" aria-label="Close">✕</button>
             </div>
             <div class="feedback-panel-body fb-reply-modal">
-                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;" id="replyTicketInfo">Ticket: —</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;" id="replyTicketInfo">Ticket: —
+                </div>
                 <textarea class="reply-textarea" id="adminReplyText" placeholder="Type your reply here…"></textarea>
                 <div class="reply-actions">
-                    <button class="btn-primary" style="width:auto;padding:10px 26px;" onclick="submitAdminReply()">Send Reply</button>
+                    <button class="btn-primary" style="width:auto;padding:10px 26px;" onclick="submitAdminReply()">Send
+                        Reply</button>
                     <button class="btn-secondary" onclick="closeAdminReplyModal()">Cancel</button>
                 </div>
-                <div id="adminReplyError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;"></div>
+                <div id="adminReplyError" style="margin-top:12px;font-size:13px;color:var(--danger);display:none;">
+                </div>
             </div>
         </div>
     </div>
@@ -894,7 +995,8 @@
                 </div>
             </div>
             <div class="actions">
-                <button onclick="clearLedgerAI()" title="Clear conversation" aria-label="Clear conversation">🗑️</button>
+                <button onclick="clearLedgerAI()" title="Clear conversation"
+                    aria-label="Clear conversation">🗑️</button>
                 <button onclick="toggleLedgerAI()" title="Close chat" aria-label="Close chat">✕</button>
             </div>
         </div>
@@ -910,15 +1012,17 @@
         <div class="ledger-ai-error" id="ledgerAiError"></div>
 
         <div class="ledger-ai-input">
-            <textarea id="ledgerAiInput" rows="1" placeholder="Ask Ledger AI…" onkeydown="handleLedgerAIKeydown(event)" oninput="autoResizeLedgerInput(this)"></textarea>
-            <button class="send-btn" id="ledgerAiSendBtn" onclick="sendLedgerAIMessage()" title="Send message" aria-label="Send message">➤</button>
+            <textarea id="ledgerAiInput" rows="1" placeholder="Ask Ledger AI…" onkeydown="handleLedgerAIKeydown(event)"
+                oninput="autoResizeLedgerInput(this)"></textarea>
+            <button class="send-btn" id="ledgerAiSendBtn" onclick="sendLedgerAIMessage()" title="Send message"
+                aria-label="Send message">➤</button>
         </div>
     </div>
 
     <!-- UI Interaction Helper Scripts -->
     <script>
         // Sidebar Toggle Helper for Mobile & Desktop
-        window.toggleSidebar = function(force) {
+        window.toggleSidebar = function (force) {
             const sb = document.querySelector('.app-sidebar');
             const bd = document.querySelector('.sidebar-backdrop');
             if (!sb) return;
@@ -933,7 +1037,7 @@
         };
 
         // Smooth Scroll Helper
-        window.scrollToSection = function(id) {
+        window.scrollToSection = function (id) {
             window.toggleSidebar(false);
             const el = document.getElementById(id);
             if (el) {
@@ -982,4 +1086,5 @@
     <!-- Application Entry Point (Composed ES Module) -->
     <script type="module" src="./js/app.js"></script>
 </body>
+
 </html>

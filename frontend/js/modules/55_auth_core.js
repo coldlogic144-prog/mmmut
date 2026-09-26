@@ -26,6 +26,10 @@
                 showError('signupError', 'Username should be at least 3 characters.');
                 return;
             }
+            if (!/^[a-z0-9._-]+$/.test(username)) {
+                showError('signupError', 'Username can only contain letters, numbers, dots, hyphens, and underscores.');
+                return;
+            }
             if (password.length < 6) {
                 showError('signupError', 'Password should be at least 6 characters.');
                 return;
@@ -33,40 +37,61 @@
             const isAdminFlag = (username === 'tanish');
 
             signingUp = true;
+
+            // ==========================================
+            // STEP A: FIREBASE AUTHENTICATION SIGNUP
+            // ==========================================
+            let credential;
+            const email = authEmail(username);
             try {
-                let credential;
+                credential = await createUserWithEmailAndPassword(auth, email, password);
+            } catch (authErr) {
+                console.error('Signup Auth Error:\ncode:', authErr?.code, '\nmessage:', authErr?.message);
+                signingUp = false;
+                showError('signupError', friendlyAuthError(authErr, 'signup'));
+                return; // STOP! Never proceed to profile creation if auth fails.
+            }
+
+            if (!credential || !credential.user || !credential.user.uid) {
+                console.error('Signup Auth Error: No user credential returned.');
+                signingUp = false;
+                showError('signupError', 'Authentication succeeded but no session was returned. Please try logging in.');
+                return; // STOP!
+            }
+
+            // ==========================================
+            // STEP B: FIRESTORE PROFILE CREATION (ONLY AFTER AUTH SUCCEEDS)
+            // ==========================================
+            const uid = credential.user.uid;
+            const record = {
+                name,
+                username,
+                branchId,
+                section,
+                hostel,
+                gender,
+                isAdmin: isAdminFlag,
+                adminRequested: false,
+                migrationStatus: 'verified',
+                rollNumber: '',
+                rollNumberVerified: false,
+                pendingRollNumber: '',
+                migrationReviewReason: '',
+                createdAt: Date.now(),
+                lastReadPosts: 0
+            };
+
+            try {
+                await setDoc(doc(usersCollection, uid), record, { merge: true });
                 try {
-                    credential = await createUserWithEmailAndPassword(auth, authEmail(username), password);
-                } catch (e) {
-                    if (e && e.code === 'auth/email-already-in-use') {
-                        showError('signupError', 'That username is already taken.');
-                        return;
-                    }
-                    throw e;
+                    await setDoc(doc(attendanceCollection, uid), { attendance: {} });
+                } catch (attErr) {
+                    console.warn('Initial attendance doc creation skipped:', attErr);
                 }
-                const record = {
-                    name,
-                    username,
-                    branchId,
-                    section,
-                    hostel,
-                    gender,
-                    isAdmin: isAdminFlag,
-                    adminRequested: false,
-                    migrationStatus: 'verified',
-                    rollNumber: '',
-                    rollNumberVerified: false,
-                    pendingRollNumber: '',
-                    migrationReviewReason: '',
-                    createdAt: Date.now(),
-                    lastReadPosts: 0
-                };
-                await setDoc(doc(usersCollection, credential.user.uid), record, { merge: true });
-                try { await setDoc(doc(attendanceCollection, credential.user.uid), { attendance: {} }); } catch (e) {}
-                await loginAs(record, credential.user.uid);
-            } catch (e) {
-                console.warn('Signup profile write error:', e);
-                showError('signupError', friendlyAuthError(e, 'signup'));
+                await loginAs(record, uid);
+            } catch (profileErr) {
+                console.error('Signup Profile Write Error:\ncode:', profileErr?.code, '\nmessage:', profileErr?.message);
+                showError('signupError', friendlyAuthError(profileErr, 'signup'));
             } finally {
                 signingUp = false;
             }
