@@ -441,7 +441,7 @@ def verify_setup():
         "timestamp": time.time(),
         "environment": {
             "TELEGRAM_BOT_TOKEN_SET": bool(TELEGRAM_BOT_TOKEN),
-            "TELEGRAM_BOT_TOKEN_PREVIEW": f"{TELEGRAM_BOT_TOKEN[:6]}...{TELEGRAM_BOT_TOKEN[-4:]}" if len(TELEGRAM_BOT_TOKEN) > 10 else ("configured" if TELEGRAM_BOT_TOKEN else "MISSING"),
+            "TELEGRAM_BOT_TOKEN_PREVIEW": "configured" if TELEGRAM_BOT_TOKEN else "MISSING",
             "TELEGRAM_CHANNEL_ID_SET": bool(TELEGRAM_CHANNEL_ID),
             "TELEGRAM_CHANNEL_ID": TELEGRAM_CHANNEL_ID or "MISSING",
             "TELEGRAM_BOT_USERNAME": TELEGRAM_BOT_USERNAME,
