@@ -147,3 +147,6 @@
         const chessEventsCollection = collection(db, "chessEvents");
         const chessActivityCollection = collection(db, "chessActivity");
         const chessGamesCollection = collection(db, "chessGames");
+
+        // ===== TELEGRAM PRIVATE ACCESS COLLECTIONS =====
+        const telegramApplicationsCollection = collection(db, "telegramApplications");

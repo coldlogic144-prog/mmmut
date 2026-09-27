@@ -191,6 +191,14 @@
                         <span class="icon">♟️</span>
                         <span>Chess Club</span>
                     </button>
+                    <button class="sidebar-link" id="sidebarTelegramBtn" onclick="toggleTelegramSection(true)">
+                        <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;color:#0088cc;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                            </svg>
+                        </span>
+                        <span>Telegram</span>
+                    </button>
                 </nav>
 
                 <div class="sidebar-footer">
@@ -234,6 +242,10 @@
                             aria-label="Announcements">
                             🔔
                             <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
+                        </button>
+                        <button class="btn-topbar-telegram" onclick="toggleTelegramSection(true)" title="Open Telegram Section">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                            <span>Telegram</span>
                         </button>
                         <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
                         <button class="btn-ghost" id="pushNotifBtn" style="display:none;"
@@ -697,6 +709,106 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- TELEGRAM SECTION VIEW                                        -->
+    <!-- ============================================================ -->
+    <div id="telegramView">
+        <div class="telegram-page-header">
+            <div>
+                <h1 style="font-size:26px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                    <span style="color:#0088cc; display:inline-flex;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                        </svg>
+                    </span>
+                    Telegram
+                </h1>
+                <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Official University Community &amp; Direct Messaging</p>
+            </div>
+            <button class="btn-secondary" onclick="toggleTelegramSection(false)">← Back to Ledger</button>
+        </div>
+
+        <!-- Dynamic State Machine Container for Private Telegram Access -->
+        <div id="telegramStateContainer" style="margin-bottom:24px;">
+            <!-- Populated dynamically by renderTelegramUI() -->
+            <div class="tg-state-card">
+                <div class="tg-state-header">
+                    <span class="tg-stage-pill">Stage 1 of 2</span>
+                    <span class="tg-status-badge tg-badge-neutral">Checking Access…</span>
+                </div>
+                <h3 class="tg-state-title">Telegram Access Verification</h3>
+                <p class="tg-state-desc">Loading your Telegram access status from MMMUT ERP…</p>
+            </div>
+        </div>
+
+        <!-- Channel & Community Grid -->
+        <div class="telegram-grid">
+            <!-- Student Channel Card -->
+            <div class="telegram-channel-card">
+                <div>
+                    <div class="card-head">
+                        <div>
+                            <div class="card-eyebrow">📢 Student Broadcast</div>
+                            <h3 class="channel-meta-title" id="telegramChannelName">MMMUT Official Channel</h3>
+                        </div>
+                        <span style="font-size:12px; font-weight:700; background:#dbeafe; color:#1e40af; padding:4px 8px; border-radius:9999px;">Verified</span>
+                    </div>
+                    <p class="channel-meta-desc" id="telegramChannelDesc">
+                        Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.
+                    </p>
+                    <ul class="telegram-channel-features">
+                        <li><span>⚡</span> <span>Real-time official notices &amp; circulars</span></li>
+                        <li><span>📅</span> <span>Timetable and examination updates</span></li>
+                        <li><span>🎓</span> <span>Campus events &amp; academic alerts</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="btn-telegram-channel" style="width:100%;" onclick="openTelegramChannel()">
+                        <span>Open Channel</span>
+                        <span>↗</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Telegram Web & App Access Info Card -->
+            <div class="telegram-channel-card">
+                <div>
+                    <div class="card-head">
+                        <div>
+                            <div class="card-eyebrow">🌐 Web &amp; App Ecosystem</div>
+                            <h3 class="channel-meta-title">Seamless Experience</h3>
+                        </div>
+                    </div>
+                    <p class="channel-meta-desc">
+                        Open Telegram in your browser or through the installed Telegram application on your computer or mobile device.
+                    </p>
+                    <ul class="telegram-channel-features">
+                        <li><span>💾</span> <span><strong>Persistent Session:</strong> Login once, stay logged in as long as Telegram remembers you.</span></li>
+                        <li><span>📱</span> <span><strong>Cross-Platform:</strong> Works on Windows desktop, laptops, tablets, and Android.</span></li>
+                        <li><span>🚀</span> <span><strong>Fast &amp; Direct:</strong> No intermediaries, no proxy delays.</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="btn-secondary" style="width:100%; justify-content:center;" onclick="openTelegramWeb()">
+                        <span>Launch Telegram Web</span>
+                        <span>↗</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy & Security Notice -->
+        <div class="telegram-security-card">
+            <div class="sec-icon">🔒</div>
+            <div>
+                <h4>Zero Credential Storage &amp; Privacy First</h4>
+                <p>
+                    MMMUT ERP does not collect, prompt for, or store your Telegram password, OTPs, or authentication tokens. All authentication is performed directly and securely through official Telegram services.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
     <!-- MODALS & OVERLAYS                                             -->
     <!-- ============================================================ -->
 
@@ -925,6 +1037,7 @@
                 <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin
                     Requests</button>
                 <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+                <button class="admin-tab" data-tab="telegram" onclick="switchAdminTab('telegram')">✈️ Telegram Access</button>
             </div>
             <div class="admin-panel-body" id="adminBody">
                 <div class="tab-content active" id="tab-dashboard">
@@ -950,6 +1063,9 @@
                 </div>
                 <div class="tab-content" id="tab-feedback">
                     <div id="adminFeedbackContent">Loading feedback…</div>
+                </div>
+                <div class="tab-content" id="tab-telegram">
+                    <div id="adminTelegramContent">Loading Telegram applications…</div>
                 </div>
             </div>
         </div>

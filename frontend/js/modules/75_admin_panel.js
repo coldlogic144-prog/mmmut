@@ -31,6 +31,7 @@
             if (tab === 'requests') renderAdminRequests();
             if (tab === 'feedback') renderAdminFeedback();
             if (tab === 'rollverify') renderAdminRollVerify();
+            if (tab === 'telegram') renderAdminTelegram();
         }
 
         // ========== ADMIN: DASHBOARD ==========
@@ -590,5 +591,163 @@
         }
         window.approveAdminRequest = approveAdminRequest;
         window.rejectAdminRequest = rejectAdminRequest;
+
+        // ========== ADMIN: TELEGRAM ACCESS APPLICATIONS ==========
+        async function renderAdminTelegram() {
+            const el = document.getElementById('adminTelegramContent');
+            if (!el) return;
+            el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-soft);">Loading Telegram applications…</div>';
+            try {
+                const snap = await getDocs(telegramApplicationsCollection);
+                let apps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // Sort pending first, then by appliedAt desc
+                apps.sort((a, b) => {
+                    if (a.status === 'PENDING_ADMIN_APPROVAL' && b.status !== 'PENDING_ADMIN_APPROVAL') return -1;
+                    if (b.status === 'PENDING_ADMIN_APPROVAL' && a.status !== 'PENDING_ADMIN_APPROVAL') return 1;
+                    const tA = (a.appliedAt && a.appliedAt.seconds) || 0;
+                    const tB = (b.appliedAt && b.appliedAt.seconds) || 0;
+                    return tB - tA;
+                });
+
+                const pendingCount = apps.filter(a => a.status === 'PENDING_ADMIN_APPROVAL').length;
+                const approvedCount = apps.filter(a => ['ADMIN_APPROVED', 'JOIN_REQUEST_NOT_SENT', 'JOIN_REQUEST_PENDING', 'CHANNEL_APPROVED'].includes(a.status)).length;
+                const rejectedCount = apps.filter(a => ['ADMIN_REJECTED', 'CHANNEL_REJECTED'].includes(a.status)).length;
+
+                let html = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;">
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:var(--primary);">${apps.length}</div><div style="font-size:12px;color:var(--ink-soft);">Total Applications</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#d97706;">${pendingCount}</div><div style="font-size:12px;color:var(--ink-soft);">Pending Review</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#16a34a;">${approvedCount}</div><div style="font-size:12px;color:var(--ink-soft);">Admin Approved</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#dc2626;">${rejectedCount}</div><div style="font-size:12px;color:var(--ink-soft);">Declined</div></div>
+                </div>
+                <div style="margin-bottom:12px;font-size:13px;color:var(--ink-soft);">
+                    <strong>Stage 1 Approval:</strong> Approving unlocks Telegram linking for the student. They will then request access to the private channel.
+                </div>`;
+
+                if (apps.length === 0) {
+                    html += '<div class="empty-note">No Telegram applications received yet.</div>';
+                } else {
+                    html += `
+                    <div style="overflow-x:auto;max-height:550px;overflow-y:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead style="background:var(--ink);color:#F1ECDD;position:sticky;top:0;z-index:2;">
+                                <tr>
+                                    <th style="padding:10px 8px;text-align:left;">Student</th>
+                                    <th style="padding:10px 8px;text-align:left;">Roll No.</th>
+                                    <th style="padding:10px 8px;text-align:left;">Branch</th>
+                                    <th style="padding:10px 8px;text-align:left;">Applied</th>
+                                    <th style="padding:10px 8px;text-align:left;">Telegram User</th>
+                                    <th style="padding:10px 8px;text-align:left;">Status</th>
+                                    <th style="padding:10px 8px;text-align:left;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    apps.forEach(app => {
+                        const statusBadge = getTelegramStatusBadge(app.status);
+                        const appliedStr = app.appliedAt ? formatDate(app.appliedAt) : '—';
+                        const tgUserStr = app.telegramUsername ? `@${escapeHtml(app.telegramUsername)}` : (app.telegramUserId ? `ID: ${escapeHtml(app.telegramUserId)}` : '<span style="color:var(--ink-soft);font-style:italic;">Not linked</span>');
+
+                        let actionsHtml = '';
+                        if (app.status === 'PENDING_ADMIN_APPROVAL') {
+                            actionsHtml = `
+                                <div style="display:flex;gap:6px;">
+                                    <button class="btn-sm" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="approveTelegramApplication('${app.id}')">✓ Approve</button>
+                                    <button class="btn-sm" style="background:#dc2626;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="rejectTelegramApplication('${app.id}')">✕ Reject</button>
+                                </div>`;
+                        } else if (app.status === 'ADMIN_REJECTED') {
+                            actionsHtml = `
+                                <button class="btn-sm" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="approveTelegramApplication('${app.id}')">✓ Approve</button>`;
+                        } else {
+                            actionsHtml = `
+                                <button class="btn-sm" style="background:#dc2626;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="rejectTelegramApplication('${app.id}')">Revoke</button>`;
+                        }
+
+                        html += `
+                            <tr style="border-bottom:1px solid var(--paper-line);">
+                                <td style="padding:10px 8px;"><strong>${escapeHtml(app.studentName || '—')}</strong><br><span style="font-size:11px;color:var(--ink-soft);">${escapeHtml(app.studentUsername || '')}</span></td>
+                                <td style="padding:10px 8px;">${escapeHtml(app.studentRoll || '—')}</td>
+                                <td style="padding:10px 8px;">${escapeHtml(getBranchName(app.studentBranch))}</td>
+                                <td style="padding:10px 8px;font-size:12px;color:var(--ink-soft);">${appliedStr}</td>
+                                <td style="padding:10px 8px;">${tgUserStr}</td>
+                                <td style="padding:10px 8px;">${statusBadge}</td>
+                                <td style="padding:10px 8px;">${actionsHtml}</td>
+                            </tr>`;
+                    });
+
+                    html += `
+                            </tbody>
+                        </table>
+                    </div>`;
+                }
+
+                el.innerHTML = html;
+            } catch (err) {
+                console.error('[Admin Telegram] Error rendering:', err);
+                el.innerHTML = `<div class="empty-note">Error loading Telegram applications: ${err.message}</div>`;
+            }
+        }
+
+        function getTelegramStatusBadge(status) {
+            switch (status) {
+                case 'PENDING_ADMIN_APPROVAL':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e;">⏳ Pending ERP Admin</span>';
+                case 'ADMIN_APPROVED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#dcfce7;color:#166534;">✅ ERP Approved</span>';
+                case 'ADMIN_REJECTED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b;">❌ ERP Rejected</span>';
+                case 'JOIN_REQUEST_NOT_SENT':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e0f2fe;color:#075985;">🔗 Telegram Linked</span>';
+                case 'JOIN_REQUEST_PENDING':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#ffedd5;color:#9a3412;">⏳ Channel Review</span>';
+                case 'CHANNEL_APPROVED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#bbf7d0;color:#14532d;">🎉 Channel Member</span>';
+                case 'CHANNEL_REJECTED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fecaca;color:#7f1d1d;">🚫 Channel Rejected</span>';
+                default:
+                    return `<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#f3f4f6;color:#374151;">${escapeHtml(status || '—')}</span>`;
+            }
+        }
+
+        async function approveTelegramApplication(uid) {
+            if (!confirm('Approve Telegram access for this student?')) return;
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, uid), {
+                    status: 'ADMIN_APPROVED',
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: (currentUser && currentUser.uid) || 'admin',
+                    rejectionReason: null
+                });
+                showToast('✅ Student Telegram application approved!');
+                renderAdminTelegram();
+            } catch (e) {
+                console.error('[Admin] Approve Telegram error:', e);
+                showToast('Failed to approve: ' + e.message);
+            }
+        }
+
+        async function rejectTelegramApplication(uid) {
+            const reason = prompt('Enter rejection reason (optional):', 'Application does not meet eligibility criteria at this time.');
+            if (reason === null) return; // user cancelled prompt
+
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, uid), {
+                    status: 'ADMIN_REJECTED',
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: (currentUser && currentUser.uid) || 'admin',
+                    rejectionReason: reason || 'Not eligible at this time.'
+                });
+                showToast('Application marked as rejected.');
+                renderAdminTelegram();
+            } catch (e) {
+                console.error('[Admin] Reject Telegram error:', e);
+                showToast('Failed to reject: ' + e.message);
+            }
+        }
+
+        window.renderAdminTelegram = renderAdminTelegram;
+        window.approveTelegramApplication = approveTelegramApplication;
+        window.rejectTelegramApplication = rejectTelegramApplication;
 
         // ========== RENDER: Posts Feed ==========

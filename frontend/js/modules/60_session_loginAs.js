@@ -88,6 +88,10 @@
             if (window._holidaysUnsub) window._holidaysUnsub();
             window._holidaysUnsub = listenHolidays();
 
+            if (typeof setupTelegramAppListener === 'function') {
+                setupTelegramAppListener(record.uid || currentUid);
+            }
+
             if (window._postsUnsub) window._postsUnsub();
             window._postsUnsub = onSnapshot(query(postsCollection, orderBy('createdAt', 'desc')), (snap) => {
                 allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));

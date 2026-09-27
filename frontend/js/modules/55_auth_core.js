@@ -201,6 +201,13 @@
             if (document.getElementById('chessClubView').style.display !== 'none') {
                 toggleChessClub(false);
             }
+            // Close Telegram section if open
+            if (document.getElementById('telegramView') && document.getElementById('telegramView').style.display !== 'none') {
+                toggleTelegramSection(false);
+            }
+            if (typeof setupTelegramAppListener === 'function') {
+                setupTelegramAppListener(null);
+            }
             // Stop using this user's push-notification token context. Does NOT
             // delete their Firestore token document or alter authentication.
             updatePushButtonUI();

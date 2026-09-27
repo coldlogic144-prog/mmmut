@@ -47,3 +47,28 @@
         // Path to the service worker. It must live at the site root relative to this
         // page (same directory as index.html), per Part 1.
         const FCM_SW_PATH = 'firebase-messaging-sw.js';
+
+        // ========== TELEGRAM INTEGRATION CONFIGURATION ==========
+        // Configurable channel URL, states, and Telegram settings.
+        // Centralized here so URLs and states are never hardcoded throughout the application.
+        const TELEGRAM_STATES = {
+            NOT_APPLIED: 'NOT_APPLIED',
+            PENDING_ADMIN_APPROVAL: 'PENDING_ADMIN_APPROVAL',
+            ADMIN_REJECTED: 'ADMIN_REJECTED',
+            ADMIN_APPROVED: 'ADMIN_APPROVED',
+            TELEGRAM_NOT_CONNECTED: 'TELEGRAM_NOT_CONNECTED',
+            JOIN_REQUEST_NOT_SENT: 'JOIN_REQUEST_NOT_SENT',
+            JOIN_REQUEST_PENDING: 'JOIN_REQUEST_PENDING',
+            CHANNEL_APPROVED: 'CHANNEL_APPROVED',
+            CHANNEL_REJECTED: 'CHANNEL_REJECTED'
+        };
+
+        const TELEGRAM_CONFIG = {
+            webUrl: "https://web.telegram.org/",
+            channelUrl: "https://t.me/mmmut_erp_official", // Configurable Telegram channel URL (user will update)
+            channelName: "MMMUT Official Channel",
+            channelDescription: "Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.",
+            botUsername: "mmmut_erp_bot",
+            states: TELEGRAM_STATES
+        };
+

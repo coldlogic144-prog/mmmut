@@ -8,8 +8,10 @@
 // Exit code 0 = all mandatory checks passed.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const APP = fs.readFileSync('e:/mmmut/frontend/js/app.js', 'utf8');
+const APP = fs.readFileSync(new URL('../frontend/js/app.js', import.meta.url), 'utf8');
 const results = [];
 const check = (name, pass, detail = '') =>
   results.push({ name, pass: !!pass, detail });
@@ -49,8 +51,10 @@ for (const [code, id] of Object.entries(branchExpect)) {
 check('ROSTER_BRANCH_TO_ID maps all 8 branches', mapOk);
 
 // ---------- 2) spawn REAL backend ----------
-const child = spawn('python', ['-m', 'backend.app'], {
-  cwd: 'e:/mmmut', stdio: 'ignore',
+const pyCmd = process.platform === 'win32' ? 'py' : 'python';
+const child = spawn(pyCmd, ['-m', 'backend.app'], {
+  cwd: path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')),
+  stdio: 'ignore',
   env: { ...process.env, PORT: '5057' },
 });
 const BASE = 'http://127.0.0.1:5057';

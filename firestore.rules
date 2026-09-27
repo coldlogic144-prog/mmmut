@@ -49,6 +49,39 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // TELEGRAM APPLICATIONS: Private Telegram Access System
+    // Path: /telegramApplications/{uid}
+    // ============================================================
+    match /telegramApplications/{uid} {
+      // Owner can read their own application; Admins can read all applications
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Owner can submit an initial application with PENDING_ADMIN_APPROVAL
+      allow create: if isOwner(uid) &&
+                    request.resource.data.uid == uid &&
+                    request.resource.data.status == 'PENDING_ADMIN_APPROVAL';
+
+      // Updates:
+      // - Admins can update any field (approving/rejecting, setting review notes)
+      // - Owners can update only their own document, and CANNOT self-approve (cannot set ADMIN_APPROVED)
+      allow update: if isAdmin() || (
+        isOwner(uid) &&
+        request.resource.data.uid == uid &&
+        (
+          (resource.data.status == 'ADMIN_REJECTED' && request.resource.data.status == 'PENDING_ADMIN_APPROVAL') ||
+          (
+            request.resource.data.status != 'ADMIN_APPROVED' &&
+            request.resource.data.status != 'ADMIN_REJECTED' &&
+            (resource.data.status in ['ADMIN_APPROVED', 'JOIN_REQUEST_NOT_SENT', 'JOIN_REQUEST_PENDING', 'CHANNEL_APPROVED'])
+          )
+        )
+      );
+
+      // Only admins can delete applications
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
     // OTHER APP COLLECTIONS
     // ============================================================
     match /adminRequests/{requestId} {

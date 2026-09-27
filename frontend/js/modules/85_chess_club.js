@@ -12,6 +12,8 @@
             const mainShell = document.getElementById('mainShell');
             const app = document.getElementById('app');
             if (show) {
+                const telegramView = document.getElementById('telegramView');
+                if (telegramView) telegramView.style.display = 'none';
                 chessView.style.display = 'block';
                 mainShell.style.display = 'none';
                 // Hide footer? We'll keep footer visible but it's outside shell. Actually footer is inside app but after shell? The footer is inside app but after shell. We'll hide footer too.

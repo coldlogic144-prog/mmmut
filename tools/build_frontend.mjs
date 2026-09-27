@@ -39,7 +39,8 @@ const marker = '} from "firebase/messaging";';
 if (!code.includes(marker)) throw new Error('firebase/messaging marker missing — section 10 changed?');
 code = code.replace(marker, marker + '\n' +
   '\n        // ===== PYTHON BACKEND CLIENT (additive — see backend/) =====\n' +
-  "        import { apiFetchRoster } from './services/apiService.js';");
+  "        import { apiFetchRoster, apiCreateTelegramToken, apiCheckTelegramMembership, apiGetTelegramChannelInvite, apiGetTelegramTokenStatus, apiVerifyTelegramSetup, apiSetTelegramWebhook } from './services/apiService.js';");
+
 
 const out =
   '// ============================================================================\n' +

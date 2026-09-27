@@ -2539,6 +2539,372 @@
             }
         }
 
+        /* ===== TELEGRAM SECTION STYLES ===== */
+        #telegramView {
+            display: none;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 20px 56px;
+            animation: telegramFadeIn 0.22s ease-out;
+        }
+
+        @keyframes telegramFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .telegram-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .telegram-hero-card {
+            background: linear-gradient(135deg, var(--paper-raised, #ffffff) 0%, rgba(0, 136, 204, 0.06) 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius, 14px);
+            padding: 38px 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .telegram-hero-badge {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2aabee 0%, #229ed9 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(34, 158, 217, 0.35);
+        }
+
+        .telegram-hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .telegram-hero-subtitle {
+            font-size: 15px;
+            color: var(--ink-soft, #475569);
+            max-width: 500px;
+            line-height: 1.5;
+            margin: 0 0 22px;
+        }
+
+        .btn-telegram-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #0088cc;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 13px 30px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 136, 204, 0.3);
+            transition: all 0.2s ease;
+            min-height: 48px;
+        }
+
+        .btn-telegram-primary:hover {
+            background: #0077b5;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 136, 204, 0.4);
+        }
+
+        .telegram-session-hint {
+            margin-top: 14px;
+            font-size: 12.5px;
+            color: var(--ink-soft, #64748b);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .telegram-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .telegram-channel-card {
+            background: var(--paper-raised, #ffffff);
+            border: 1px solid var(--paper-line, #D9D4C4);
+            border-radius: var(--radius, 14px);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .telegram-channel-card .channel-meta-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 4px 0 8px;
+        }
+
+        .telegram-channel-card .channel-meta-desc {
+            font-size: 13.5px;
+            color: var(--ink-soft, #475569);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .telegram-channel-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .telegram-channel-features li {
+            font-size: 13px;
+            color: var(--ink-soft, #475569);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-telegram-channel {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #eff6ff;
+            color: #0284c7;
+            border: 1px solid #bae6fd;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 11px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-height: 44px;
+        }
+
+        .btn-telegram-channel:hover {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+
+        .telegram-security-card {
+            background: var(--paper-raised, #ffffff);
+            border: 1px solid var(--paper-line, #D9D4C4);
+            border-left: 4px solid #0088cc;
+            border-radius: var(--radius, 14px);
+            padding: 18px 22px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .telegram-security-card .sec-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .telegram-security-card h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .telegram-security-card p {
+            font-size: 13px;
+            color: var(--ink-soft, #475569);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .btn-topbar-telegram {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #bfdbfe;
+            background: #f0f9ff;
+            padding: 7px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0088cc;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            min-height: 36px;
+        }
+
+        .btn-topbar-telegram:hover {
+            background: #0088cc;
+            color: #ffffff;
+            border-color: #0088cc;
+        }
+
+        @media (max-width: 720px) {
+            #telegramView {
+                padding: 16px 12px 40px;
+            }
+            .telegram-hero-card {
+                padding: 24px 16px;
+            }
+            .telegram-hero-title {
+                font-size: 22px;
+            }
+            .btn-topbar-telegram {
+                display: none;
+            }
+        }
+
+        /* Telegram Private Access State Cards & Workflow */
+        .tg-state-card {
+            background: var(--paper-raised, #ffffff);
+            border: 1px solid var(--paper-line, #e2e8f0);
+            border-radius: var(--radius, 14px);
+            padding: 30px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .tg-state-card.tg-card-success {
+            border-color: #86efac;
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        }
+
+        .tg-state-card.tg-card-danger {
+            border-color: #fca5a5;
+            background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+        }
+
+        .tg-state-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tg-stage-pill {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--ink, #1e3a8a);
+            background: var(--paper, #f1f5f9);
+            padding: 3px 10px;
+            border-radius: 9999px;
+            border: 1px solid var(--paper-line, #cbd5e1);
+        }
+
+        .tg-status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+        }
+
+        .tg-badge-neutral { background: #f1f5f9; color: #475569; }
+        .tg-badge-warning { background: #fef3c7; color: #92400e; }
+        .tg-badge-success { background: #dcfce7; color: #166534; }
+        .tg-badge-danger { background: #fee2e2; color: #991b1b; }
+        .tg-badge-info { background: #e0f2fe; color: #075985; }
+
+        .tg-state-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--ink, #0f172a);
+            margin: 0 0 8px;
+        }
+
+        .tg-state-desc {
+            font-size: 14px;
+            color: var(--ink-soft, #475569);
+            line-height: 1.55;
+            margin-bottom: 20px;
+        }
+
+        .tg-applicant-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-xs, 8px);
+            padding: 16px 20px;
+            margin-bottom: 22px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .tg-info-row {
+            font-size: 13px;
+            color: var(--ink-soft, #475569);
+        }
+
+        .tg-info-row span {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .tg-info-row strong {
+            color: var(--ink, #0f172a);
+            font-size: 14px;
+        }
+
+        .tg-timeline-note,
+        .tg-helper-note {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            border-left: 3px solid #0088cc;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--ink-soft, #475569);
+            margin-bottom: 20px;
+        }
+
+        .tg-reason-box {
+            background: #fef2f2;
+            border-left: 3px solid #dc2626;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #991b1b;
+            margin-bottom: 20px;
+        }
+
+        .tg-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+
         @media (max-width: 520px) {
             .ledger-ai-chat {
                 bottom: 80px;
@@ -2746,6 +3112,10 @@
                 <button class="btn-icon" id="notifBell" onclick="scrollToPosts()" title="Announcements">
                     🔔
                     <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
+                </button>
+                <button class="btn-topbar-telegram" onclick="toggleTelegramSection(true)" title="Open Telegram Section">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                    <span>Telegram</span>
                 </button>
                 <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
                 <button class="btn-ghost" id="pushNotifBtn" style="display:none;" onclick="enablePushNotifications()">🔔 Enable Notifications</button>
@@ -3108,6 +3478,103 @@
         </div>
     </div>
 
+    <!-- ===== TELEGRAM SECTION VIEW ===== -->
+    <div id="telegramView">
+        <div class="telegram-page-header">
+            <div>
+                <h1 style="font-family:'Fraunces',serif; font-size:28px; font-weight:600; display:flex; align-items:center; gap:10px;">
+                    <span style="color:#0088cc; display:inline-flex;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                        </svg>
+                    </span>
+                    Telegram
+                </h1>
+                <p style="color:var(--ink-soft); font-size:14px; margin-top:2px;">Official University Community &amp; Direct Messaging</p>
+            </div>
+            <button class="btn-secondary" onclick="toggleTelegramSection(false)" style="margin:0;">← Back to Ledger</button>
+        </div>
+
+        <!-- Dynamic State Machine Container for Private Telegram Access -->
+        <div id="telegramStateContainer" style="margin-bottom:24px;">
+            <div class="tg-state-card">
+                <div class="tg-state-header">
+                    <span class="tg-stage-pill">Stage 1 of 2</span>
+                    <span class="tg-status-badge tg-badge-neutral">Checking Access…</span>
+                </div>
+                <h3 class="tg-state-title">Telegram Access Verification</h3>
+                <p class="tg-state-desc">Loading your Telegram access status from MMMUT ERP…</p>
+            </div>
+        </div>
+
+        <!-- Channel & Community Grid -->
+        <div class="telegram-grid">
+            <!-- Student Channel Card -->
+            <div class="telegram-channel-card">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+                        <div>
+                            <div class="card-eyebrow" style="color:#0284c7;">📢 Student Broadcast</div>
+                            <h3 class="channel-meta-title display" id="telegramChannelName">MMMUT Official Channel</h3>
+                        </div>
+                        <span style="font-size:12px; font-weight:700; background:#dbeafe; color:#1e40af; padding:3px 8px; border-radius:9999px;">Verified</span>
+                    </div>
+                    <p class="channel-meta-desc" id="telegramChannelDesc">
+                        Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.
+                    </p>
+                    <ul class="telegram-channel-features">
+                        <li><span>⚡</span> <span>Real-time official notices &amp; circulars</span></li>
+                        <li><span>📅</span> <span>Timetable and examination updates</span></li>
+                        <li><span>🎓</span> <span>Campus events &amp; academic alerts</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="btn-telegram-channel" style="width:100%;" onclick="openTelegramChannel()">
+                        <span>Open Channel</span>
+                        <span>↗</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Telegram Web & App Access Info Card -->
+            <div class="telegram-channel-card">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+                        <div>
+                            <div class="card-eyebrow" style="color:#0284c7;">🌐 Web &amp; App Ecosystem</div>
+                            <h3 class="channel-meta-title display">Seamless Experience</h3>
+                        </div>
+                    </div>
+                    <p class="channel-meta-desc">
+                        Open Telegram in your browser or through the installed Telegram application on your computer or mobile device.
+                    </p>
+                    <ul class="telegram-channel-features">
+                        <li><span>💾</span> <span><strong>Persistent Session:</strong> Login once, stay logged in as long as Telegram remembers you.</span></li>
+                        <li><span>📱</span> <span><strong>Cross-Platform:</strong> Works on Windows desktop, laptops, tablets, and Android.</span></li>
+                        <li><span>🚀</span> <span><strong>Fast &amp; Direct:</strong> No intermediaries, no proxy delays.</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="btn-secondary" style="width:100%; justify-content:center; margin:0;" onclick="openTelegramWeb()">
+                        <span>Launch Telegram Web</span>
+                        <span>↗</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy & Security Notice -->
+        <div class="telegram-security-card">
+            <div class="sec-icon">🔒</div>
+            <div>
+                <h4>Zero Credential Storage &amp; Privacy First</h4>
+                <p>
+                    MMMUT ERP does not collect, prompt for, or store your Telegram password, OTPs, or authentication tokens. All authentication is performed directly and securely through official Telegram services.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== CREATE POST OVERLAY (Admin only) ===== -->
     <div class="feedback-overlay" id="createPostOverlay">
         <div class="feedback-panel cp-modal" style="max-width:560px;">
@@ -3308,6 +3775,7 @@
                 <button class="admin-tab" data-tab="posts" onclick="switchAdminTab('posts')">📢 Announcements</button>
                 <button class="admin-tab" data-tab="requests" onclick="switchAdminTab('requests')">👥 Admin Requests</button>
                 <button class="admin-tab" data-tab="feedback" onclick="switchAdminTab('feedback')">💬 Feedback</button>
+                <button class="admin-tab" data-tab="telegram" onclick="switchAdminTab('telegram')">✈️ Telegram Access</button>
             </div>
             <div class="admin-panel-body" id="adminBody">
                 <div class="tab-content active" id="tab-dashboard"><div id="adminDashboardContent">Loading dashboard…</div></div>
@@ -3318,6 +3786,7 @@
                 <div class="tab-content" id="tab-posts"><div id="adminPostsContent">Loading announcements…</div></div>
                 <div class="tab-content" id="tab-requests"><div id="adminRequestsContent">Loading requests…</div></div>
                 <div class="tab-content" id="tab-feedback"><div id="adminFeedbackContent">Loading feedback…</div></div>
+                <div class="tab-content" id="tab-telegram"><div id="adminTelegramContent">Loading Telegram applications…</div></div>
             </div>
         </div>
     </div>
@@ -3460,6 +3929,16 @@
             isSupported as isMessagingSupported
         } from "firebase/messaging";
 
+        // ===== PYTHON BACKEND CLIENT (additive — see backend/) =====
+        import {
+            apiFetchRoster,
+            apiCreateTelegramToken,
+            apiCheckTelegramMembership,
+            apiGetTelegramChannelInvite,
+            apiGetTelegramTokenStatus,
+            apiVerifyTelegramSetup
+        } from './frontend/js/services/apiService.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyDMLvLIZkPFO5nsVQBr2IA-8BRB5Hzb3Xo",
             authDomain: "student-erp-77605.firebaseapp.com",
@@ -3538,6 +4017,9 @@
         const chessActivityCollection = collection(db, "chessActivity");
         const chessGamesCollection = collection(db, "chessGames");
 
+        // ===== TELEGRAM PRIVATE ACCESS COLLECTIONS =====
+        const telegramApplicationsCollection = collection(db, "telegramApplications");
+
         // ========== ROLL-NUMBER MIGRATION (recovery-safe, additive) ==========
         // Master switches. FLIP ROLL_MIGRATION_ENABLED to false to instantly
         // restore the ORIGINAL pre-migration behavior of the app (gate hidden,
@@ -3573,6 +4055,31 @@
         // Path to the service worker. It must live at the site root relative to this
         // page (same directory as index.html), per Part 1.
         const FCM_SW_PATH = 'firebase-messaging-sw.js';
+
+        // ========== TELEGRAM INTEGRATION CONFIGURATION ==========
+        // Configurable channel URL, states, and Telegram settings.
+        // Centralized here so URLs and states are never hardcoded throughout the application.
+        const TELEGRAM_STATES = {
+            NOT_APPLIED: 'NOT_APPLIED',
+            PENDING_ADMIN_APPROVAL: 'PENDING_ADMIN_APPROVAL',
+            ADMIN_REJECTED: 'ADMIN_REJECTED',
+            ADMIN_APPROVED: 'ADMIN_APPROVED',
+            TELEGRAM_NOT_CONNECTED: 'TELEGRAM_NOT_CONNECTED',
+            JOIN_REQUEST_NOT_SENT: 'JOIN_REQUEST_NOT_SENT',
+            JOIN_REQUEST_PENDING: 'JOIN_REQUEST_PENDING',
+            CHANNEL_APPROVED: 'CHANNEL_APPROVED',
+            CHANNEL_REJECTED: 'CHANNEL_REJECTED'
+        };
+
+        const TELEGRAM_CONFIG = {
+            webUrl: "https://web.telegram.org/",
+            channelUrl: "https://t.me/mmmut_erp_official",
+            channelName: "MMMUT Official Channel",
+            channelDescription: "Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.",
+            botUsername: "mmmut_erp_bot",
+            states: TELEGRAM_STATES
+        };
+
 
         let messagingInstance = null;
         let fcmSwRegistration = null;
@@ -6054,6 +6561,10 @@
             if (document.getElementById('chessClubView').style.display !== 'none') {
                 toggleChessClub(false);
             }
+            // Close Telegram section if open
+            if (document.getElementById('telegramView') && document.getElementById('telegramView').style.display !== 'none') {
+                toggleTelegramSection(false);
+            }
             // Stop using this user's push-notification token context. Does NOT
             // delete their Firestore token document or alter authentication.
             updatePushButtonUI();
@@ -6824,6 +7335,7 @@
             if (tab === 'requests') renderAdminRequests();
             if (tab === 'feedback') renderAdminFeedback();
             if (tab === 'rollverify') renderAdminRollVerify();
+            if (tab === 'telegram') renderAdminTelegram();
         }
 
         // ========== ADMIN: DASHBOARD ==========
@@ -7945,6 +8457,709 @@
         }
 
         // ============================================================
+        // ========== TELEGRAM INTEGRATION ============================
+        // ============================================================
+
+        let telegramAppUnsub = null;
+        let currentTelegramAppState = 'NOT_APPLIED';
+        let currentTelegramAppData = null;
+        let telegramTokenWatcherTimer = null;
+
+        function openTelegramWeb() {
+            const url = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.webUrl) ||
+                (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.webUrl) ||
+                'https://web.telegram.org/';
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function openTelegramChannel() {
+            const url = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.channelUrl) ||
+                (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.channelUrl) ||
+                'https://t.me/mmmut_erp_official';
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function setupTelegramAppListener(uid) {
+            if (telegramAppUnsub) {
+                try { telegramAppUnsub(); } catch (_) {}
+                telegramAppUnsub = null;
+            }
+            if (!uid) {
+                currentTelegramAppState = 'NOT_APPLIED';
+                currentTelegramAppData = null;
+                renderTelegramUI();
+                return;
+            }
+
+            try {
+                const appDocRef = doc(telegramApplicationsCollection, uid);
+                telegramAppUnsub = onSnapshot(appDocRef, (snap) => {
+                    if (!snap.exists()) {
+                        currentTelegramAppState = 'NOT_APPLIED';
+                        currentTelegramAppData = null;
+                    } else {
+                        currentTelegramAppData = snap.data();
+                        const rawStatus = currentTelegramAppData.status || 'PENDING_ADMIN_APPROVAL';
+                        if (rawStatus === 'ADMIN_APPROVED' && !currentTelegramAppData.telegramUserId) {
+                            currentTelegramAppState = 'TELEGRAM_NOT_CONNECTED';
+                        } else {
+                            currentTelegramAppState = rawStatus;
+                        }
+                    }
+                    renderTelegramUI();
+                }, (err) => {
+                    console.warn('[Telegram] Listener notice:', err.message);
+                });
+            } catch (err) {
+                console.error('[Telegram] Failed to attach application listener:', err);
+            }
+        }
+
+        async function applyForTelegramAccess() {
+            if (!currentUser || !currentUid) {
+                showToast('Please sign in to apply for Telegram access.');
+                return;
+            }
+
+            const btn = document.getElementById('btnApplyTelegram');
+            if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+            try {
+                const studentName = (currentProfile && (currentProfile.name || currentProfile.displayName)) ||
+                    (currentUser && currentUser.displayName) || 'Student';
+                const studentRoll = (currentProfile && (currentProfile.rollNumber || currentProfile.pendingRollNumber)) || '';
+                const studentBranch = (currentProfile && currentProfile.branchId) || '';
+                const studentUsername = (currentProfile && currentProfile.username) || '';
+
+                const appDoc = {
+                    uid: currentUid,
+                    studentName: studentName,
+                    studentRoll: studentRoll,
+                    studentBranch: studentBranch,
+                    studentUsername: studentUsername,
+                    status: 'PENDING_ADMIN_APPROVAL',
+                    appliedAt: serverTimestamp(),
+                    reviewedAt: null,
+                    reviewedBy: null,
+                    rejectionReason: null,
+                    telegramUserId: null,
+                    telegramUsername: null
+                };
+
+                await setDoc(doc(telegramApplicationsCollection, currentUid), appDoc);
+                showToast('✅ Application submitted for ERP Administrator approval.');
+            } catch (err) {
+                console.error('[Telegram] Error submitting application:', err);
+                showToast('Failed to submit application: ' + (err.message || 'Permission denied'));
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Apply for Telegram Access'; }
+            }
+        }
+
+        async function reapplyForTelegramAccess() {
+            if (!currentUser || !currentUid) return;
+            const btn = document.getElementById('btnReapplyTelegram');
+            if (btn) { btn.disabled = true; btn.textContent = 'Re-submitting…'; }
+
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                    status: 'PENDING_ADMIN_APPROVAL',
+                    appliedAt: serverTimestamp(),
+                    rejectionReason: null
+                });
+                showToast('✅ Application re-submitted for Administrator review.');
+            } catch (err) {
+                console.error('[Telegram] Reapply error:', err);
+                showToast('Error re-applying: ' + err.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Re-apply for Access'; }
+            }
+        }
+
+        // Stage 2, Step A: Connect Telegram Identity via Official Deep-link (/start <token>)
+        async function connectTelegramAccount() {
+            if (!currentUser || !currentUid) return;
+            const btn = document.getElementById('btnConnectTelegram');
+            if (btn) { btn.disabled = true; btn.textContent = 'Generating Link…'; }
+
+            try {
+                let idToken = null;
+                if (currentUser && typeof currentUser.getIdToken === 'function') {
+                    try {
+                        idToken = await currentUser.getIdToken();
+                    } catch (e) {
+                        console.warn('[Telegram] Could not fetch ID token:', e);
+                    }
+                }
+
+                // Request single-use linking token from server-side backend
+                const res = typeof apiCreateTelegramToken === 'function' ?
+                    await apiCreateTelegramToken(currentUid, idToken) : null;
+
+                if (res && res.ok && res.deepLink) {
+                    window.open(res.deepLink, '_blank', 'noopener,noreferrer');
+                    showToast('Opening Telegram bot… Press Start in Telegram to link.');
+                    startTelegramTokenWatcher(res.token);
+                } else {
+                    // Fallback to bot username direct link if backend offline
+                    const botUser = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.botUsername) || 'mmmut_erp_bot';
+                    const fallbackUrl = 'https://t.me/' + botUser;
+                    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+                    promptManualTelegramHandle();
+                }
+            } catch (err) {
+                console.error('[Telegram] Error connecting Telegram:', err);
+                showToast('Could not initiate Telegram connection.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Connect Telegram Account'; }
+            }
+        }
+
+        // Polling watcher while student links with bot on Telegram
+        function startTelegramTokenWatcher(token) {
+            if (telegramTokenWatcherTimer) {
+                clearInterval(telegramTokenWatcherTimer);
+                telegramTokenWatcherTimer = null;
+            }
+
+            let attempts = 0;
+            telegramTokenWatcherTimer = setInterval(async () => {
+                attempts++;
+                if (attempts > 40) { // 2 minutes max
+                    clearInterval(telegramTokenWatcherTimer);
+                    telegramTokenWatcherTimer = null;
+                    return;
+                }
+
+                if (typeof apiGetTelegramTokenStatus === 'function') {
+                    const statusRes = await apiGetTelegramTokenStatus(token);
+                    if (statusRes && statusRes.ok && statusRes.linked) {
+                        clearInterval(telegramTokenWatcherTimer);
+                        telegramTokenWatcherTimer = null;
+
+                        // Save linked identity to Firestore doc
+                        try {
+                            await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                                telegramUserId: statusRes.telegramUserId || null,
+                                telegramUsername: statusRes.telegramUsername || null,
+                                status: 'JOIN_REQUEST_NOT_SENT',
+                                linkedAt: serverTimestamp()
+                            });
+                            showToast('🎉 Telegram account connected successfully!');
+                        } catch (e) {
+                            console.warn('[Telegram] Could not update linked status directly:', e);
+                        }
+                    }
+                }
+            }, 3000);
+        }
+
+        // Fallback helper to record handle if bot server is unreachable
+        async function promptManualTelegramHandle() {
+            const handle = prompt('Enter your Telegram @username to link with your ERP profile:');
+            if (!handle) return;
+            const clean = handle.trim().replace(/^@/, '');
+            if (!clean) return;
+
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                    telegramUsername: clean,
+                    telegramUserId: clean,
+                    status: 'JOIN_REQUEST_NOT_SENT',
+                    linkedAt: serverTimestamp()
+                });
+                showToast('Telegram username saved. Proceed to request channel access.');
+            } catch (e) {
+                showToast('Failed to save Telegram handle: ' + e.message);
+            }
+        }
+
+        // Stage 2, Step B: Student requests to join the private channel
+        async function requestChannelJoin() {
+            if (!currentUser || !currentUid) return;
+            const btn = document.getElementById('btnRequestJoinChannel');
+            if (btn) { btn.disabled = true; btn.textContent = 'Opening Channel…'; }
+
+            try {
+                // Fetch private channel invite link
+                let inviteUrl = null;
+                if (typeof apiGetTelegramChannelInvite === 'function') {
+                    const res = await apiGetTelegramChannelInvite();
+                    if (res && res.ok && res.inviteLink) inviteUrl = res.inviteLink;
+                }
+                if (!inviteUrl) {
+                    inviteUrl = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.channelUrl) || 'https://t.me/mmmut_erp_official';
+                }
+
+                // Open private channel join request link
+                window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+
+                // Update state to JOIN_REQUEST_PENDING
+                await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                    status: 'JOIN_REQUEST_PENDING',
+                    joinRequestedAt: serverTimestamp()
+                });
+
+                showToast('Request submitted in Telegram. Waiting for channel admin approval.');
+            } catch (err) {
+                console.error('[Telegram] Error recording join request:', err);
+                showToast('Failed to record join request: ' + err.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Request to Join Private Channel'; }
+            }
+        }
+
+        // Stage 2, Step C: Check membership status via Telegram getChatMember
+        async function checkMembershipStatus() {
+            if (!currentUser || !currentUid) return;
+            const btn = document.getElementById('btnCheckMembership');
+            if (btn) { btn.disabled = true; btn.textContent = 'Checking Status…'; }
+
+            try {
+                const tgUserId = currentTelegramAppData?.telegramUserId;
+                let idToken = null;
+                if (currentUser && typeof currentUser.getIdToken === 'function') {
+                    try {
+                        idToken = await currentUser.getIdToken();
+                    } catch (e) {
+                        console.warn('[Telegram] Could not fetch ID token:', e);
+                    }
+                }
+
+                let checkRes = null;
+                if (typeof apiCheckTelegramMembership === 'function') {
+                    checkRes = await apiCheckTelegramMembership(currentUid, tgUserId, idToken);
+                }
+
+                if (checkRes && checkRes.ok) {
+                    if (checkRes.isMember || checkRes.status === 'CHANNEL_APPROVED') {
+                        // User is an active member
+                        await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                            status: 'CHANNEL_APPROVED',
+                            verifiedAt: serverTimestamp()
+                        });
+                        showToast('🎉 Membership verified! Welcome to the private channel.');
+                    } else if (checkRes.status === 'CHANNEL_REJECTED' && checkRes.rejectionEvidence) {
+                        // Reliable evidence of rejection
+                        await updateDoc(doc(telegramApplicationsCollection, currentUid), {
+                            status: 'CHANNEL_REJECTED',
+                            reviewedAt: serverTimestamp()
+                        });
+                        showToast('Your channel join request was declined by the administrator.');
+                    } else {
+                        // USER CORRECTION ENFORCEMENT:
+                        // If not currently a member, REMAINS JOIN_REQUEST_PENDING!
+                        // Do NOT falsely display CHANNEL_REJECTED.
+                        showToast('⏳ Your join request is still pending channel administrator approval.');
+                    }
+                } else {
+                    // Backend unavailable or fallback
+                    showToast('Status check: still awaiting channel administrator approval.');
+                }
+            } catch (err) {
+                console.error('[Telegram] Membership check error:', err);
+                showToast('Could not verify membership right now. Please try again.');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 Check Membership Status'; }
+            }
+        }
+
+        function renderTelegramUI() {
+            const container = document.getElementById('telegramStateContainer');
+            if (!container) return;
+
+            const state = currentTelegramAppState || 'NOT_APPLIED';
+            const data = currentTelegramAppData || {};
+
+            let html = '';
+
+            switch (state) {
+                case 'NOT_APPLIED':
+                    html = `
+                    <div class="tg-state-card">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 1 of 2</span>
+                            <span class="tg-status-badge tg-badge-neutral">Not Applied</span>
+                        </div>
+                        <h3 class="tg-state-title">Apply for University Telegram Access</h3>
+                        <p class="tg-state-desc">
+                            Access to the private university channel is restricted to verified MMMUT students.
+                            First, submit your application for ERP Administrator verification.
+                        </p>
+                        <div class="tg-applicant-box">
+                            <div class="tg-info-row"><span>Student Name:</span> <strong>${escapeHtml((currentProfile && (currentProfile.name || currentProfile.displayName)) || (currentUser && currentUser.displayName) || 'Student')}</strong></div>
+                            <div class="tg-info-row"><span>Roll Number:</span> <strong>${escapeHtml((currentProfile && (currentProfile.rollNumber || currentProfile.pendingRollNumber)) || '—')}</strong></div>
+                            <div class="tg-info-row"><span>Branch:</span> <strong>${escapeHtml(getBranchName((currentProfile && currentProfile.branchId) || ''))}</strong></div>
+                        </div>
+                        <div class="tg-actions">
+                            <button id="btnApplyTelegram" class="btn-primary" onclick="applyForTelegramAccess()">
+                                <span>Apply for Telegram Access</span>
+                                <span>→</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'PENDING_ADMIN_APPROVAL':
+                    html = `
+                    <div class="tg-state-card">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 1 of 2</span>
+                            <span class="tg-status-badge tg-badge-warning">⏳ Pending ERP Admin Review</span>
+                        </div>
+                        <h3 class="tg-state-title">Application Under Review</h3>
+                        <p class="tg-state-desc">
+                            Your application has been received and is queued for verification by an ERP Administrator.
+                            Once approved, you will be invited to link your Telegram account and join the private channel.
+                        </p>
+                        <div class="tg-timeline-note">
+                            <span>🕒</span>
+                            <span>Submitted: ${data.appliedAt ? formatDate(data.appliedAt) : 'Just now'}. Reviews typically complete within 24 hours.</span>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'ADMIN_REJECTED':
+                    html = `
+                    <div class="tg-state-card tg-card-danger">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 1 of 2</span>
+                            <span class="tg-status-badge tg-badge-danger">❌ Application Not Approved</span>
+                        </div>
+                        <h3 class="tg-state-title">ERP Access Request Declined</h3>
+                        <p class="tg-state-desc">
+                            Your application for Telegram access was reviewed and declined by the ERP administrator.
+                        </p>
+                        ${data.rejectionReason ? `
+                        <div class="tg-reason-box">
+                            <strong>Reason:</strong> ${escapeHtml(data.rejectionReason)}
+                        </div>` : ''}
+                        <div class="tg-actions">
+                            <button id="btnReapplyTelegram" class="btn-primary" onclick="reapplyForTelegramAccess()">
+                                <span>Re-apply for Access</span>
+                                <span>↺</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'ADMIN_APPROVED':
+                case 'TELEGRAM_NOT_CONNECTED':
+                    html = `
+                    <div class="tg-state-card tg-card-success">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 2 of 2</span>
+                            <span class="tg-status-badge tg-badge-success">✅ ERP Admin Approved</span>
+                        </div>
+                        <h3 class="tg-state-title">Connect Your Telegram Account</h3>
+                        <p class="tg-state-desc">
+                            Your student application has been verified! Now link your Telegram account so our official
+                            bot can recognize you when you request access to the private university channel.
+                        </p>
+                        <div class="tg-helper-note">
+                            <span>💡</span>
+                            <span>Clicking the button will open Telegram with our official verification bot. Simply tap <strong>Start</strong> to link.</span>
+                        </div>
+                        <div class="tg-actions">
+                            <button id="btnConnectTelegram" class="btn-telegram-primary" onclick="connectTelegramAccount()">
+                                <span>Connect Telegram Account</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'JOIN_REQUEST_NOT_SENT':
+                    html = `
+                    <div class="tg-state-card">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 2 of 2</span>
+                            <span class="tg-status-badge tg-badge-info">🔗 Telegram Linked</span>
+                        </div>
+                        <h3 class="tg-state-title">Telegram Connected: @${escapeHtml(data.telegramUsername || data.telegramUserId || 'User')}</h3>
+                        <p class="tg-state-desc">
+                            Your Telegram identity is verified. You may now request to join the private university channel.
+                            The channel administrator will approve your request inside Telegram.
+                        </p>
+                        <div class="tg-actions">
+                            <button id="btnRequestJoinChannel" class="btn-primary" onclick="requestChannelJoin()">
+                                <span>Request to Join Private Channel</span>
+                                <span>↗</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'JOIN_REQUEST_PENDING':
+                    html = `
+                    <div class="tg-state-card">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Stage 2 of 2</span>
+                            <span class="tg-status-badge tg-badge-warning">⏳ Join Request Pending Channel Admin</span>
+                        </div>
+                        <h3 class="tg-state-title">Awaiting Channel Administrator Approval</h3>
+                        <p class="tg-state-desc">
+                            Your join request has been delivered to the private Telegram channel.
+                            The channel administrator will review and accept your request in Telegram.
+                        </p>
+                        <div class="tg-helper-note">
+                            <span>ℹ️</span>
+                            <span>Once the channel admin accepts your join request, click the button below to verify your membership.</span>
+                        </div>
+                        <div class="tg-actions">
+                            <button id="btnCheckMembership" class="btn-secondary" onclick="checkMembershipStatus()">
+                                <span>🔄 Check Membership Status</span>
+                            </button>
+                            <button class="btn-secondary" onclick="requestChannelJoin()">
+                                <span>Re-open Channel Link</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'CHANNEL_APPROVED':
+                    html = `
+                    <div class="tg-state-card tg-card-success">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Access Granted</span>
+                            <span class="tg-status-badge tg-badge-success">🎉 Active Channel Member</span>
+                        </div>
+                        <h3 class="tg-state-title">Welcome to the Private University Channel</h3>
+                        <p class="tg-state-desc">
+                            Your membership is confirmed! You have full access to official semester notices, circulars,
+                            academic updates, and university broadcasts.
+                        </p>
+                        <div class="tg-actions">
+                            <button class="btn-telegram-primary" onclick="openTelegramChannel()">
+                                <span>Open University Channel</span>
+                                <span>↗</span>
+                            </button>
+                            <button class="btn-secondary" onclick="openTelegramWeb()">
+                                <span>Launch Telegram Web</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+
+                case 'CHANNEL_REJECTED':
+                    html = `
+                    <div class="tg-state-card tg-card-danger">
+                        <div class="tg-state-header">
+                            <span class="tg-stage-pill">Channel Access</span>
+                            <span class="tg-status-badge tg-badge-danger">🚫 Request Declined</span>
+                        </div>
+                        <h3 class="tg-state-title">Channel Join Request Declined</h3>
+                        <p class="tg-state-desc">
+                            Your join request to the private Telegram channel was declined by the channel administrator.
+                        </p>
+                        <div class="tg-actions">
+                            <button class="btn-secondary" onclick="requestChannelJoin()">
+                                <span>Re-submit Join Request</span>
+                            </button>
+                            <button id="btnCheckMembership" class="btn-secondary" onclick="checkMembershipStatus()">
+                                <span>🔄 Re-check Status</span>
+                            </button>
+                        </div>
+                    </div>`;
+                    break;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderTelegramSection() {
+            const config = window.TELEGRAM_CONFIG || (typeof TELEGRAM_CONFIG !== 'undefined' ? TELEGRAM_CONFIG : {});
+            const chNameEl = document.getElementById('telegramChannelName');
+            const chDescEl = document.getElementById('telegramChannelDesc');
+            if (chNameEl && config.channelName) {
+                chNameEl.textContent = config.channelName;
+            }
+            if (chDescEl && config.channelDescription) {
+                chDescEl.textContent = config.channelDescription;
+            }
+            renderTelegramUI();
+        }
+
+        function toggleTelegramSection(show) {
+            const telegramView = document.getElementById('telegramView');
+            const mainShell = document.getElementById('mainShell');
+            const chessView = document.getElementById('chessClubView');
+            if (!telegramView) return;
+
+            if (show) {
+                if (chessView) chessView.style.display = 'none';
+                if (mainShell) mainShell.style.display = 'none';
+                telegramView.style.display = 'block';
+
+                if (typeof window.toggleSidebar === 'function') {
+                    window.toggleSidebar(false);
+                }
+
+                if (currentUid && (!telegramAppUnsub || currentTelegramAppState === 'NOT_APPLIED')) {
+                    setupTelegramAppListener(currentUid);
+                }
+
+                renderTelegramSection();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                telegramView.style.display = 'none';
+                if (mainShell) mainShell.style.display = 'flex';
+            }
+        }
+
+        // ========== ADMIN: TELEGRAM ACCESS APPLICATIONS ==========
+        async function renderAdminTelegram() {
+            const el = document.getElementById('adminTelegramContent');
+            if (!el) return;
+            el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-soft);">Loading Telegram applications…</div>';
+            try {
+                const snap = await getDocs(telegramApplicationsCollection);
+                let apps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                apps.sort((a, b) => {
+                    if (a.status === 'PENDING_ADMIN_APPROVAL' && b.status !== 'PENDING_ADMIN_APPROVAL') return -1;
+                    if (b.status === 'PENDING_ADMIN_APPROVAL' && a.status !== 'PENDING_ADMIN_APPROVAL') return 1;
+                    const tA = (a.appliedAt && a.appliedAt.seconds) || 0;
+                    const tB = (b.appliedAt && b.appliedAt.seconds) || 0;
+                    return tB - tA;
+                });
+
+                const pendingCount = apps.filter(a => a.status === 'PENDING_ADMIN_APPROVAL').length;
+                const approvedCount = apps.filter(a => ['ADMIN_APPROVED', 'JOIN_REQUEST_NOT_SENT', 'JOIN_REQUEST_PENDING', 'CHANNEL_APPROVED'].includes(a.status)).length;
+                const rejectedCount = apps.filter(a => ['ADMIN_REJECTED', 'CHANNEL_REJECTED'].includes(a.status)).length;
+
+                let html = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;">
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:var(--teal);">${apps.length}</div><div style="font-size:12px;color:var(--ink-soft);">Total Applications</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#d97706;">${pendingCount}</div><div style="font-size:12px;color:var(--ink-soft);">Pending Review</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#16a34a;">${approvedCount}</div><div style="font-size:12px;color:var(--ink-soft);">Admin Approved</div></div>
+                    <div class="admin-card"><div class="title" style="font-size:24px;font-weight:700;color:#dc2626;">${rejectedCount}</div><div style="font-size:12px;color:var(--ink-soft);">Declined</div></div>
+                </div>
+                <div style="margin-bottom:12px;font-size:13px;color:var(--ink-soft);">
+                    <strong>Stage 1 Approval:</strong> Approving unlocks Telegram linking for the student. They will then request access to the private channel.
+                </div>`;
+
+                if (apps.length === 0) {
+                    html += '<div class="empty-note">No Telegram applications received yet.</div>';
+                } else {
+                    html += `
+                    <div style="overflow-x:auto;max-height:550px;overflow-y:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead style="background:var(--ink);color:#F1ECDD;position:sticky;top:0;z-index:2;">
+                                <tr>
+                                    <th style="padding:10px 8px;text-align:left;">Student</th>
+                                    <th style="padding:10px 8px;text-align:left;">Roll No.</th>
+                                    <th style="padding:10px 8px;text-align:left;">Branch</th>
+                                    <th style="padding:10px 8px;text-align:left;">Applied</th>
+                                    <th style="padding:10px 8px;text-align:left;">Telegram User</th>
+                                    <th style="padding:10px 8px;text-align:left;">Status</th>
+                                    <th style="padding:10px 8px;text-align:left;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    apps.forEach(app => {
+                        const statusBadge = getTelegramStatusBadge(app.status);
+                        const appliedStr = app.appliedAt ? formatDate(app.appliedAt) : '—';
+                        const tgUserStr = app.telegramUsername ? `@${escapeHtml(app.telegramUsername)}` : (app.telegramUserId ? `ID: ${escapeHtml(app.telegramUserId)}` : '<span style="color:var(--ink-soft);font-style:italic;">Not linked</span>');
+
+                        let actionsHtml = '';
+                        if (app.status === 'PENDING_ADMIN_APPROVAL') {
+                            actionsHtml = `
+                                <div style="display:flex;gap:6px;">
+                                    <button class="btn-sm" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="approveTelegramApplication('${app.id}')">✓ Approve</button>
+                                    <button class="btn-sm" style="background:#dc2626;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="rejectTelegramApplication('${app.id}')">✕ Reject</button>
+                                </div>`;
+                        } else if (app.status === 'ADMIN_REJECTED') {
+                            actionsHtml = `
+                                <button class="btn-sm" style="background:#16a34a;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="approveTelegramApplication('${app.id}')">✓ Approve</button>`;
+                        } else {
+                            actionsHtml = `
+                                <button class="btn-sm" style="background:#dc2626;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;" onclick="rejectTelegramApplication('${app.id}')">Revoke</button>`;
+                        }
+
+                        html += `
+                            <tr style="border-bottom:1px solid var(--paper-line);">
+                                <td style="padding:10px 8px;"><strong>${escapeHtml(app.studentName || '—')}</strong><br><span style="font-size:11px;color:var(--ink-soft);">${escapeHtml(app.studentUsername || '')}</span></td>
+                                <td style="padding:10px 8px;">${escapeHtml(app.studentRoll || '—')}</td>
+                                <td style="padding:10px 8px;">${escapeHtml(getBranchName(app.studentBranch))}</td>
+                                <td style="padding:10px 8px;font-size:12px;color:var(--ink-soft);">${appliedStr}</td>
+                                <td style="padding:10px 8px;">${tgUserStr}</td>
+                                <td style="padding:10px 8px;">${statusBadge}</td>
+                                <td style="padding:10px 8px;">${actionsHtml}</td>
+                            </tr>`;
+                    });
+
+                    html += `
+                            </tbody>
+                        </table>
+                    </div>`;
+                }
+
+                el.innerHTML = html;
+            } catch (err) {
+                console.error('[Admin Telegram] Error rendering:', err);
+                el.innerHTML = `<div class="empty-note">Error loading Telegram applications: ${err.message}</div>`;
+            }
+        }
+
+        function getTelegramStatusBadge(status) {
+            switch (status) {
+                case 'PENDING_ADMIN_APPROVAL':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e;">⏳ Pending ERP Admin</span>';
+                case 'ADMIN_APPROVED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#dcfce7;color:#166534;">✅ ERP Approved</span>';
+                case 'ADMIN_REJECTED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b;">❌ ERP Rejected</span>';
+                case 'JOIN_REQUEST_NOT_SENT':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#e0f2fe;color:#075985;">🔗 Telegram Linked</span>';
+                case 'JOIN_REQUEST_PENDING':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#ffedd5;color:#9a3412;">⏳ Channel Review</span>';
+                case 'CHANNEL_APPROVED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#bbf7d0;color:#14532d;">🎉 Channel Member</span>';
+                case 'CHANNEL_REJECTED':
+                    return '<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#fecaca;color:#7f1d1d;">🚫 Channel Rejected</span>';
+                default:
+                    return `<span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#f3f4f6;color:#374151;">${escapeHtml(status || '—')}</span>`;
+            }
+        }
+
+        async function approveTelegramApplication(uid) {
+            if (!confirm('Approve Telegram access for this student?')) return;
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, uid), {
+                    status: 'ADMIN_APPROVED',
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: (currentUser && currentUser.uid) || 'admin',
+                    rejectionReason: null
+                });
+                showToast('✅ Student Telegram application approved!');
+                renderAdminTelegram();
+            } catch (e) {
+                console.error('[Admin] Approve Telegram error:', e);
+                showToast('Failed to approve: ' + e.message);
+            }
+        }
+
+        async function rejectTelegramApplication(uid) {
+            const reason = prompt('Enter rejection reason (optional):', 'Application does not meet eligibility criteria at this time.');
+            if (reason === null) return;
+
+            try {
+                await updateDoc(doc(telegramApplicationsCollection, uid), {
+                    status: 'ADMIN_REJECTED',
+                    reviewedAt: serverTimestamp(),
+                    reviewedBy: (currentUser && currentUser.uid) || 'admin',
+                    rejectionReason: reason || 'Not eligible at this time.'
+                });
+                showToast('Application marked as rejected.');
+                renderAdminTelegram();
+            } catch (e) {
+                console.error('[Admin] Reject Telegram error:', e);
+                showToast('Failed to reject: ' + e.message);
+            }
+        }
+
+        // ============================================================
         // ========== CHESS CLUB ======================================
         // ============================================================
 
@@ -7953,6 +9168,8 @@
             const mainShell = document.getElementById('mainShell');
             const app = document.getElementById('app');
             if (show) {
+                const telegramView = document.getElementById('telegramView');
+                if (telegramView) telegramView.style.display = 'none';
                 chessView.style.display = 'block';
                 mainShell.style.display = 'none';
                 // Hide footer? We'll keep footer visible but it's outside shell. Actually footer is inside app but after shell? The footer is inside app but after shell. We'll hide footer too.
@@ -10056,6 +11273,23 @@
 
         // Push notifications globals
         window.enablePushNotifications = enablePushNotifications;
+
+        // Telegram section globals
+        window.TELEGRAM_CONFIG = TELEGRAM_CONFIG;
+        window.toggleTelegramSection = toggleTelegramSection;
+        window.openTelegramWeb = openTelegramWeb;
+        window.openTelegramChannel = openTelegramChannel;
+        window.renderTelegramSection = renderTelegramSection;
+        window.renderTelegramUI = renderTelegramUI;
+        window.setupTelegramAppListener = setupTelegramAppListener;
+        window.applyForTelegramAccess = applyForTelegramAccess;
+        window.reapplyForTelegramAccess = reapplyForTelegramAccess;
+        window.connectTelegramAccount = connectTelegramAccount;
+        window.requestChannelJoin = requestChannelJoin;
+        window.checkMembershipStatus = checkMembershipStatus;
+        window.renderAdminTelegram = renderAdminTelegram;
+        window.approveTelegramApplication = approveTelegramApplication;
+        window.rejectTelegramApplication = rejectTelegramApplication;
 
         window.toggleLedgerAI = toggleLedgerAI;
         window.clearLedgerAI = clearLedgerAI;

@@ -30,10 +30,14 @@ def create_app() -> Flask:
     origins = [o.strip() for o in os.environ.get(
         "API_ALLOW_ORIGIN", "*").split(",") if o.strip()]
     # supports_credentials stays False: the API is public read-only JSON.
-    CORS(app, origins=origins, supports_credentials=False)
+    CORS(app, origins=origins, supports_credentials=False,
+         allow_headers=["Content-Type", "Authorization", "X-Telegram-Bot-Api-Secret-Token"])
 
     from .routes.roster import bp as roster_bp
     app.register_blueprint(roster_bp)
+
+    from .routes.telegram import bp as telegram_bp
+    app.register_blueprint(telegram_bp)
 
     @app.get("/")
     def index():
@@ -41,7 +45,10 @@ def create_app() -> Flask:
             "ok": True,
             "service": "mmmut-ero-backend",
             "endpoints": ["/api/health", "/api/roster/<roll>",
-                          "/api/roster/search?q=", "/api/roster/stats"],
+                          "/api/roster/search?q=", "/api/roster/stats",
+                          "/api/telegram/config", "/api/telegram/create-token",
+                          "/api/telegram/check-membership", "/api/telegram/channel-invite",
+                          "/api/telegram/verify-setup", "/api/telegram/set-webhook"],
         })
 
     @app.errorhandler(404)

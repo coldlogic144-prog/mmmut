@@ -235,6 +235,20 @@
         // Push notifications globals
         window.enablePushNotifications = enablePushNotifications;
 
+        // Telegram section globals
+        window.TELEGRAM_CONFIG = TELEGRAM_CONFIG;
+        window.toggleTelegramSection = toggleTelegramSection;
+        window.openTelegramWeb = openTelegramWeb;
+        window.openTelegramChannel = openTelegramChannel;
+        window.renderTelegramSection = renderTelegramSection;
+        window.renderTelegramUI = renderTelegramUI;
+        window.setupTelegramAppListener = setupTelegramAppListener;
+        window.applyForTelegramAccess = applyForTelegramAccess;
+        window.reapplyForTelegramAccess = reapplyForTelegramAccess;
+        window.connectTelegramAccount = connectTelegramAccount;
+        window.requestChannelJoin = requestChannelJoin;
+        window.checkMembershipStatus = checkMembershipStatus;
+
         window.toggleLedgerAI = toggleLedgerAI;
         window.clearLedgerAI = clearLedgerAI;
         window.sendLedgerAIMessage = sendLedgerAIMessage;
