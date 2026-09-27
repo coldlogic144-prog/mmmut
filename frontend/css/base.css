@@ -92,10 +92,11 @@
     --radius-full: 9999px;
 
     /* Structural Metrics */
-    --touch-min: 42px;
+    --touch-min: 44px;
     --sidebar-width: 250px;
     --header-height: 56px;
-    --mobile-nav-height: 56px;
+    --header-height-mobile: 48px;
+    --mobile-nav-height: 52px;
 
     /* Typography Scale */
     font-size: 15px;

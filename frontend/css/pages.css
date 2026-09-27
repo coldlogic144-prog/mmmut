@@ -14,29 +14,29 @@
     bottom: 24px;
     right: 24px;
     z-index: 300;
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-xs);
-    background: var(--primary);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: var(--shadow-md);
-    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--surface-border);
+    box-shadow: var(--shadow-sm);
+    font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    transition: background var(--transition-fast), border-color var(--transition-fast);
     cursor: pointer;
     padding: 0;
 }
 
 .ledger-ai-fab:hover {
-    background: var(--primary-hover);
-    transform: translateY(-2px);
+    background: var(--surface-subtle);
+    border-color: #94A3B8;
 }
 
 .ledger-ai-fab:active {
-    transform: translateY(0);
+    background: var(--surface-hover);
 }
 
 .ledger-ai-fab .badge-dot {
@@ -880,19 +880,28 @@
     }
 
     .ledger-ai-chat {
-        bottom: 74px;
-        right: 12px;
-        left: 12px;
+        bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+        right: max(10px, env(safe-area-inset-right, 0px));
+        left: max(10px, env(safe-area-inset-left, 0px));
         width: auto;
         max-width: none;
-        height: 65vh;
+        height: min(460px, 60vh);
     }
 
     .ledger-ai-fab {
-        bottom: 16px;
-        right: 16px;
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+        bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 10px);
+        right: max(12px, env(safe-area-inset-right, 0px));
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+        border-radius: var(--radius-xs);
+        background: var(--surface);
+        color: var(--text-main);
+        border: 1px solid var(--surface-border);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+    }
+
+    .ledger-ai-fab .badge-dot {
+        display: none !important;
     }
 }

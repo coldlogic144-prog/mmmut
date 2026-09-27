@@ -279,26 +279,41 @@
 .overall-ring-wrap {
     display: flex;
     align-items: center;
-    gap: 18px;
-    margin-bottom: 16px;
-    padding-bottom: 16px;
+    gap: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 14px;
     border-bottom: 1px solid var(--surface-border-subtle);
 }
 
 .overall-num {
     font-family: var(--font-mono);
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 800;
     color: var(--primary);
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
 }
 
 .overall-sub {
-    font-size: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     color: var(--text-muted);
-    margin-top: 3px;
-    font-weight: 500;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.overall-counts-box {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.overall-counts-box b {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 700;
 }
 
 .target-row {
@@ -306,8 +321,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 14px;
-    padding: 8px 12px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 7px 12px;
     background: var(--surface-subtle);
     border: 1px solid var(--surface-border-subtle);
     border-radius: var(--radius-xs);
@@ -327,22 +343,24 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--text-main);
+    cursor: pointer;
 }
 
 .overall-leave {
-    margin-top: 14px;
-    padding: 10px 14px;
+    margin-top: 10px;
+    padding: 10px 12px;
     border-radius: var(--radius-xs);
     background: var(--surface-subtle);
-    font-size: 12.5px;
+    font-size: 12px;
     line-height: 1.5;
     border-left: 3px solid var(--primary);
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .overall-leave b {
     font-family: var(--font-mono);
     color: var(--text-main);
+    font-weight: 700;
 }
 
 .leave-line {
@@ -548,49 +566,52 @@
    5. ANNOUNCEMENTS & OFFICIAL POSTS
    ---------------------------------------------------------------------------- */
 .post-item {
-    border: 1px solid var(--surface-border);
-    border-left: 3px solid var(--primary);
-    background: var(--surface);
-    padding: 14px 16px;
-    border-radius: var(--radius-xs);
-    margin-bottom: 12px;
-    transition: border-color var(--transition-fast);
+    border: none;
+    border-bottom: 1px solid var(--surface-border-subtle);
+    background: transparent;
+    padding: 12px 4px;
+    border-radius: 0;
+    margin-bottom: 0;
+    transition: background 0.15s ease;
 }
 
 .post-item:hover {
-    border-color: #CBD5E1;
-    border-left-color: var(--primary);
+    background: var(--surface-subtle);
 }
 
 .post-item:last-child {
+    border-bottom: none;
     margin-bottom: 0;
 }
 
 .post-item.pinned {
-    border-left-color: var(--warning);
-    background: #FFFDF9;
+    background: #FFFDF8;
+    border-left: 3px solid var(--warning);
+    padding-left: 10px;
 }
 
 .post-item .post-title {
     font-weight: 700;
-    font-size: 14.5px;
+    font-size: 13.5px;
     color: var(--text-main);
     line-height: 1.35;
+    letter-spacing: -0.01em;
 }
 
 .post-item .post-meta {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--text-muted);
-    margin-top: 3px;
+    font-family: var(--font-mono);
+    margin-top: 2px;
     display: flex;
     gap: 8px;
     align-items: center;
 }
 
 .post-item .post-content {
-    font-size: 13px;
-    margin-top: 8px;
-    color: var(--text-muted);
+    font-size: 12.5px;
+    margin-top: 4px;
+    color: var(--text-secondary);
     white-space: pre-wrap;
     line-height: 1.5;
 }
@@ -1217,4 +1238,217 @@ table.admin-table td {
 
 table.admin-table tbody tr:hover {
     background: var(--surface-hover);
+}
+
+/* ----------------------------------------------------------------------------
+   11. INSTITUTIONAL EMPTY NOTES & BANNERS
+   ---------------------------------------------------------------------------- */
+.empty-note,
+.holiday-banner {
+    padding: 12px 14px;
+    border-radius: var(--radius-xs);
+    background: var(--surface-subtle);
+    border: 1px dashed var(--surface-border);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.holiday-banner {
+    background: #FFFDF8;
+    border-color: var(--warning-border);
+    color: #92400E;
+    font-weight: 600;
+}
+
+/* ----------------------------------------------------------------------------
+   12. MOBILE COMPONENT COMPACT REFINEMENTS (Max-Width: 768px)
+   ---------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    /* Announcements: Compact rows with 2-line snippet */
+    .post-item {
+        padding: 8px 2px;
+    }
+
+    .post-item .post-title {
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .post-item .post-meta {
+        font-size: 10px;
+        margin-top: 2px;
+        gap: 6px;
+    }
+
+    .post-item .post-content {
+        font-size: 11.5px;
+        margin-top: 3px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Timetable Rail: Compact tabs, dots and spacing */
+    .tabbar {
+        padding: 2px;
+    }
+
+    .tab-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .rail {
+        padding-left: 28px;
+    }
+
+    .rail::before {
+        left: 10px;
+        top: 8px;
+        bottom: 8px;
+    }
+
+    .rail-dot {
+        left: -28px;
+        top: 6px;
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+    }
+
+    .rail-item {
+        padding-bottom: 8px;
+    }
+
+    .rail-row {
+        padding: 7px 10px;
+        gap: 8px;
+    }
+
+    .rail-subject {
+        font-size: 12.5px;
+    }
+
+    .rail-meta {
+        font-size: 10.5px;
+        margin-top: 1px;
+    }
+
+    .rail-time {
+        font-size: 10px;
+    }
+
+    .mini-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    .status-tag {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    /* Attendance Summary: Clean, compact hierarchy */
+    .overall-ring-wrap {
+        gap: 12px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+    }
+
+    .overall-num {
+        font-size: 26px;
+    }
+
+    .overall-sub {
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    .overall-counts-box {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .overall-counts-box b {
+        font-size: 12px;
+    }
+
+    .target-row {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        padding: 5px 10px;
+    }
+
+    .target-row label {
+        font-size: 11px;
+    }
+
+    .target-row select {
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+
+    .overall-leave {
+        margin-top: 8px;
+        padding: 8px 10px;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .leave-line {
+        font-size: 10.5px;
+    }
+
+    #subjectStats {
+        margin-top: 10px !important;
+    }
+
+    .stat-row {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        width: 105px;
+        font-size: 11.5px;
+    }
+
+    .stat-bar-track {
+        height: 6px;
+    }
+
+    .stat-pct {
+        width: 36px;
+        font-size: 10.5px;
+    }
+
+    /* Secondary Cards: History & Syllabus */
+    .history-nav {
+        margin-bottom: 10px;
+        gap: 6px;
+    }
+
+    .history-nav .date-display {
+        font-size: 13px;
+        min-width: 120px;
+    }
+
+    .history-nav .nav-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+
+    .history-nav .nav-btn.today-btn {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
 }

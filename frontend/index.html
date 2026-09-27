@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1e3a8a" />
     <meta name="description"
         content="MMMUT ERP — The Ledger. Academic portal for attendance tracking, timetables, syllabus, notices and student services." />
@@ -226,45 +226,86 @@
                     <div class="topbar-left">
                         <button class="sidebar-toggle-btn" onclick="toggleSidebar()"
                             aria-label="Toggle Navigation Menu">☰</button>
-                        <div class="brand">
-                            <div class="brand-mark">M</div>
-                            <div>
-                                <div class="brand-name">The Ledger</div>
-                                <div class="brand-sub" id="todayLabel">—</div>
+                        <div class="brand" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer;" title="Scroll to top">
+                            <div class="brand-title-wrap">
+                                <div class="page-title">The Ledger</div>
+                                <div class="page-subtitle" id="todayLabel">—</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="topbar-right">
-                        <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank"
-                            class="btn-download-app">📱 APK</a>
+                        <!-- Announcements Notification Bell -->
                         <button class="btn-icon" id="notifBell" onclick="scrollToPosts()" title="Announcements"
                             aria-label="Announcements">
                             🔔
                             <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
                         </button>
-                        <button class="btn-topbar-telegram" onclick="toggleTelegramSection(true)" title="Open Telegram Section">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                            <span>Telegram</span>
-                        </button>
-                        <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
-                        <button class="btn-ghost" id="pushNotifBtn" style="display:none;"
-                            onclick="enablePushNotifications()">🔔 Notifications</button>
-                        <div class="user-pill" onclick="openProfileModal()">
-                            <div>
-                                <div class="user-pill-name" id="pillName">—</div>
-                                <div class="user-pill-branch" id="pillBranch">—</div>
+
+                        <!-- User Profile Dropdown Menu -->
+                        <div class="user-menu-container" id="userMenuContainer">
+                            <button class="user-pill" id="userMenuToggleBtn" onclick="toggleUserMenu()" aria-haspopup="true" aria-expanded="false" title="Account Menu">
+                                <div class="avatar" id="pillAvatar">—</div>
+                                <div class="user-pill-text">
+                                    <div class="user-pill-name" id="pillName">—</div>
+                                    <div class="user-pill-branch" id="pillBranch">—</div>
+                                </div>
+                                <span class="dropdown-chevron" aria-hidden="true">▾</span>
+                            </button>
+
+                            <div class="user-dropdown-menu" id="userDropdownMenu" role="menu" aria-label="User account menu">
+                                <div class="dropdown-user-header">
+                                    <div class="avatar" id="dropdownAvatar">—</div>
+                                    <div class="dropdown-user-details">
+                                        <div class="dropdown-name" id="dropdownName">Student</div>
+                                        <div class="dropdown-meta" id="dropdownMeta">B.Tech Session 2026–27</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                
+                                <button class="dropdown-item" role="menuitem" onclick="openProfileModal(); toggleUserMenu(false);">
+                                    <span class="item-icon">👤</span>
+                                    <span>Profile &amp; Settings</span>
+                                </button>
+
+                                <button class="dropdown-item" id="dropdownAdminBtn" role="menuitem" onclick="handleDropdownAdmin(); toggleUserMenu(false);">
+                                    <span class="item-icon" id="dropdownAdminIcon">⚙️</span>
+                                    <span id="dropdownAdminLabel">Admin Console</span>
+                                </button>
+
+                                <button class="dropdown-item" id="dropdownPushNotifBtn" role="menuitem" onclick="enablePushNotifications(); toggleUserMenu(false);">
+                                    <span class="item-icon">🔔</span>
+                                    <span>Push Notifications</span>
+                                </button>
+
+                                <a class="dropdown-item" role="menuitem" href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank" onclick="toggleUserMenu(false);">
+                                    <span class="item-icon">📱</span>
+                                    <span>Download Android APK</span>
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+
+                                <button class="dropdown-item dropdown-item-danger" role="menuitem" onclick="handleLogout(); toggleUserMenu(false);">
+                                    <span class="item-icon">🚪</span>
+                                    <span>Sign Out</span>
+                                </button>
                             </div>
-                            <div class="avatar" id="pillAvatar">—</div>
                         </div>
-                        <button class="btn-ghost" onclick="handleLogout()">Log out</button>
+
+                        <!-- Hidden compatibility elements to ensure existing JS querySelectors and ID lookups continue to work seamlessly without errors -->
+                        <div style="display:none !important;" aria-hidden="true">
+                            <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank" class="btn-download-app">📱 APK</a>
+                            <button class="btn-topbar-telegram" onclick="toggleTelegramSection(true)">Telegram</button>
+                            <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
+                            <button class="btn-ghost" id="pushNotifBtn" onclick="enablePushNotifications()">🔔 Notifications</button>
+                        </div>
                     </div>
                 </header>
 
                 <!-- Shell Content -->
                 <main class="shell" id="mainShell">
 
-                    <!-- Welcome Hero Banner -->
+                    <!-- 1. Compact Institutional Welcome Banner -->
                     <div class="welcome-hero">
                         <div class="welcome-info">
                             <h1>Welcome back, <span id="welcomeStudentName">Student</span></h1>
@@ -276,7 +317,7 @@
                         </div>
                     </div>
 
-                    <!-- Announcements Feed Card -->
+                    <!-- 2. Official Announcements Feed Card -->
                     <div class="card" id="postsTopCard">
                         <div class="card-head">
                             <div>
@@ -289,9 +330,43 @@
                         <div id="postsFeedContent"></div>
                     </div>
 
-                    <!-- Main Dashboard 2-column Grid -->
+                    <!-- Compact Dashboard Quick Actions Strip -->
+                    <div class="quick-actions-bar">
+                        <div class="qa-item" onclick="toggleTelegramSection(true)">
+                            <span class="qa-icon" style="color:#0088cc;display:inline-flex;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                            </span>
+                            <div class="qa-text">
+                                <span class="qa-title">Telegram Channel</span>
+                                <span class="qa-sub">Private Community</span>
+                            </div>
+                        </div>
+                        <a class="qa-item" href="chess/chess.html" style="text-decoration:none;">
+                            <span class="qa-icon">♟️</span>
+                            <div class="qa-text">
+                                <span class="qa-title">Chess Club</span>
+                                <span class="qa-sub">Campus Matches</span>
+                            </div>
+                        </a>
+                        <div class="qa-item" onclick="scrollToSection('syllabusCard')">
+                            <span class="qa-icon">📖</span>
+                            <div class="qa-text">
+                                <span class="qa-title">Curriculum</span>
+                                <span class="qa-sub">Branch Syllabus</span>
+                            </div>
+                        </div>
+                        <div class="qa-item" onclick="openFeedbackForm()">
+                            <span class="qa-icon">💬</span>
+                            <div class="qa-text">
+                                <span class="qa-title">Help &amp; Support</span>
+                                <span class="qa-sub">Submit Feedback</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 & 4. Primary Academic 2-Column Grid (Periods & Attendance Balanced) -->
                     <div class="shell-grid">
-                        <!-- Column 1: Timetable & Schedule -->
+                        <!-- Column 1: Today's Periods Schedule -->
                         <div id="timetableSection">
                             <div class="card">
                                 <div class="card-head">
@@ -321,32 +396,40 @@
                             </div>
                         </div>
 
-                        <!-- Column 2: Attendance, History, Feedback & Links -->
+                        <!-- Column 2: Attendance Summary -->
                         <div id="attendanceSection">
                             <!-- Overall Attendance Card -->
                             <div class="card">
                                 <div class="card-eyebrow">Academic Standing</div>
-                                <div class="card-title" style="margin-bottom:16px;">Attendance Summary</div>
+                                <div class="card-title" style="margin-bottom:14px;">Attendance Summary</div>
+                                
+                                <div class="overall-ring-wrap">
+                                    <div>
+                                        <div class="overall-num" id="overallPct">—</div>
+                                        <div class="overall-sub">cumulative attendance</div>
+                                    </div>
+                                    <div class="overall-counts-box" id="overallCounts">—</div>
+                                </div>
+
                                 <div class="target-row">
-                                    <label for="targetPct">Target Attendance:</label>
+                                    <label for="targetPct">Target Minimum:</label>
                                     <select id="targetPct" onchange="renderAttendanceStats()">
                                         <option value="75" selected>75% Minimum</option>
                                         <option value="80">80% Target</option>
                                         <option value="90">90% Dean's List</option>
                                     </select>
                                 </div>
-                                <div class="overall-ring-wrap">
-                                    <div>
-                                        <div class="overall-num" id="overallPct">—</div>
-                                        <div class="overall-sub">cumulative attendance</div>
-                                    </div>
-                                    <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6;"
-                                        id="overallCounts">—</div>
-                                </div>
+
                                 <div class="overall-leave" id="overallLeave"></div>
                                 <div id="subjectStats" style="margin-top:16px;"></div>
                             </div>
+                        </div>
+                    </div>
 
+                    <!-- 5. Secondary Information 2-Column Grid -->
+                    <div class="secondary-grid">
+                        <!-- Column 1: History & Syllabus -->
+                        <div style="display:flex;flex-direction:column;gap:18px;">
                             <!-- Attendance History Card -->
                             <div class="card" id="historyCard">
                                 <div class="card-eyebrow">📋 Past &amp; Upcoming</div>
@@ -362,6 +445,39 @@
                                 <div id="historyView"></div>
                             </div>
 
+                            <!-- Syllabus Card -->
+                            <div class="syllabus-card" id="syllabusCard">
+                                <div class="card-head">
+                                    <div>
+                                        <div class="card-eyebrow">📖 Curriculum</div>
+                                        <div class="card-title">Course Syllabus</div>
+                                    </div>
+                                    <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
+                                        onclick="openSyllabusFullView()">📄 Full View</button>
+                                </div>
+                                <div class="syllabus-branch-selector" id="syllabusSelector">
+                                    <div class="field">
+                                        <label for="syllabusBranch">Branch</label>
+                                        <select id="syllabusBranch" onchange="loadSyllabus()"></select>
+                                    </div>
+                                    <div class="field">
+                                        <label for="syllabusYear">Year</label>
+                                        <select id="syllabusYear" onchange="loadSyllabus()">
+                                            <option value="1">1st Year</option>
+                                            <option value="2">2nd Year</option>
+                                            <option value="3">3rd Year</option>
+                                            <option value="4">4th Year</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="syllabus-content" id="syllabusContent">
+                                    <div class="syllabus-loading">Select your branch to view the syllabus.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Feedback, Campus Community & Resources -->
+                        <div style="display:flex;flex-direction:column;gap:18px;">
                             <!-- Help & Feedback Card -->
                             <div class="card" id="feedbackCard">
                                 <div class="card-head">
@@ -412,34 +528,11 @@
                                 </div>
                             </div>
 
-                            <!-- Syllabus Card -->
-                            <div class="syllabus-card" id="syllabusCard">
-                                <div class="card-head">
-                                    <div>
-                                        <div class="card-eyebrow">📖 Curriculum</div>
-                                        <div class="card-title">Course Syllabus</div>
-                                    </div>
-                                    <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
-                                        onclick="openSyllabusFullView()">📄 Full View</button>
-                                </div>
-                                <div class="syllabus-branch-selector" id="syllabusSelector">
-                                    <div class="field">
-                                        <label for="syllabusBranch">Branch</label>
-                                        <select id="syllabusBranch" onchange="loadSyllabus()"></select>
-                                    </div>
-                                    <div class="field">
-                                        <label for="syllabusYear">Year</label>
-                                        <select id="syllabusYear" onchange="loadSyllabus()">
-                                            <option value="1">1st Year</option>
-                                            <option value="2">2nd Year</option>
-                                            <option value="3">3rd Year</option>
-                                            <option value="4">4th Year</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="syllabus-content" id="syllabusContent">
-                                    <div class="syllabus-loading">Select your branch to view the syllabus.</div>
-                                </div>
+                            <!-- Upcoming Calendar Events -->
+                            <div class="card">
+                                <div class="card-eyebrow">Academic Schedule</div>
+                                <div class="card-title" style="margin-bottom:14px;">Upcoming Dates</div>
+                                <div id="eventsList"></div>
                             </div>
 
                             <!-- Quick Academic Links -->
@@ -458,13 +551,6 @@
                                     onclick="window.open('https://drive.google.com/file/d/1vENgYXFOKl-1O6eAALAfBYHR95a8b8EX/view?usp=drivesdk','_blank')">📖
                                     Academic Calendar 2026–27</button>
                             </div>
-
-                            <!-- Upcoming Calendar Events -->
-                            <div class="card">
-                                <div class="card-eyebrow">Academic Schedule</div>
-                                <div class="card-title" style="margin-bottom:14px;">Upcoming Dates</div>
-                                <div id="eventsList"></div>
-                            </div>
                         </div>
                     </div>
                 </main>
@@ -478,25 +564,29 @@
         <!-- Mobile Bottom Navigation Bar -->
         <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
             <div class="mobile-nav-items">
-                <button class="mobile-nav-item active" onclick="scrollToSection('timetableSection')">
+                <button class="mobile-nav-item active" onclick="scrollToSection('timetableSection')" title="Today's Periods">
                     <span class="nav-icon">📅</span>
-                    <span>Today</span>
+                    <span>Periods</span>
                 </button>
-                <button class="mobile-nav-item" onclick="setScheduleView('week'); scrollToSection('timetableSection');">
-                    <span class="nav-icon">🗓️</span>
-                    <span>Timetable</span>
-                </button>
-                <button class="mobile-nav-item" onclick="scrollToSection('attendanceSection')">
+                <button class="mobile-nav-item" onclick="scrollToSection('attendanceSection')" title="Attendance">
                     <span class="nav-icon">📈</span>
                     <span>Attendance</span>
                 </button>
-                <button class="mobile-nav-item" onclick="scrollToPosts()">
+                <button class="mobile-nav-item" onclick="scrollToPosts()" title="Announcements">
                     <span class="nav-icon">📢</span>
                     <span>Notices</span>
                 </button>
-                <button class="mobile-nav-item" onclick="openProfileModal()">
-                    <span class="nav-icon">👤</span>
-                    <span>Profile</span>
+                <button class="mobile-nav-item" onclick="toggleTelegramSection(true)" title="Telegram">
+                    <span class="nav-icon" style="color:#0088cc;display:inline-flex;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                        </svg>
+                    </span>
+                    <span>Telegram</span>
+                </button>
+                <button class="mobile-nav-item" onclick="toggleSidebar(true)" title="More Menu">
+                    <span class="nav-icon">☰</span>
+                    <span>More</span>
                 </button>
             </div>
         </nav>
@@ -1096,8 +1186,8 @@
     <!-- ============================================================ -->
     <!-- LEDGER AI CHAT ASSISTANT                                     -->
     <!-- ============================================================ -->
-    <button class="ledger-ai-fab" id="ledgerAiFab" onclick="toggleLedgerAI()" aria-label="Toggle Ledger AI Assistant">
-        🤖
+    <button class="ledger-ai-fab" id="ledgerAiFab" onclick="toggleLedgerAI()" aria-label="Toggle Campus Support" title="Campus Support">
+        💬
         <span class="badge-dot" id="aiBadgeDot" style="display:none;">•</span>
     </button>
 
@@ -1152,16 +1242,23 @@
             }
         };
 
-        // Smooth Scroll Helper
+        // Smooth Scroll Helper (with sticky header offset)
         window.scrollToSection = function (id) {
             window.toggleSidebar(false);
             const el = document.getElementById(id);
             if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const topbar = document.querySelector('.topbar');
+                const headerOffset = topbar ? topbar.offsetHeight + 10 : 60;
+                const elementPosition = el.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({
+                    top: Math.max(0, offsetPosition),
+                    behavior: 'smooth'
+                });
             }
         };
 
-        // Sync student pill into welcome hero & sidebar
+        // Sync student pill into welcome hero, sidebar & user dropdown
         const observer = new MutationObserver(() => {
             const pName = document.getElementById('pillName');
             const pBranch = document.getElementById('pillBranch');
@@ -1170,6 +1267,9 @@
             const sName = document.getElementById('sidebarName');
             const sBranch = document.getElementById('sidebarBranch');
             const sAvatar = document.getElementById('sidebarAvatar');
+            const dName = document.getElementById('dropdownName');
+            const dMeta = document.getElementById('dropdownMeta');
+            const dAvatar = document.getElementById('dropdownAvatar');
 
             if (pName && wName && pName.textContent !== '—') {
                 wName.textContent = pName.textContent;
@@ -1177,11 +1277,81 @@
             if (pName && sName) sName.textContent = pName.textContent;
             if (pBranch && sBranch) sBranch.textContent = pBranch.textContent;
             if (pAvatar && sAvatar) sAvatar.textContent = pAvatar.textContent;
+            if (pName && dName && pName.textContent !== '—') dName.textContent = pName.textContent;
+            if (pBranch && dMeta && pBranch.textContent !== '—') dMeta.textContent = pBranch.textContent;
+            if (pAvatar && dAvatar && pAvatar.textContent !== '—') dAvatar.textContent = pAvatar.textContent;
         });
         const pillNode = document.getElementById('pillName');
         if (pillNode) {
             observer.observe(pillNode, { childList: true, characterData: true, subtree: true });
         }
+
+        // User Profile Dropdown Navigation
+        window.toggleUserMenu = function(open) {
+            const menu = document.getElementById('userDropdownMenu');
+            const btn = document.getElementById('userMenuToggleBtn');
+            if (!menu) return;
+            const isShown = menu.classList.contains('show');
+            const willOpen = open !== undefined ? open : !isShown;
+            if (willOpen) {
+                const pName = document.getElementById('pillName')?.textContent || 'Student';
+                const pBranch = document.getElementById('pillBranch')?.textContent || 'B.Tech';
+                const pAvatar = document.getElementById('pillAvatar')?.textContent || 'ST';
+                const dName = document.getElementById('dropdownName');
+                const dMeta = document.getElementById('dropdownMeta');
+                const dAvatar = document.getElementById('dropdownAvatar');
+                if (dName && pName !== '—') dName.textContent = pName;
+                if (dMeta && pBranch !== '—') dMeta.textContent = pBranch;
+                if (dAvatar && pAvatar !== '—') dAvatar.textContent = pAvatar;
+
+                const dAdmin = document.getElementById('dropdownAdminBtn');
+                const dAdminLabel = document.getElementById('dropdownAdminLabel');
+                const dAdminIcon = document.getElementById('dropdownAdminIcon');
+                if (dAdmin && dAdminLabel) {
+                    if (typeof isAdmin !== 'undefined' && isAdmin) {
+                        dAdmin.style.display = 'flex';
+                        dAdminLabel.textContent = 'Admin Console';
+                        if (dAdminIcon) dAdminIcon.textContent = '⚙️';
+                    } else if (typeof adminRequested !== 'undefined' && adminRequested) {
+                        dAdmin.style.display = 'flex';
+                        dAdminLabel.textContent = 'Request Pending';
+                        if (dAdminIcon) dAdminIcon.textContent = '⏳';
+                    } else {
+                        dAdmin.style.display = 'flex';
+                        dAdminLabel.textContent = 'Request Admin Role';
+                        if (dAdminIcon) dAdminIcon.textContent = '👤';
+                    }
+                }
+                menu.classList.add('show');
+                if (btn) btn.setAttribute('aria-expanded', 'true');
+            } else {
+                menu.classList.remove('show');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        };
+
+        window.handleDropdownAdmin = function() {
+            if (typeof isAdmin !== 'undefined' && isAdmin) {
+                if (typeof openAdminPanel === 'function') openAdminPanel();
+            } else if (typeof adminRequested !== 'undefined' && !adminRequested) {
+                if (typeof requestAdminRole === 'function') requestAdminRole();
+            } else if (typeof alert === 'function') {
+                alert('Your admin role request is currently pending review.');
+            }
+        };
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('userMenuContainer');
+            if (container && !container.contains(e.target)) {
+                window.toggleUserMenu(false);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.toggleUserMenu(false);
+            }
+        });
     </script>
 
     <!-- Import Map for Firebase CDN Modules -->
