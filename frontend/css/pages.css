@@ -863,16 +863,24 @@
 
 /* Mobile Adjustments */
 @media (max-width: 768px) {
-    #telegramView {
-        padding: 16px 16px 36px;
+    #telegramView,
+    #chessClubView {
+        padding: 14px 12px calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 24px) 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .telegram-hero-card {
-        padding: 18px 16px;
+        padding: 16px 14px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .tg-state-card {
-        padding: 18px 16px;
+        padding: 16px 14px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .btn-topbar-telegram {
