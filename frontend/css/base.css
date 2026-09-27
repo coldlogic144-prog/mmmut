@@ -1,97 +1,104 @@
 /* ============================================================================
-   MMMUT ERP / THE LEDGER — BASE DESIGN SYSTEM & TOKENS
-   Modern University SaaS Aesthetic: Clean, spacious, accessible, responsive
+   MMMUT ERP — THE ACADEMIC LEDGER
+   Professional University Enterprise Resource Planning System — Base Design System
+   Madan Mohan Malaviya University of Technology, Gorakhpur
    ============================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Canvas & Surfaces */
+    /* Institutional Canvas & Surfaces */
     --bg-canvas: #f8fafc;
     --surface: #ffffff;
     --surface-subtle: #f1f5f9;
     --surface-hover: #e2e8f0;
     --surface-border: #e2e8f0;
     --surface-border-subtle: #f1f5f9;
+    --surface-border-strong: #cbd5e1;
 
-    /* University Brand Palette (Deep Navy / Royal Blue + Azure) */
-    --primary: #1e3a8a;
-    --primary-hover: #1e40af;
-    --primary-active: #172554;
+    /* University Brand Palette — Formal Institutional Navy */
+    --primary: #1b365d;
+    --primary-hover: #132744;
+    --primary-active: #0c1a2e;
     --primary-light: #eff6ff;
     --primary-subtle: #dbeafe;
-    --primary-focus: rgba(30, 58, 138, 0.18);
+    --primary-border: #bfdbfe;
+    --primary-focus: rgba(27, 54, 93, 0.16);
 
     --accent: #0284c7;
     --accent-hover: #0369a1;
     --accent-light: #f0f9ff;
     --accent-subtle: #e0f2fe;
 
-    /* Text & Typography */
+    /* High-Legibility Typography Colors */
     --text-main: #0f172a;
+    --text-secondary: #334155;
     --text-muted: #475569;
-    --text-light: #94a3b8;
+    --text-light: #64748b;
+    --text-faint: #94a3b8;
     --text-inverse: #ffffff;
 
-    /* Semantic Status */
-    --success: #059669;
+    /* Formal Academic Status Colors */
+    --success: #047857;
     --success-bg: #ecfdf5;
     --success-text: #065f46;
     --success-border: #a7f3d0;
 
-    --warning: #d97706;
+    --warning: #b45309;
     --warning-bg: #fffbeb;
     --warning-text: #92400e;
     --warning-border: #fde68a;
 
-    --danger: #dc2626;
+    --danger: #b91c1c;
     --danger-bg: #fef2f2;
     --danger-text: #991b1b;
     --danger-border: #fecaca;
 
-    --info: #2563eb;
+    --info: #1d4ed8;
     --info-bg: #eff6ff;
-    --info-text: #1d4ed8;
+    --info-text: #1e40af;
     --info-border: #bfdbfe;
 
-    /* Backward compatibility mappings for existing feature classes */
+    /* Backward compatibility mappings for existing codebase classes */
     --ink: #0f172a;
-    --ink-soft: #475569;
+    --ink-soft: #334155;
     --paper: #f8fafc;
     --paper-raised: #ffffff;
     --paper-line: #e2e8f0;
-    --brass: #0284c7;
-    --brass-soft: #e0f2fe;
+    --brass: #b45309;
+    --brass-soft: #fef3c7;
     --teal: #0f766e;
     --teal-soft: #ccfbf1;
-    --brick: #dc2626;
+    --brick: #b91c1c;
     --brick-soft: #fee2e2;
-    --moss: #059669;
+    --moss: #047857;
     --moss-soft: #d1fae5;
 
-    /* Elevation & Shadows */
+    /* Architectural Elevation & Restrained Shadows */
+    --shadow-none: none;
     --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-    --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.03);
+    --shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 
-    /* Radii */
-    --radius-xs: 4px;
-    --radius-sm: 8px;
-    --radius: 12px;
-    --radius-md: 14px;
-    --radius-lg: 18px;
+    /* Professional, Non-Excessive Radii */
+    --radius-xs: 3px;
+    --radius-sm: 5px;
+    --radius: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
     --radius-full: 9999px;
 
-    /* Touch & Layout Standards */
-    --touch-min: 44px;
-    --sidebar-width: 260px;
-    --header-height: 64px;
-    --mobile-nav-height: 60px;
+    /* Structural Metrics */
+    --touch-min: 42px;
+    --sidebar-width: 250px;
+    --header-height: 56px;
+    --mobile-nav-height: 56px;
 
-    /* Typography scale */
-    font-size: 16px;
+    /* Typography Scale */
+    font-size: 15px;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color-scheme: light;
 }
@@ -124,17 +131,22 @@ body {
     color: var(--primary);
 }
 
-/* Typography elements */
+/* Strict Typography Hierarchy */
 h1, h2, h3, h4, h5, h6, .display {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 700;
-    letter-spacing: -0.02em;
     color: var(--text-main);
-    line-height: 1.25;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
 }
 
+h1 { font-size: 22px; font-weight: 700; }
+h2 { font-size: 18px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 600; }
+h4 { font-size: 13.5px; font-weight: 600; }
+
 .mono {
-    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-feature-settings: 'tnum' on, 'zero' on;
 }
 
@@ -146,6 +158,7 @@ a {
 
 a:hover {
     color: var(--primary-hover);
+    text-decoration: underline;
 }
 
 button {
@@ -156,13 +169,13 @@ button {
 
 input, select, textarea {
     font-family: inherit;
-    font-size: 14.5px;
+    font-size: 13.5px;
 }
 
-/* Custom Scrollbars */
+/* Subtle, Functional Scrollbars */
 ::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -178,13 +191,13 @@ input, select, textarea {
     background: #94a3b8;
 }
 
-/* Accessible focus visible outlines */
+/* Accessible Focus States */
 :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
-/* Modern Loading Screen */
+/* Administrative Loading Screen */
 #loadingScreen {
     position: fixed;
     inset: 0;
@@ -192,19 +205,19 @@ input, select, textarea {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     background: var(--surface);
     z-index: 9999;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .loader-ring {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    border: 3.5px solid var(--surface-subtle);
+    border: 3px solid var(--surface-subtle);
     border-top-color: var(--primary);
-    animation: erp-spin 0.8s cubic-bezier(0.6, 0.2, 0.4, 0.9) infinite;
+    animation: erp-spin 0.75s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
 }
 
 @keyframes erp-spin {
@@ -212,8 +225,7 @@ input, select, textarea {
 }
 
 .loading-msg {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
     color: var(--text-muted);
     letter-spacing: 0.01em;
