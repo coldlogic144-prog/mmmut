@@ -211,6 +211,8 @@
             // Stop using this user's push-notification token context. Does NOT
             // delete their Firestore token document or alter authentication.
             updatePushButtonUI();
+            const sidebarAdminBtn = document.getElementById('sidebarAdminBtn');
+            if (sidebarAdminBtn) sidebarAdminBtn.style.display = 'none';
         }
 
         async function loadUserProfile(uid) {

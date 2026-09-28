@@ -2801,6 +2801,8 @@
             // Stop using this user's push-notification token context. Does NOT
             // delete their Firestore token document or alter authentication.
             updatePushButtonUI();
+            const sidebarAdminBtn = document.getElementById('sidebarAdminBtn');
+            if (sidebarAdminBtn) sidebarAdminBtn.style.display = 'none';
         }
 
         async function loadUserProfile(uid) {
@@ -2930,11 +2932,34 @@
                 btn.disabled = true;
                 btn.style.opacity = '0.6';
             }
-            const userPill = topRight.querySelector('.user-pill');
-            if (userPill && userPill.nextSibling) {
-                topRight.insertBefore(btn, userPill.nextSibling);
-            } else {
-                topRight.appendChild(btn);
+            if (topRight) {
+                const userMenuContainer = document.getElementById('userMenuContainer');
+                if (userMenuContainer) {
+                    topRight.insertBefore(btn, userMenuContainer);
+                } else {
+                    topRight.appendChild(btn);
+                }
+            }
+
+            // Show/hide sidebar Admin Panel button based on admin status
+            const sidebarAdminBtn = document.getElementById('sidebarAdminBtn');
+            if (sidebarAdminBtn) {
+                sidebarAdminBtn.style.display = isAdmin ? 'flex' : 'none';
+            }
+
+            const dropdownAdminLabel = document.getElementById('dropdownAdminLabel');
+            const dropdownAdminIcon = document.getElementById('dropdownAdminIcon');
+            if (dropdownAdminLabel) {
+                if (isAdmin) {
+                    dropdownAdminLabel.textContent = 'Admin Panel';
+                    if (dropdownAdminIcon) dropdownAdminIcon.textContent = '🛡️';
+                } else if (!adminRequested) {
+                    dropdownAdminLabel.textContent = 'Request Admin Role';
+                    if (dropdownAdminIcon) dropdownAdminIcon.textContent = '👤';
+                } else {
+                    dropdownAdminLabel.textContent = 'Admin Request Pending';
+                    if (dropdownAdminIcon) dropdownAdminIcon.textContent = '⏳';
+                }
             }
 
             scheduleCache = buildSchedule(branch, record.section);
@@ -3040,11 +3065,32 @@
                             b.disabled = true;
                             b.style.opacity = '0.6';
                         }
-                        const pill = document.querySelector('.topbar-right .user-pill');
-                        if (pill && pill.nextSibling) {
-                            pill.parentNode.insertBefore(b, pill.nextSibling);
-                        } else {
-                            document.querySelector('.topbar-right').appendChild(b);
+                        const tr = document.querySelector('.topbar-right');
+                        if (tr) {
+                            const userMenuContainer = document.getElementById('userMenuContainer');
+                            if (userMenuContainer) {
+                                tr.insertBefore(b, userMenuContainer);
+                            } else {
+                                tr.appendChild(b);
+                            }
+                        }
+                        const sidebarAdminBtn2 = document.getElementById('sidebarAdminBtn');
+                        if (sidebarAdminBtn2) {
+                            sidebarAdminBtn2.style.display = isAdmin ? 'flex' : 'none';
+                        }
+                        const dropdownAdminLabel2 = document.getElementById('dropdownAdminLabel');
+                        const dropdownAdminIcon2 = document.getElementById('dropdownAdminIcon');
+                        if (dropdownAdminLabel2) {
+                            if (isAdmin) {
+                                dropdownAdminLabel2.textContent = 'Admin Panel';
+                                if (dropdownAdminIcon2) dropdownAdminIcon2.textContent = '🛡️';
+                            } else if (!adminRequested) {
+                                dropdownAdminLabel2.textContent = 'Request Admin Role';
+                                if (dropdownAdminIcon2) dropdownAdminIcon2.textContent = '👤';
+                            } else {
+                                dropdownAdminLabel2.textContent = 'Admin Request Pending';
+                                if (dropdownAdminIcon2) dropdownAdminIcon2.textContent = '⏳';
+                            }
                         }
                         const newBtn = document.getElementById('cpNewPostBtn');
                         if (newBtn) {
