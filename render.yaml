@@ -23,7 +23,7 @@ services:
       - key: TELEGRAM_WEBHOOK_SECRET
         generateValue: true
       - key: TELEGRAM_CHANNEL_INVITE_LINK
-        sync: false
+        value: "https://t.me/+Hx9BkNjz58YwZjY9"
       # The CSV ships with the repo (data/admission_data.csv). To refresh the
       # roster without redeploying, host it elsewhere and set a URL fetch —
       # for now the repo copy is the source of truth.

@@ -90,30 +90,49 @@ function stripElFor(color) {
             name: document.getElementById('topPlayerName'),
             clock: document.getElementById('topPlayerClock'),
             captures: document.getElementById('topPlayerCaptures')
-          }
+        }
         : {
             strip: document.getElementById('bottomPlayerStrip'),
             name: document.getElementById('bottomPlayerName'),
             clock: document.getElementById('bottomPlayerClock'),
             captures: document.getElementById('bottomPlayerCaptures')
-          };
+        };
 }
 
 // ---------------- AUTH GATE ----------------
+function activateChessSession(user) {
+    currentUser = user;
+    me = (user && user.uid) || 'dev-student';
+    const gate = document.getElementById('gateScreen');
+    const app = document.getElementById('chessApp');
+    if (gate) gate.style.display = 'none';
+    if (app) app.style.display = 'flex';
+    myName = (user && (user.displayName || user.email)) || 'Student';
+    const label = document.getElementById('playerNameLabel');
+    if (label) label.textContent = myName;
+    initHome();
+    if (user && user.uid && user.uid !== 'dev-student') initPhase2(user);
+}
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        document.getElementById('gateScreen').style.display = 'none';
-        document.getElementById('chessApp').style.display = 'flex';
-        myName = user.displayName || user.email || 'Student';
-        document.getElementById('playerNameLabel').textContent = myName;
-        initHome();
-        initPhase2(user);
+        activateChessSession(user);
+    } else if (currentUser) {
+        // Session already explicitly active
+        return;
     } else {
-        document.getElementById('gateTitle').textContent = "Authentication Required";
-        document.getElementById('gateMessage').textContent = 'Please log in to your MMMUT ERP student session first.';
-        document.getElementById('gateBackLink').style.display = 'inline-flex';
+        const title = document.getElementById('gateTitle');
+        const msg = document.getElementById('gateMessage');
+        const link = document.getElementById('gateBackLink');
+        if (title) title.textContent = "Authentication Required";
+        if (msg) msg.textContent = 'Please log in to your MMMUT ERP student session first.';
+        if (link) link.style.display = 'inline-flex';
     }
 });
+
+window.activateChessSession = activateChessSession;
+window.initHome = initHome;
+window.setChessUIState = setChessUIState;
 
 // ---------------- CHESS SIMPLIFIED UI STATE MACHINE ----------------
 // States: 'idle' | 'searching' | 'active' | 'finished'
@@ -128,12 +147,16 @@ function setChessUIState(state, meta = {}) {
     const boardControls = document.getElementById('boardControls');
 
     if (sIdle) sIdle.style.display = state === 'idle' ? 'block' : 'none';
-    if (sSearching) sSearching.style.display = state === 'searching' ? 'block' : 'none';
+    if (sSearching) {
+        sSearching.style.display = state === 'searching' ? 'block' : 'none';
+        const cancelBtn = document.getElementById('cancelSearchBtn');
+        if (cancelBtn && state === 'searching') cancelBtn.style.display = 'inline-flex';
+    }
     if (sActive) sActive.style.display = state === 'active' ? 'block' : 'none';
     if (sFinished) sFinished.style.display = state === 'finished' ? 'block' : 'none';
 
     if (boardControls) {
-        boardControls.style.display = (state === 'active' || state === 'finished') ? 'flex' : 'none';
+        boardControls.style.display = state === 'active' ? 'flex' : 'none';
     }
 
     if (state === 'finished') {
@@ -383,8 +406,8 @@ function updatePlayerStrips() {
 }
 
 // ---------------- BOARD RENDERING ----------------
-const FILES = ['a','b','c','d','e','f','g','h'];
-const RANKS = ['1','2','3','4','5','6','7','8'];
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const RANKS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 function squareId(file, rank) { return file + rank; }
 
@@ -553,6 +576,7 @@ function doMove(from, to, promotion) {
         animateMove(move);
         renderMoveList();
         renderCaptures();
+        updateTurnStatus();
         persistRemoteMove(move);
     } else {
         switchClock(move.color);
@@ -725,22 +749,7 @@ window.flipBoard = function () {
     updatePlayerStrips();
 };
 
-// ---------------- GAME STATUS & END ----------------
-function updateTurnStatus() {
-    if (gameOver) return;
-    if (isRemoteGame) {
-        if (myColor && game.turn() === myColor) {
-            setStatus(game.inCheck() ? 'Your turn — Check!' : 'Make your move', game.inCheck());
-        } else {
-            setStatus('Opponent’s turn…', false);
-        }
-    } else {
-        const turnLabel = game.turn() === 'w' ? 'White' : 'Black';
-        const checkNote = game.inCheck() ? ' — Check!' : '';
-        setStatus(`${turnLabel} to move${checkNote}`, game.inCheck());
-    }
-}
-
+// ---------------- GAME END ----------------
 function checkGameEnd() {
     if (game.isCheckmate()) {
         const winner = game.turn() === 'w' ? 'b' : 'w';
@@ -754,7 +763,9 @@ function checkGameEnd() {
     } else if (game.isDrawByFiftyMoves ? game.isDrawByFiftyMoves() : false) {
         endGame('fifty-move', null);
     } else {
-        updateTurnStatus();
+        const turnLabel = game.turn() === 'w' ? 'White' : 'Black';
+        const checkNote = game.inCheck() ? ' — Check!' : '';
+        setStatus(`${turnLabel} to move${checkNote}`, game.inCheck());
         if (game.inCheck()) showCheckNotification();
     }
 }
@@ -812,7 +823,7 @@ window.declineDrawOffer = function () {
     if (isRemoteGame && currentGameId) {
         updateDoc(doc(gamesCol, currentGameId), {
             drawOfferFrom: null, drawOfferTs: null, drawOfferStatus: null
-        }).catch(() => {});
+        }).catch(() => { });
     }
 };
 
@@ -829,48 +840,41 @@ function endGame(reason, winnerColor) {
     showDrawControls(false);
 
     const REASON_LABEL = {
-        checkmate: 'by checkmate',
-        stalemate: 'by stalemate',
-        repetition: 'by threefold repetition',
-        insufficient: 'by insufficient material',
-        'fifty-move': 'by fifty-move rule',
-        resignation: 'by resignation',
-        agreement: 'by mutual agreement',
-        timeout: 'on time'
+        checkmate: 'Checkmate',
+        stalemate: 'Stalemate',
+        repetition: 'Draw — threefold repetition',
+        insufficient: 'Draw — insufficient material',
+        'fifty-move': 'Draw — fifty-move rule',
+        resignation: 'Resignation',
+        agreement: 'Draw by mutual agreement',
+        timeout: 'Timeout'
     };
 
-    let title, sub, bannerClass;
+    let title, sub;
     if (winnerColor) {
         if (isRemoteGame) {
-            const iWon = winnerColor === myColor;
-            title = iWon ? 'You won' : 'You lost';
-            bannerClass = iWon ? 'is-won' : 'is-lost';
+            title = winnerColor === myColor ? 'You won' : 'You lost';
         } else {
-            title = `${winnerColor === 'w' ? 'White' : 'Black'} won`;
-            bannerClass = 'is-won';
+            title = `${winnerColor === 'w' ? 'White' : 'Black'} wins`;
         }
         sub = REASON_LABEL[reason] || reason;
     } else {
         title = 'Draw';
         sub = REASON_LABEL[reason] || reason;
-        bannerClass = 'is-draw';
     }
 
     const revealResultCard = () => {
+        let bannerClass = 'is-draw';
+        if (winnerColor) {
+            bannerClass = (isRemoteGame ? (winnerColor === myColor ? 'is-win' : 'is-loss') : 'is-win');
+        }
         setChessUIState('finished', { title, sub, bannerClass });
+
         const card = document.getElementById('resultCard');
         if (card) {
-            card.style.display = 'block';
-            card.innerHTML = `
-                <div class="result-banner">
-                    <div class="result-title">${title}</div>
-                    <div class="result-sub">${sub}</div>
-                    <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
-                        <button class="btn-secondary" style="font-size:12px; padding:6px 14px; background:#ffffff; color:var(--text-main); font-weight:700;" onclick="playAgain()">Play Again</button>
-                    </div>
-                </div>`;
+            card.style.display = 'none';
         }
-        setStatus(`${title} (${sub}).`, true);
+        setStatus(`Game over — ${title} (${sub}).`, true);
     };
 
     if (reason === 'checkmate' && game) {
@@ -905,7 +909,7 @@ function setChallengeStatus(msg) {
     if (el) el.textContent = msg || '';
 }
 function showCancelSearch(show) {
-    const el = document.getElementById('cancelSearchBtn');
+    const el = document.getElementById('cancelSearchModalBtn');
     if (el) el.style.display = show ? 'inline-flex' : 'none';
 }
 
@@ -1049,10 +1053,7 @@ function onGameSnap(snap) {
     if (g.whiteMs != null) whiteMs = g.whiteMs;
     if (g.blackMs != null) blackMs = g.blackMs;
     renderClocks();
-    if (!g.finished) {
-        startClock(game.turn());
-        updateTurnStatus();
-    }
+    if (!g.finished) startClock(game.turn());
 
     // Draw offer handling
     if (g.drawOfferFrom && g.drawOfferFrom !== me && !pendingDrawOffer) {
@@ -1083,8 +1084,6 @@ function joinGame(id) {
     startedForId = null;
     const resCard = document.getElementById('resultCard');
     if (resCard) resCard.style.display = 'none';
-    setChessUIState('active');
-    updateTurnStatus();
     const ref = doc(gamesCol, id);
     gameUnsub = onSnapshot(ref, onGameSnap, (err) => {
         console.warn('game snap err', err);
@@ -1131,7 +1130,6 @@ async function findOrCreateOnlineGame(base, inc) {
             waitingGameId = myWaiting.id;
             setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
             showCancelSearch(true);
-            setChessUIState('searching');
             return;
         }
         if (target) {
@@ -1139,7 +1137,6 @@ async function findOrCreateOnlineGame(base, inc) {
                 blackUid: me, blackName: myName, status: 'active', lastMoveTs: Date.now()
             });
             setOnlineStatus('Match found! Loading board…');
-            setChessUIState('active');
         } else {
             const ref = await addDoc(gamesCol, {
                 whiteUid: me, whiteName: myName, blackUid: '', blackName: '',
@@ -1150,7 +1147,6 @@ async function findOrCreateOnlineGame(base, inc) {
             waitingGameId = ref.id;
             setOnlineStatus('Waiting for a student opponent… (Cancel to stop)');
             showCancelSearch(true);
-            setChessUIState('searching');
         }
     } catch (e) {
         console.warn('findOrCreateOnlineGame failed', e);
@@ -1169,7 +1165,6 @@ function setupMyGamesListener() {
                 waitingGameId = id;
                 setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
                 showCancelSearch(true);
-                setChessUIState('searching');
             } else if (g.status === 'finished' && !recordedGameIds.has(id)) {
                 recordGameResult({ id, ...g });
             }

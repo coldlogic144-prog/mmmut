@@ -460,33 +460,19 @@
                                 <div id="historyView"></div>
                             </div>
 
-                            <!-- Syllabus Card -->
-                            <div class="syllabus-card" id="syllabusCard">
+                            <!-- Syllabus Tracker (Ledger) Preview Card — replaces old static Curriculum viewer.
+                                 Single source of truth is The Ledger full view; this is a live preview. -->
+                            <div class="syllabus-card ledger-preview-card" id="syllabusCard">
                                 <div class="card-head">
                                     <div>
-                                        <div class="card-eyebrow">📖 Curriculum</div>
-                                        <div class="card-title">Course Syllabus</div>
+                                        <div class="card-eyebrow">📑 Syllabus Tracker</div>
+                                        <div class="card-title">Course Progress</div>
                                     </div>
                                     <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
-                                        onclick="openSyllabusFullView()">📄 Full View</button>
+                                        onclick="toggleLedgerSection(true)">📑 Open Tracker</button>
                                 </div>
-                                <div class="syllabus-branch-selector" id="syllabusSelector">
-                                    <div class="field">
-                                        <label for="syllabusBranch">Branch</label>
-                                        <select id="syllabusBranch" onchange="loadSyllabus()"></select>
-                                    </div>
-                                    <div class="field">
-                                        <label for="syllabusYear">Year</label>
-                                        <select id="syllabusYear" onchange="loadSyllabus()">
-                                            <option value="1">1st Year</option>
-                                            <option value="2">2nd Year</option>
-                                            <option value="3">3rd Year</option>
-                                            <option value="4">4th Year</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="syllabus-content" id="syllabusContent">
-                                    <div class="syllabus-loading">Select your branch to view the syllabus.</div>
+                                <div id="dashboardLedgerPreview">
+                                    <div class="syllabus-loading">Loading your syllabus progress…</div>
                                 </div>
                             </div>
                         </div>

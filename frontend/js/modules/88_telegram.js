@@ -46,7 +46,11 @@
                     console.warn('[Telegram] Could not fetch channel invite link from backend:', e);
                 }
             }
-            return null;
+
+            // Reliable default fallback to the configured official channel invite link
+            const defaultInvite = 'https://t.me/+Hx9BkNjz58YwZjY9';
+            cfg.channelUrl = defaultInvite;
+            return defaultInvite;
         }
 
         function openTelegramWeb(sameTab = false) {
@@ -67,6 +71,9 @@
                 showToast('⚠️ Private channel invite link is not configured on the server yet. Please contact the administrator.');
                 return;
             }
+            try {
+                window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+            } catch (_) {}
             launchTelegramDestination(inviteUrl, 'Roomhub (Private Channel)');
         }
 
@@ -323,6 +330,9 @@
                 }
 
                 // Open private channel join request link safely
+                try {
+                    window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+                } catch (_) {}
                 launchTelegramDestination(inviteUrl, 'Roomhub (Private Channel Join Request)');
 
                 // Update state to JOIN_REQUEST_PENDING

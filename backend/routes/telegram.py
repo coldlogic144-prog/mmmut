@@ -43,7 +43,7 @@ TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
 TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "").strip()
 TELEGRAM_CHANNEL_INVITE_LINK = os.environ.get(
     "TELEGRAM_CHANNEL_INVITE_LINK",
-    ""
+    "https://t.me/+Hx9BkNjz58YwZjY9"
 ).strip()
 
 FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyDMLvLIZkPFO5nsVQBr2IA-8BRB5Hzb3Xo").strip()

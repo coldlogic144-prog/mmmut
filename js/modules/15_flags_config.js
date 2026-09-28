@@ -65,7 +65,7 @@
 
         const TELEGRAM_CONFIG = {
             webUrl: "https://web.telegram.org/k/",
-            channelUrl: "", // Dynamically retrieved from backend /api/telegram/channel-invite
+            channelUrl: "https://t.me/+Hx9BkNjz58YwZjY9",
             channelName: "Roomhub",
             channelDescription: "Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.",
             channelId: "-1003908239361",

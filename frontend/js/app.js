@@ -231,7 +231,7 @@
 
         const TELEGRAM_CONFIG = {
             webUrl: "https://web.telegram.org/k/",
-            channelUrl: "", // Dynamically retrieved from backend /api/telegram/channel-invite
+            channelUrl: "https://t.me/+Hx9BkNjz58YwZjY9",
             channelName: "Roomhub",
             channelDescription: "Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.",
             channelId: "-1003908239361",
@@ -6554,7 +6554,11 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     console.warn('[Telegram] Could not fetch channel invite link from backend:', e);
                 }
             }
-            return null;
+
+            // Reliable default fallback to the configured official channel invite link
+            const defaultInvite = 'https://t.me/+Hx9BkNjz58YwZjY9';
+            cfg.channelUrl = defaultInvite;
+            return defaultInvite;
         }
 
         function openTelegramWeb(sameTab = false) {
@@ -6575,6 +6579,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 showToast('⚠️ Private channel invite link is not configured on the server yet. Please contact the administrator.');
                 return;
             }
+            try {
+                window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+            } catch (_) {}
             launchTelegramDestination(inviteUrl, 'Roomhub (Private Channel)');
         }
 
@@ -6831,6 +6838,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 }
 
                 // Open private channel join request link safely
+                try {
+                    window.open(inviteUrl, '_blank', 'noopener,noreferrer');
+                } catch (_) {}
                 launchTelegramDestination(inviteUrl, 'Roomhub (Private Channel Join Request)');
 
                 // Update state to JOIN_REQUEST_PENDING

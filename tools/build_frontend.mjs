@@ -55,4 +55,8 @@ const out =
   code.trimStart() + '\n';
 
 fs.writeFileSync(path.join(FE, 'js', 'app.js'), out);
+const ROOT_JS = path.resolve(__dirname, '..', 'js');
+if (fs.existsSync(ROOT_JS) && ROOT_JS !== path.join(FE, 'js')) {
+  try { fs.writeFileSync(path.join(ROOT_JS, 'app.js'), out); } catch (_) {}
+}
 console.log('rebuilt js/app.js from ' + files.length + ' sections (' + out.split('\n').length + ' lines)');
