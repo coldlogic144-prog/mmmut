@@ -1,18 +1,18 @@
-// ============================================================
-// CHESS MODULE — chess.js (game logic)
-// PHASE 1 SCOPE: local hotseat play only.
-// Firebase is used ONLY to confirm the visitor has an existing
-// Ledger session — no chess data is read from or written to
-// Firestore in this phase. Same firebaseConfig as index.html,
-// re-used as read-only auth verification (no new auth system).
-// ============================================================
+// ============================================================================
+// MMMUT ERP — CHESS MODULE (chess.js)
+// Academic Ledger Chess Arena — Realtime Game Engine & Firebase Sync
+// Madan Mohan Malaviya University of Technology, Gorakhpur
+// ============================================================================
 
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp, getDocs, runTransaction } from "firebase/firestore";
+import {
+    getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
+    onSnapshot, query, where, orderBy, limit, serverTimestamp, getDocs, runTransaction
+} from "firebase/firestore";
 import { Chess } from "chess.js";
 
-// ===== Same Firebase project as the main Ledger app =====
+// ===== Same Firebase project as main MMMUT ERP =====
 const firebaseConfig = {
     apiKey: "AIzaSyDMLvLIZkPFO5nsVQBr2IA-8BRB5Hzb3Xo",
     authDomain: "student-erp-77605.firebaseapp.com",
@@ -27,19 +27,19 @@ const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConf
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
-// ===== Phase 2 collections (reuse the same chess* collections the Chess Club uses) =====
+// ===== Firestore Collections =====
 const playersCol = collection(db, "chessPlayers");
 const challengesCol = collection(db, "chessChallenges");
 const gamesCol = collection(db, "chessGames");
 const activityCol = collection(db, "chessActivity");
 
-// ===== Phase 2 runtime state =====
+// ===== Runtime State =====
 let currentUser = null;
 let me = null;
-let myName = "Player";
+let myName = "Student";
 
 let isRemoteGame = false;
-let myColor = 'w'; // the local player's colour in an online game ('w' if I host, 'b' if I join)
+let myColor = 'w';
 let currentGameId = null;
 let gameUnsub = null;
 let startedForId = null;
@@ -54,19 +54,29 @@ const PIECE_GLYPHS = {
 };
 const PIECE_VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
-let game = null;
+let game = new Chess();
 let boardFlipped = false;
 let selectedSquare = null;
 let legalTargets = [];
-let lastMove = null; // { from, to }
-let pendingPromotion = null; // { from, to }
+let lastMove = null;
+let pendingPromotion = null;
 let checkmateKingSquare = null;
 
-let whiteMs = 0, blackMs = 0, incrementMs = 0;
+let whiteMs = 180000, blackMs = 180000, incrementMs = 0;
 let clockTimer = null;
-let clockRunningColor = null; // 'w' | 'b' | null
+let clockRunningColor = null;
 let gameOver = false;
-let pendingDrawOffer = null; // { from, ts } - tracks pending draw offer
+let pendingDrawOffer = null;
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -94,17 +104,65 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('gateScreen').style.display = 'none';
         document.getElementById('chessApp').style.display = 'flex';
-        document.getElementById('playerNameLabel').textContent = user.displayName || user.email || 'Player';
+        myName = user.displayName || user.email || 'Student';
+        document.getElementById('playerNameLabel').textContent = myName;
         initHome();
         initPhase2(user);
     } else {
-        document.getElementById('gateTitle').textContent = "You're not logged in";
-        document.getElementById('gateMessage').textContent = 'Log in to Ledger first, then open Chess again.';
+        document.getElementById('gateTitle').textContent = "Authentication Required";
+        document.getElementById('gateMessage').textContent = 'Please log in to your MMMUT ERP student session first.';
         document.getElementById('gateBackLink').style.display = 'inline-flex';
     }
 });
 
-// ---------------- HOME ----------------
+// ---------------- CHESS SIMPLIFIED UI STATE MACHINE ----------------
+// States: 'idle' | 'searching' | 'active' | 'finished'
+let chessUIState = 'idle';
+
+function setChessUIState(state, meta = {}) {
+    chessUIState = state;
+    const sIdle = document.getElementById('stateIdle');
+    const sSearching = document.getElementById('stateSearching');
+    const sActive = document.getElementById('stateActive');
+    const sFinished = document.getElementById('stateFinished');
+    const boardControls = document.getElementById('boardControls');
+
+    if (sIdle) sIdle.style.display = state === 'idle' ? 'block' : 'none';
+    if (sSearching) sSearching.style.display = state === 'searching' ? 'block' : 'none';
+    if (sActive) sActive.style.display = state === 'active' ? 'block' : 'none';
+    if (sFinished) sFinished.style.display = state === 'finished' ? 'block' : 'none';
+
+    if (boardControls) {
+        boardControls.style.display = (state === 'active' || state === 'finished') ? 'flex' : 'none';
+    }
+
+    if (state === 'finished') {
+        const titleEl = document.getElementById('finishTitle');
+        const reasonEl = document.getElementById('finishReason');
+        const bannerEl = document.getElementById('finishBanner');
+        if (titleEl) titleEl.textContent = meta.title || 'Game Over';
+        if (reasonEl) reasonEl.textContent = meta.sub || '';
+        if (bannerEl) {
+            bannerEl.className = 'finished-banner-box ' + (meta.bannerClass || 'is-draw');
+        }
+    }
+}
+
+window.heroFindOpponent = function () {
+    setChessUIState('searching');
+    findOrCreateOnlineGame(300, 0); // 5+0 campus blitz standard
+};
+
+window.playAgain = function () {
+    if (isRemoteGame) {
+        leaveCurrentGame();
+        window.heroFindOpponent();
+    } else {
+        beginGame(180, 0);
+    }
+};
+
+// ---------------- LOBBY / HOME ----------------
 const QUICK_TCS = [
     { label: '1 + 0', base: 60, inc: 0 },
     { label: '3 + 0', base: 180, inc: 0 },
@@ -116,16 +174,20 @@ const QUICK_TCS = [
 
 function initHome() {
     const grid = document.getElementById('quickTcGrid');
-    grid.innerHTML = QUICK_TCS.map((tc, i) =>
-        `<button class="tc-chip" onclick="quickStart(${tc.base},${tc.inc})">${tc.label}</button>`
-    ).join('');
-    // Phase 1: no chessPlayers profile yet, so stats stay placeholders.
-    document.getElementById('statRating').textContent = '1200';
-    document.getElementById('statGames').textContent = '0';
-    document.getElementById('statWins').textContent = '0';
-    document.getElementById('statLosses').textContent = '0';
-    document.getElementById('ratingChip').textContent = 'Rating 1200';
+    if (grid) {
+        grid.innerHTML = QUICK_TCS.map((tc) =>
+            `<button class="tc-chip" onclick="quickStart(${tc.base},${tc.inc})">${tc.label}</button>`
+        ).join('');
+    }
+    // Set initial board state
+    if (!game) game = new Chess();
+    renderBoard();
+    renderMoveList();
+    updatePlayerStrips();
+    setChessUIState('idle');
+    setStatus('Ready to play.');
 }
+
 window.quickStart = function (base, inc) {
     beginGame(base, inc);
 };
@@ -137,17 +199,22 @@ window.openSetupModal = function () {
 window.closeSetupModal = function () {
     document.getElementById('setupModal').classList.remove('open');
 };
+
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'setupTimeControl') {
-        document.getElementById('customTcRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+        const row = document.getElementById('customTcRow');
+        if (row) row.style.display = e.target.value === 'custom' ? 'flex' : 'none';
     }
     if (e.target && e.target.id === 'onlineTimeControl') {
-        document.getElementById('onlineCustomRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+        const row = document.getElementById('onlineCustomRow');
+        if (row) row.style.display = e.target.value === 'custom' ? 'flex' : 'none';
     }
     if (e.target && e.target.id === 'challengeTimeControl') {
-        document.getElementById('challengeCustomRow').style.display = e.target.value === 'custom' ? 'flex' : 'none';
+        const row = document.getElementById('challengeCustomRow');
+        if (row) row.style.display = e.target.value === 'custom' ? 'flex' : 'none';
     }
 });
+
 window.startLocalGame = function () {
     const sel = document.getElementById('setupTimeControl').value;
     let base, inc;
@@ -163,6 +230,7 @@ window.startLocalGame = function () {
 
 // ---------------- GAME LIFECYCLE ----------------
 function beginGame(baseSeconds, incSeconds) {
+    stopClock();
     game = new Chess();
     boardFlipped = false;
     selectedSquare = null;
@@ -171,28 +239,49 @@ function beginGame(baseSeconds, incSeconds) {
     pendingPromotion = null;
     checkmateKingSquare = null;
     gameOver = false;
+    pendingDrawOffer = null;
+    showDrawControls(false);
 
-    whiteMs = baseSeconds * 1000;
-    blackMs = baseSeconds * 1000;
-    incrementMs = incSeconds * 1000;
+    whiteMs = (baseSeconds || 180) * 1000;
+    blackMs = (baseSeconds || 180) * 1000;
+    incrementMs = (incSeconds || 0) * 1000;
 
-    document.getElementById('homeScreen').style.display = 'none';
-    document.getElementById('gameScreen').style.display = 'block';
-    document.getElementById('resultCard').style.display = 'none';
-    document.getElementById('statusLine').className = 'status-line';
-    document.getElementById('statusLine').textContent = 'White to move.';
+    const resCard = document.getElementById('resultCard');
+    if (resCard) resCard.style.display = 'none';
 
     renderBoard();
     renderMoveList();
     updatePlayerStrips();
+    setChessUIState('active');
+    updateTurnStatus();
     startClock('w');
 }
 
 window.backToHome = function () {
-    if (isRemoteGame) leaveCurrentGame();
-    else stopClock();
-    document.getElementById('gameScreen').style.display = 'none';
-    document.getElementById('homeScreen').style.display = 'block';
+    stopClock();
+    if (isRemoteGame) {
+        leaveCurrentGame();
+    }
+    game = new Chess();
+    boardFlipped = false;
+    selectedSquare = null;
+    legalTargets = [];
+    lastMove = null;
+    pendingPromotion = null;
+    checkmateKingSquare = null;
+    gameOver = false;
+    pendingDrawOffer = null;
+    showDrawControls(false);
+
+    const resCard = document.getElementById('resultCard');
+    if (resCard) resCard.style.display = 'none';
+
+    renderBoard();
+    renderMoveList();
+    updatePlayerStrips();
+    setChessUIState('idle');
+    setStatus('Ready to play.');
+    setOnlineStatus('');
 };
 
 // ---------------- CLOCK ----------------
@@ -209,7 +298,7 @@ function startClock(color) {
             whiteMs = Math.max(0, whiteMs - elapsed);
             if (whiteMs === 0) {
                 renderClocks();
-                stripElFor('w').clock.classList.add('timeout-flash');
+                if (stripElFor('w').clock) stripElFor('w').clock.classList.add('critical-time');
                 if (isRemoteGame) finishRemoteGame('b', 'timeout');
                 endGame('timeout', 'b');
                 return;
@@ -218,7 +307,7 @@ function startClock(color) {
             blackMs = Math.max(0, blackMs - elapsed);
             if (blackMs === 0) {
                 renderClocks();
-                stripElFor('b').clock.classList.add('timeout-flash');
+                if (stripElFor('b').clock) stripElFor('b').clock.classList.add('critical-time');
                 if (isRemoteGame) finishRemoteGame('w', 'timeout');
                 endGame('timeout', 'w');
                 return;
@@ -227,47 +316,68 @@ function startClock(color) {
         renderClocks();
     }, 200);
 }
+
 function stopClock() {
-    if (clockTimer) clearInterval(clockTimer);
-    clockTimer = null;
+    if (clockTimer) {
+        clearInterval(clockTimer);
+        clockTimer = null;
+    }
+    clockRunningColor = null;
 }
+
 function switchClock(movedColor) {
-    // increment goes to the player who just moved
     if (movedColor === 'w') whiteMs += incrementMs; else blackMs += incrementMs;
     startClock(movedColor === 'w' ? 'b' : 'w');
     renderClocks();
 }
+
 function fmtClock(ms) {
     const totalSec = Math.ceil(ms / 1000);
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
+
 function renderClocks() {
     const w = stripElFor('w');
     const b = stripElFor('b');
-    w.clock.textContent = fmtClock(whiteMs);
-    b.clock.textContent = fmtClock(blackMs);
-    updateClockVisuals(w.clock, whiteMs);
-    updateClockVisuals(b.clock, blackMs);
+    if (w.clock) w.clock.textContent = fmtClock(whiteMs);
+    if (b.clock) b.clock.textContent = fmtClock(blackMs);
+    if (w.clock) updateClockVisuals(w.clock, whiteMs);
+    if (b.clock) updateClockVisuals(b.clock, blackMs);
 
     const turn = game ? game.turn() : 'w';
-    w.strip.classList.toggle('turn-active', turn === 'w' && !gameOver);
-    b.strip.classList.toggle('turn-active', turn === 'b' && !gameOver);
-    w.clock.classList.toggle('ticking', turn === 'w' && !gameOver);
-    b.clock.classList.toggle('ticking', turn === 'b' && !gameOver);
+    if (w.strip) w.strip.classList.toggle('turn-active', turn === 'w' && !gameOver);
+    if (b.strip) b.strip.classList.toggle('turn-active', turn === 'b' && !gameOver);
+    if (w.clock) w.clock.classList.toggle('ticking', turn === 'w' && !gameOver);
+    if (b.clock) b.clock.classList.toggle('ticking', turn === 'b' && !gameOver);
 }
+
 function updateClockVisuals(el, ms) {
-    el.classList.toggle('low-time', ms <= 20000 && ms > 10000);
+    el.classList.toggle('low-time', ms <= 30000 && ms > 10000);
     el.classList.toggle('critical-time', ms <= 10000 && ms > 0);
 }
+
 function updatePlayerStrips() {
     const w = stripElFor('w');
     const b = stripElFor('b');
-    w.name.textContent = 'White';
-    b.name.textContent = 'Black';
-    document.getElementById('topPlayerStrip').dataset.color = topColor();
-    document.getElementById('bottomPlayerStrip').dataset.color = bottomColor();
+    if (isRemoteGame) {
+        // In remote game, label with real opponent name
+        if (myColor === 'w') {
+            if (w.name) w.name.textContent = `${myName} (You)`;
+            if (b.name) b.name.textContent = 'Opponent';
+        } else {
+            if (w.name) w.name.textContent = 'Opponent';
+            if (b.name) b.name.textContent = `${myName} (You)`;
+        }
+    } else {
+        if (w.name) w.name.textContent = 'White';
+        if (b.name) b.name.textContent = 'Black';
+    }
+    const topStrip = document.getElementById('topPlayerStrip');
+    const bottomStrip = document.getElementById('bottomPlayerStrip');
+    if (topStrip) topStrip.dataset.color = topColor();
+    if (bottomStrip) bottomStrip.dataset.color = bottomColor();
     renderClocks();
     renderCaptures();
 }
@@ -280,11 +390,12 @@ function squareId(file, rank) { return file + rank; }
 
 function renderBoard() {
     const board = document.getElementById('board');
+    if (!board || !game) return;
     board.innerHTML = '';
     const filesOrder = boardFlipped ? [...FILES].reverse() : FILES;
     const ranksOrder = boardFlipped ? [...RANKS] : [...RANKS].reverse();
 
-    const boardState = game.board(); // 8x8, [0]=rank8..[7]=rank1
+    const boardState = game.board();
 
     ranksOrder.forEach((rank) => {
         filesOrder.forEach((file) => {
@@ -299,7 +410,7 @@ function renderBoard() {
             if (lastMove && (id === lastMove.from || id === lastMove.to)) sq.classList.add('last-move');
             if (selectedSquare === id) sq.classList.add('selected');
 
-            // coords: file letters on rank-1 row (bottom edge shown), rank numbers on file-a column
+            // Coordinates on perimeter
             if (rank === (boardFlipped ? '8' : '1')) {
                 const f = document.createElement('span');
                 f.className = 'coord-file'; f.textContent = file;
@@ -311,8 +422,8 @@ function renderBoard() {
                 sq.appendChild(r);
             }
 
-            // piece
-            const rowIdx = 8 - Number(rank); // boardState row index
+            // Piece
+            const rowIdx = 8 - Number(rank);
             const colIdx = FILES.indexOf(file);
             const cell = boardState[rowIdx][colIdx];
             if (cell) {
@@ -326,7 +437,7 @@ function renderBoard() {
                 sq.appendChild(p);
             }
 
-            // move indicator
+            // Legal target move indicators
             if (legalTargets.includes(id)) {
                 const occupied = !!cell;
                 const marker = document.createElement('div');
@@ -334,7 +445,7 @@ function renderBoard() {
                 sq.appendChild(marker);
             }
 
-            // check highlight
+            // Check & checkmate styling
             if (game.inCheck() && cell && cell.type === 'k' && cell.color === game.turn()) {
                 sq.classList.add('in-check');
             }
@@ -342,6 +453,7 @@ function renderBoard() {
                 sq.classList.add('checkmate-king');
             }
 
+            // Click / Tap listener
             sq.addEventListener('click', () => onSquareClick(id));
             sq.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -358,30 +470,33 @@ function renderBoard() {
 // ---------------- INTERACTION ----------------
 function onSquareClick(id) {
     if (gameOver) return;
-    // In an online game, the human player moves their own pieces — but only on their turn.
     if (isRemoteGame && myColor && game.turn() !== myColor) return;
     if (selectedSquare) {
         if (legalTargets.includes(id)) {
             attemptMove(selectedSquare, id);
             return;
         }
-        // reselect if clicking another own piece
+        // Reselect if clicking another piece of the turn's color
         const piece = game.get(id);
-        if (piece && piece.color === game.turn()) {
+        const allowedColor = isRemoteGame ? myColor : game.turn();
+        if (piece && piece.color === allowedColor) {
             selectSquare(id);
         } else {
             clearSelection();
         }
     } else {
         const piece = game.get(id);
-        if (piece && piece.color === game.turn()) selectSquare(id);
+        const allowedColor = isRemoteGame ? myColor : game.turn();
+        if (piece && piece.color === allowedColor) selectSquare(id);
     }
 }
+
 function selectSquare(id) {
     selectedSquare = id;
     legalTargets = game.moves({ square: id, verbose: true }).map(m => m.to);
     renderBoard();
 }
+
 function clearSelection() {
     selectedSquare = null;
     legalTargets = [];
@@ -391,11 +506,11 @@ function clearSelection() {
 let dragSourceSquare = null;
 function onDragStart(e) {
     if (gameOver) { e.preventDefault(); return; }
-    // In an online game, only allow dragging on your own turn.
     if (isRemoteGame && myColor && game.turn() !== myColor) { e.preventDefault(); return; }
     const id = e.target.dataset.square;
     const piece = game.get(id);
-    if (!piece || piece.color !== game.turn()) { e.preventDefault(); return; }
+    const allowedColor = isRemoteGame ? myColor : game.turn();
+    if (!piece || piece.color !== allowedColor) { e.preventDefault(); return; }
     dragSourceSquare = id;
     selectSquare(id);
     e.target.classList.add('dragging');
@@ -417,7 +532,6 @@ function onDrop(e, targetId) {
 }
 
 function attemptMove(from, to) {
-    // promotion check
     const piece = game.get(from);
     const isPromotion = piece && piece.type === 'p' && (to[1] === '8' || to[1] === '1');
     if (isPromotion) {
@@ -453,6 +567,7 @@ function doMove(from, to, promotion) {
 // ---------------- ANIMATIONS ----------------
 function animateMove(move) {
     const boardEl = document.getElementById('board');
+    if (!boardEl) return;
     const reduced = prefersReducedMotion();
 
     const toSq = boardEl.querySelector(`.sq[data-square="${move.to}"]`);
@@ -467,7 +582,7 @@ function animateMove(move) {
         movingPiece.style.transition = 'none';
         movingPiece.style.transform = `translate(${dx}px, ${dy}px)`;
         requestAnimationFrame(() => {
-            const dur = move.piece === 'p' ? 240 : 200;
+            const dur = move.piece === 'p' ? 220 : 180;
             movingPiece.style.transition = `transform ${dur}ms var(--anim-ease)`;
             movingPiece.style.transform = 'translate(0, 0)';
         });
@@ -477,44 +592,14 @@ function animateMove(move) {
         }, { once: true });
     }
 
-    // castling: animate the rook too
-    if (!reduced && (move.flags.includes('k') || move.flags.includes('q'))) {
-        const rank = move.color === 'w' ? '1' : '8';
-        const rookFrom = move.flags.includes('k') ? 'h' + rank : 'a' + rank;
-        const rookTo = move.flags.includes('k') ? 'f' + rank : 'd' + rank;
-        const rookFromSq = boardEl.querySelector(`.sq[data-square="${rookFrom}"]`);
-        const rookToSq = boardEl.querySelector(`.sq[data-square="${rookTo}"]`);
-        const rookPiece = rookToSq && rookToSq.querySelector('.piece');
-        if (rookPiece && rookFromSq && rookToSq) {
-            const fRect = rookFromSq.getBoundingClientRect();
-            const tRect = rookToSq.getBoundingClientRect();
-            const dx = fRect.left - tRect.left;
-            const dy = fRect.top - tRect.top;
-            rookPiece.style.transition = 'none';
-            rookPiece.style.transform = `translate(${dx}px, ${dy}px)`;
-            requestAnimationFrame(() => {
-                rookPiece.style.transition = 'transform 220ms var(--anim-ease)';
-                rookPiece.style.transform = 'translate(0, 0)';
-            });
-            rookPiece.addEventListener('transitionend', () => {
-                rookPiece.style.transition = '';
-                rookPiece.style.transform = '';
-            }, { once: true });
-        }
-    }
-
     animateCapture(move);
     showMoveFeedback(toSq, move);
-
-    if (move.promotion && movingPiece) {
-        movingPiece.classList.add('promote-pop');
-        movingPiece.addEventListener('animationend', () => movingPiece.classList.remove('promote-pop'), { once: true });
-    }
 }
 
 function animateCapture(move) {
     if (!move.captured) return;
     const boardEl = document.getElementById('board');
+    if (!boardEl) return;
     let flashSquareId = move.to;
     if (move.flags.includes('e')) {
         const rank = move.color === 'w' ? '5' : '4';
@@ -539,13 +624,13 @@ function showCheckNotification() {
     if (!boardWrap) return;
     const toast = document.createElement('div');
     toast.className = 'check-toast';
-    toast.textContent = 'CHECK';
+    toast.textContent = 'CHECK!';
     boardWrap.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 1000);
+        setTimeout(() => toast.remove(), 250);
+    }, 1200);
 }
 
 function showCheckmateOverlay(winnerColor, onDone) {
@@ -556,14 +641,14 @@ function showCheckmateOverlay(winnerColor, onDone) {
     overlay.innerHTML = `
         <div class="checkmate-card">
             <div class="checkmate-title">CHECKMATE</div>
-            <div class="checkmate-winner">${winnerColor === 'w' ? 'White' : 'Black'} wins</div>
+            <div class="checkmate-winner">${winnerColor === 'w' ? 'White' : 'Black'} is victorious</div>
         </div>`;
     boardWrap.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('show'));
-    const holdTime = prefersReducedMotion() ? 300 : 1300;
+    const holdTime = prefersReducedMotion() ? 300 : 1400;
     setTimeout(() => {
         overlay.classList.remove('show');
-        setTimeout(() => { overlay.remove(); onDone && onDone(); }, 350);
+        setTimeout(() => { overlay.remove(); onDone && onDone(); }, 300);
     }, holdTime);
 }
 
@@ -588,6 +673,7 @@ window.resolvePromotion = function (piece) {
 function renderMoveList() {
     const history = game.history();
     const list = document.getElementById('moveList');
+    if (!list) return;
     let html = '';
     for (let i = 0; i < history.length; i += 2) {
         const num = i / 2 + 1;
@@ -599,14 +685,17 @@ function renderMoveList() {
     }
     list.innerHTML = html;
     list.scrollTop = list.scrollHeight;
-    document.getElementById('pgnBox').textContent = game.pgn() || '—';
+    const pgnBox = document.getElementById('pgnBox');
+    if (pgnBox) pgnBox.textContent = game.pgn() || '—';
 }
 
 window.copyPgn = function () {
     navigator.clipboard.writeText(game.pgn() || '');
+    setStatus('PGN copied to clipboard.');
 };
 window.copyFen = function () {
     navigator.clipboard.writeText(game.fen());
+    setStatus('FEN position copied to clipboard.');
 };
 
 // ---------------- CAPTURES ----------------
@@ -615,7 +704,6 @@ function renderCaptures() {
     const captured = { w: [], b: [] };
     history.forEach(m => {
         if (m.captured) {
-            // the capturing side gains the point; captured piece belonged to the opposite color
             const capturerColor = m.color;
             captured[capturerColor].push(m.captured);
         }
@@ -624,18 +712,35 @@ function renderCaptures() {
         .sort((a, b) => PIECE_VALUE[b] - PIECE_VALUE[a])
         .map(t => PIECE_GLYPHS[color === 'w' ? 'b' : 'w'][t])
         .join(' ');
-    stripElFor('w').captures.textContent = renderSide(captured.w, 'w');
-    stripElFor('b').captures.textContent = renderSide(captured.b, 'b');
+    const w = stripElFor('w');
+    const b = stripElFor('b');
+    if (w.captures) w.captures.textContent = renderSide(captured.w, 'w');
+    if (b.captures) b.captures.textContent = renderSide(captured.b, 'b');
 }
 
-// ---------------- BOARD FLIP ----------------
+// ---------------- BOARD PERSPECTIVE FLIP ----------------
 window.flipBoard = function () {
     boardFlipped = !boardFlipped;
     renderBoard();
     updatePlayerStrips();
 };
 
-// ---------------- GAME END ----------------
+// ---------------- GAME STATUS & END ----------------
+function updateTurnStatus() {
+    if (gameOver) return;
+    if (isRemoteGame) {
+        if (myColor && game.turn() === myColor) {
+            setStatus(game.inCheck() ? 'Your turn — Check!' : 'Make your move', game.inCheck());
+        } else {
+            setStatus('Opponent’s turn…', false);
+        }
+    } else {
+        const turnLabel = game.turn() === 'w' ? 'White' : 'Black';
+        const checkNote = game.inCheck() ? ' — Check!' : '';
+        setStatus(`${turnLabel} to move${checkNote}`, game.inCheck());
+    }
+}
+
 function checkGameEnd() {
     if (game.isCheckmate()) {
         const winner = game.turn() === 'w' ? 'b' : 'w';
@@ -649,26 +754,32 @@ function checkGameEnd() {
     } else if (game.isDrawByFiftyMoves ? game.isDrawByFiftyMoves() : false) {
         endGame('fifty-move', null);
     } else {
-        const turnLabel = game.turn() === 'w' ? 'White' : 'Black';
-        const checkNote = game.inCheck() ? ' — check!' : '';
-        setStatus(`${turnLabel} to move${checkNote}`, game.inCheck());
+        updateTurnStatus();
         if (game.inCheck()) showCheckNotification();
     }
 }
 
-window.offerResign = function () {
+window.executeResign = function () {
     if (gameOver || !game) return;
-    if (!confirm('Resign this game?')) return;
-    const resigningColor = game.turn();
+    const resigningColor = isRemoteGame ? myColor : game.turn();
     const winner = resigningColor === 'w' ? 'b' : 'w';
     if (isRemoteGame) finishRemoteGame(winner, 'resignation');
     endGame('resignation', winner);
     if (isRemoteGame) leaveCurrentGame();
 };
+
+window.offerResign = function () {
+    if (gameOver || !game) return;
+    if (typeof window.promptResign === 'function') {
+        window.promptResign();
+    } else {
+        window.executeResign();
+    }
+};
+
 window.offerDraw = function () {
     if (gameOver || !game) return;
     if (isRemoteGame) {
-        // In remote game, send draw offer to opponent
         if (!currentGameId) return;
         updateDoc(doc(gamesCol, currentGameId), {
             drawOfferFrom: me,
@@ -677,18 +788,15 @@ window.offerDraw = function () {
         }).catch((e) => console.warn('draw offer failed', e));
         setOnlineStatus('Draw offer sent to opponent.');
     } else {
-        // Local game: both players share the board — confirm before ending as a draw.
         if (!confirm('Both players agree to a draw?')) return;
         endGame('agreement', null);
     }
 };
 
-// Accept the opponent's pending draw offer (or, locally, end the game by mutual agreement).
 window.acceptDrawOffer = function () {
     pendingDrawOffer = null;
     showDrawControls(false);
     if (isRemoteGame && currentGameId) {
-        // Mark the game finished on the server so BOTH sides end and the result is recorded.
         finishRemoteGame(null, 'agreement');
         endGame('agreement', null);
         return;
@@ -696,67 +804,76 @@ window.acceptDrawOffer = function () {
     endGame('agreement', null);
 };
 
-// Decline the opponent's draw offer (or withdraw your own pending offer).
 window.declineDrawOffer = function () {
     const offerer = pendingDrawOffer ? pendingDrawOffer.from : null;
     pendingDrawOffer = null;
     showDrawControls(false);
-    setOnlineStatus(offerer ? 'Draw declined.' : 'Draw offer withdrawn.');
+    setOnlineStatus(offerer ? 'Draw offer declined.' : 'Draw offer withdrawn.');
     if (isRemoteGame && currentGameId) {
-        // Clear the pending offer server-side so the other player stops seeing it too.
         updateDoc(doc(gamesCol, currentGameId), {
             drawOfferFrom: null, drawOfferTs: null, drawOfferStatus: null
         }).catch(() => {});
     }
 };
 
-// Show/hide draw offer control buttons
 function showDrawControls(show) {
-    const acceptBtn = document.querySelector('button[onclick="acceptDrawOffer()"]');
-    const declineBtn = document.querySelector('button[onclick="declineDrawOffer()"]');
-    if (acceptBtn && declineBtn) {
-        acceptBtn.style.display = show ? 'inline-block' : 'none';
-        declineBtn.style.display = show ? 'inline-block' : 'none';
-    }
+    const banner = document.getElementById('drawOfferBanner');
+    if (banner) banner.style.display = show ? 'flex' : 'none';
 }
 
 function endGame(reason, winnerColor) {
     if (gameOver) return;
     gameOver = true;
     stopClock();
-    // A finished game must not leave dangling draw controls / a pending offer behind.
     pendingDrawOffer = null;
     showDrawControls(false);
 
     const REASON_LABEL = {
-        checkmate: 'Checkmate',
-        stalemate: 'Stalemate',
-        repetition: 'Draw — threefold repetition',
-        insufficient: 'Draw — insufficient material',
-        'fifty-move': 'Draw — fifty-move rule',
-        resignation: 'Resignation',
-        agreement: 'Draw by agreement',
-        timeout: 'Timeout'
+        checkmate: 'by checkmate',
+        stalemate: 'by stalemate',
+        repetition: 'by threefold repetition',
+        insufficient: 'by insufficient material',
+        'fifty-move': 'by fifty-move rule',
+        resignation: 'by resignation',
+        agreement: 'by mutual agreement',
+        timeout: 'on time'
     };
 
-    let title, sub;
+    let title, sub, bannerClass;
     if (winnerColor) {
-        title = `${winnerColor === 'w' ? 'White' : 'Black'} wins`;
+        if (isRemoteGame) {
+            const iWon = winnerColor === myColor;
+            title = iWon ? 'You won' : 'You lost';
+            bannerClass = iWon ? 'is-won' : 'is-lost';
+        } else {
+            title = `${winnerColor === 'w' ? 'White' : 'Black'} won`;
+            bannerClass = 'is-won';
+        }
         sub = REASON_LABEL[reason] || reason;
     } else {
         title = 'Draw';
         sub = REASON_LABEL[reason] || reason;
+        bannerClass = 'is-draw';
     }
 
     const revealResultCard = () => {
+        setChessUIState('finished', { title, sub, bannerClass });
         const card = document.getElementById('resultCard');
-        card.style.display = 'block';
-        card.innerHTML = `<div class="result-banner"><div class="result-title">${title}</div><div class="result-sub">${sub}</div></div>`;
-        setStatus(`Game over — ${title.toLowerCase()} (${sub.toLowerCase()}).`, true);
+        if (card) {
+            card.style.display = 'block';
+            card.innerHTML = `
+                <div class="result-banner">
+                    <div class="result-title">${title}</div>
+                    <div class="result-sub">${sub}</div>
+                    <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+                        <button class="btn-secondary" style="font-size:12px; padding:6px 14px; background:#ffffff; color:var(--text-main); font-weight:700;" onclick="playAgain()">Play Again</button>
+                    </div>
+                </div>`;
+        }
+        setStatus(`${title} (${sub}).`, true);
     };
 
     if (reason === 'checkmate' && game) {
-        // find the losing king's square for the strong highlight
         const loserColor = winnerColor === 'w' ? 'b' : 'w';
         const boardState = game.board();
         outer:
@@ -776,10 +893,7 @@ function endGame(reason, winnerColor) {
     }
 }
 
-// ============================================================
-// PHASE 2 — Firebase profiles, online matchmaking & challenges
-// ============================================================
-
+// ---------------- FIREBASE RATINGS, MATCHMAKING & CHALLENGES ----------------
 function setOnlineStatus(msg) {
     const el = document.getElementById('onlineStatus');
     if (el) el.textContent = msg || '';
@@ -795,12 +909,11 @@ function showCancelSearch(show) {
     if (el) el.style.display = show ? 'inline-flex' : 'none';
 }
 
-// ---------------- PROFILE / RATINGS ----------------
 async function ensureProfile(uid, name) {
     const ref = doc(playersCol, uid);
     const snap = await getDoc(ref);
     if (snap.exists()) return snap.data();
-    const fresh = { uid, name: name || 'Player', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
+    const fresh = { uid, name: name || 'Student', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
     try { await setDoc(ref, fresh); } catch (e) { console.warn('chess profile create failed', e); }
     return fresh;
 }
@@ -814,20 +927,23 @@ async function refreshProfileStats() {
     set('statLosses', p.losses);
     set('ratingChip', 'Rating ' + p.rating);
 }
+
 function applyElo(a, b, scoreA) {
     const K = 32;
     const ea = 1 / (1 + Math.pow(10, (b.rating - a.rating) / 400));
     a.rating = Math.max(100, Math.round(a.rating + K * (scoreA - ea)));
     b.rating = Math.max(100, Math.round(b.rating + K * (1 - scoreA - (1 - ea))));
 }
+
 async function ensureProfileTx(tx, uid, name) {
     const ref = doc(playersCol, uid);
     const snap = await tx.get(ref);
     if (snap.exists()) return snap.data();
-    const fresh = { uid, name: name || 'Player', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
+    const fresh = { uid, name: name || 'Student', rating: 1200, games: 0, wins: 0, losses: 0, draws: 0, updatedAt: serverTimestamp() };
     tx.set(ref, fresh);
     return fresh;
 }
+
 async function recordGameResult(g) {
     if (recordedGameIds.has(g.id)) return;
     if (g.winnerColor === undefined) return;
@@ -837,7 +953,7 @@ async function recordGameResult(g) {
         await runTransaction(db, async (tx) => {
             const gameRef = doc(gamesCol, g.id);
             const gs = await tx.get(gameRef);
-            if (!gs.exists() || gs.data().resultRecorded) return; // another client already recorded
+            if (!gs.exists() || gs.data().resultRecorded) return;
             const w = await ensureProfileTx(tx, g.whiteUid, g.whiteName);
             const b = await ensureProfileTx(tx, g.blackUid, g.blackName);
             let scoreW;
@@ -858,13 +974,12 @@ async function recordGameResult(g) {
         });
     } catch (e) {
         console.warn('chess result persist failed', e);
-        recordedGameIds.delete(g.id); // allow a retry on next snapshot
+        recordedGameIds.delete(g.id);
     }
     loadRecentGames().catch(() => { });
     refreshProfileStats().catch(() => { });
 }
 
-// ---------------- RESULT DETECTION ----------------
 function detectResult() {
     if (!game) return null;
     if (game.isCheckmate()) return { reason: 'checkmate', winnerColor: game.turn() === 'w' ? 'b' : 'w' };
@@ -874,17 +989,20 @@ function detectResult() {
     if (game.isDrawByFiftyMoves && game.isDrawByFiftyMoves()) return { reason: 'fifty-move', winnerColor: null };
     return null;
 }
+
 function rebuildFromMoves(moves) {
     const ng = new Chess();
     (moves || []).forEach(m => { try { ng.move({ from: m.from, to: m.to, promotion: m.promotion || undefined }); } catch (e) { } });
     game = ng;
     const last = (moves && moves.length) ? moves[moves.length - 1] : null;
     lastMove = last ? { from: last.from, to: last.to } : null;
-    selectedSquare = null; legalTargets = [];
-    renderBoard(); renderMoveList(); renderCaptures();
+    selectedSquare = null;
+    legalTargets = [];
+    renderBoard();
+    renderMoveList();
+    renderCaptures();
 }
 
-// ---------------- REMOTE GAME SYNC ----------------
 async function finishRemoteGame(winnerColor, reason) {
     if (!currentGameId) return;
     try {
@@ -896,6 +1014,7 @@ async function finishRemoteGame(winnerColor, reason) {
         });
     } catch (e) { console.warn('finishRemoteGame failed', e); }
 }
+
 async function persistRemoteMove(move) {
     if (!currentGameId) return;
     const ref = doc(gamesCol, currentGameId);
@@ -916,10 +1035,10 @@ async function persistRemoteMove(move) {
         setOnlineStatus('Sync error: ' + (e.message || e));
     }
 }
+
 function onGameSnap(snap) {
     if (!snap.exists()) return;
     const g = snap.data();
-    // The local player's colour: white if I created the game, black if I joined it.
     if (g.whiteUid === me) myColor = 'w';
     else if (g.blackUid === me) myColor = 'b';
     if (startedForId !== currentGameId) {
@@ -930,16 +1049,17 @@ function onGameSnap(snap) {
     if (g.whiteMs != null) whiteMs = g.whiteMs;
     if (g.blackMs != null) blackMs = g.blackMs;
     renderClocks();
-    if (!g.finished) startClock(game.turn());
+    if (!g.finished) {
+        startClock(game.turn());
+        updateTurnStatus();
+    }
 
-    // --- draw offer handling ---
+    // Draw offer handling
     if (g.drawOfferFrom && g.drawOfferFrom !== me && !pendingDrawOffer) {
-        // The opponent offered a draw — show accept/decline.
         pendingDrawOffer = { from: g.drawOfferFrom, ts: g.drawOfferTs || Date.now() };
         showDrawControls(true);
         setOnlineStatus('Opponent offered a draw.');
     } else if (!g.drawOfferFrom && pendingDrawOffer) {
-        // Offer was declined / withdrawn — drop any stale controls.
         pendingDrawOffer = null;
         showDrawControls(false);
     }
@@ -947,7 +1067,6 @@ function onGameSnap(snap) {
     const res = detectResult();
     if (g.finished) {
         if (!gameOver) endGame(g.reason || (res && res.reason) || 'agreement', g.winnerColor);
-        // Persist ratings/statistics when a remote game ends (guarded against double-recording).
         if (currentGameId && !recordedGameIds.has(currentGameId)) {
             recordGameResult({ id: currentGameId, ...g });
         }
@@ -955,22 +1074,25 @@ function onGameSnap(snap) {
     }
     if (res && currentGameId) finishRemoteGame(res.winnerColor, res.reason);
 }
+
 function joinGame(id) {
     if (currentGameId === id) return;
     if (gameUnsub) { gameUnsub(); gameUnsub = null; }
     currentGameId = id;
     isRemoteGame = true;
     startedForId = null;
-    document.getElementById('homeScreen').style.display = 'none';
-    document.getElementById('gameScreen').style.display = 'block';
-    document.getElementById('resultCard').style.display = 'none';
+    const resCard = document.getElementById('resultCard');
+    if (resCard) resCard.style.display = 'none';
+    setChessUIState('active');
+    updateTurnStatus();
     const ref = doc(gamesCol, id);
     gameUnsub = onSnapshot(ref, onGameSnap, (err) => {
         console.warn('game snap err', err);
-        setOnlineStatus('Connection error.');
+        setOnlineStatus('Connection issue. Retrying…');
     });
-    setOnlineStatus('Connected to game.');
+    setOnlineStatus('Connected to live match.');
 }
+
 function leaveCurrentGame() {
     if (gameUnsub) { gameUnsub(); gameUnsub = null; }
     currentGameId = null;
@@ -982,18 +1104,20 @@ function leaveCurrentGame() {
     showDrawControls(false);
     stopClock();
 }
+
 async function cancelOnlineSearch() {
     if (waitingGameId) {
         try { await deleteDoc(doc(gamesCol, waitingGameId)); } catch (e) { }
         waitingGameId = null;
     }
     showCancelSearch(false);
-    setOnlineStatus('');
+    setOnlineStatus('Search cancelled.');
+    setChessUIState('idle');
 }
 
 // ---------------- ONLINE MATCHMAKING ----------------
 async function findOrCreateOnlineGame(base, inc) {
-    setOnlineStatus('Searching for opponent…');
+    setOnlineStatus('Searching for student opponent…');
     showCancelSearch(false);
     try {
         const snap = await getDocs(query(gamesCol, where('status', '==', 'waiting')));
@@ -1004,17 +1128,18 @@ async function findOrCreateOnlineGame(base, inc) {
             else if (!g.blackUid) target = { id: d.id };
         });
         if (myWaiting) {
-            // Reuse my own still-open waiting game
             waitingGameId = myWaiting.id;
             setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
             showCancelSearch(true);
+            setChessUIState('searching');
             return;
         }
         if (target) {
             await updateDoc(doc(gamesCol, target.id), {
                 blackUid: me, blackName: myName, status: 'active', lastMoveTs: Date.now()
             });
-            setOnlineStatus('Opponent found! Joining…');
+            setOnlineStatus('Match found! Loading board…');
+            setChessUIState('active');
         } else {
             const ref = await addDoc(gamesCol, {
                 whiteUid: me, whiteName: myName, blackUid: '', blackName: '',
@@ -1023,14 +1148,16 @@ async function findOrCreateOnlineGame(base, inc) {
                 lastMoveTs: Date.now(), createdAt: serverTimestamp()
             });
             waitingGameId = ref.id;
-            setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
+            setOnlineStatus('Waiting for a student opponent… (Cancel to stop)');
             showCancelSearch(true);
+            setChessUIState('searching');
         }
     } catch (e) {
         console.warn('findOrCreateOnlineGame failed', e);
-        setOnlineStatus('Could not start matchmaking: ' + (e.message || e));
+        setOnlineStatus('Matchmaking error: ' + (e.message || e));
     }
 }
+
 function setupMyGamesListener() {
     const handler = (snap) => {
         snap.forEach(d => {
@@ -1042,6 +1169,7 @@ function setupMyGamesListener() {
                 waitingGameId = id;
                 setOnlineStatus('Waiting for an opponent… (Cancel to stop)');
                 showCancelSearch(true);
+                setChessUIState('searching');
             } else if (g.status === 'finished' && !recordedGameIds.has(id)) {
                 recordGameResult({ id, ...g });
             }
@@ -1054,7 +1182,7 @@ function setupMyGamesListener() {
 // ---------------- CHALLENGES ----------------
 async function sendChessChallenge(opponentInput, tcBase, tcInc) {
     if (!me) return;
-    setChallengeStatus('Looking up player…');
+    setChallengeStatus('Searching for student profile…');
     try {
         const [s1, s2] = await Promise.all([
             getDocs(query(collection(db, 'users'), where('username', '==', opponentInput))),
@@ -1063,8 +1191,8 @@ async function sendChessChallenge(opponentInput, tcBase, tcInc) {
         let opp = null;
         if (!s1.empty) opp = { uid: s1.docs[0].id, ...s1.docs[0].data() };
         else if (!s2.empty) opp = { uid: s2.docs[0].id, ...s2.docs[0].data() };
-        if (!opp) { setChallengeStatus('No player found with that username/email.'); return; }
-        if (opp.uid === me) { setChallengeStatus("You can't challenge yourself."); return; }
+        if (!opp) { setChallengeStatus('No student found matching that username or email.'); return; }
+        if (opp.uid === me) { setChallengeStatus("You cannot challenge yourself."); return; }
         const oppName = opp.name || opp.username || opp.email;
         await addDoc(challengesCol, {
             challengerUid: me, challengerName: myName,
@@ -1072,36 +1200,42 @@ async function sendChessChallenge(opponentInput, tcBase, tcInc) {
             status: 'pending', baseMs: tcBase * 1000, incMs: tcInc * 1000,
             createdAt: serverTimestamp()
         });
-        setChallengeStatus('Challenge sent to ' + oppName + '.');
+        setChallengeStatus('Challenge sent to ' + oppName + '!');
         addDoc(activityCol, {
             type: 'challenge', uid: me, name: myName,
             toUid: opp.uid, toName: oppName, createdAt: serverTimestamp()
         }).catch(() => { });
     } catch (e) {
-        setChallengeStatus('Could not send challenge: ' + (e.message || e));
+        setChallengeStatus('Error sending challenge: ' + (e.message || e));
     }
 }
+
 function setupChallengesListener() {
     challengesUnsub = onSnapshot(
         query(challengesCol, where('opponentUid', '==', me)),
         (snap) => renderIncomingChallenges(snap)
     );
 }
+
 function renderIncomingChallenges(snap) {
     const el = document.getElementById('incomingChallenges');
     if (!el) return;
     const pending = snap.docs.filter(d => d.data().status === 'pending');
-    if (!pending.length) { el.innerHTML = '<div class="empty-note">No incoming challenges.</div>'; return; }
+    if (!pending.length) { el.innerHTML = '<div class="empty-note">No incoming challenges at this moment.</div>'; return; }
     let html = '';
     pending.forEach(d => {
         const c = d.data();
-        html += '<div class="challenge-row"><span>' + (c.challengerName || 'Someone') +
-            ' challenged you</span>' +
-            '<button class="btn-secondary" onclick="acceptChessChallenge(\'' + d.id + '\')">Accept</button>' +
-            '<button class="btn-ghost-chess" onclick="declineChessChallenge(\'' + d.id + '\')">Decline</button></div>';
+        html += `<div class="challenge-row">
+            <span><strong>${escapeHtml(c.challengerName || 'A Student')}</strong> challenged you</span>
+            <div class="challenge-row-actions">
+                <button class="btn-primary" style="padding:4px 10px; font-size:12px; background:var(--success); border-color:var(--success);" onclick="acceptChessChallenge('${d.id}')">Accept</button>
+                <button class="btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="declineChessChallenge('${d.id}')">Decline</button>
+            </div>
+        </div>`;
     });
     el.innerHTML = html;
 }
+
 async function acceptChessChallenge(challengeId) {
     try {
         const ref = doc(challengesCol, challengeId);
@@ -1119,9 +1253,10 @@ async function acceptChessChallenge(challengeId) {
         await updateDoc(ref, { status: 'accepted' });
         joinGame(ref2.id);
     } catch (e) {
-        setChallengeStatus('Could not accept: ' + (e.message || e));
+        setChallengeStatus('Could not accept challenge: ' + (e.message || e));
     }
 }
+
 async function declineChessChallenge(challengeId) {
     try { await updateDoc(doc(challengesCol, challengeId), { status: 'declined' }); } catch (e) { }
 }
@@ -1142,35 +1277,72 @@ async function loadRecentGames() {
         renderRecentGames(games);
     } catch (e) { console.warn('loadRecentGames failed', e); }
 }
+
 function renderRecentGames(games) {
     const el = document.getElementById('recentGames');
     if (!el) return;
-    if (!games.length) { el.innerHTML = '<div class="empty-note">No games yet.</div>'; return; }
+    if (!games.length) { el.innerHTML = '<div class="empty-note">No games recorded yet.</div>'; return; }
     el.innerHTML = games.map(g => {
         const youAreWhite = g.whiteUid === me;
         const opp = youAreWhite ? (g.blackName || 'Opponent') : (g.whiteName || 'Opponent');
         let res = 'In progress';
+        let resClass = 'rg-draw';
         if (g.finished) {
-            res = g.winnerColor == null ? 'Draw'
-                : (g.winnerColor === (youAreWhite ? 'w' : 'b') ? 'You won' : 'You lost');
+            if (g.winnerColor == null) {
+                res = 'Draw';
+                resClass = 'rg-draw';
+            } else if (g.winnerColor === (youAreWhite ? 'w' : 'b')) {
+                res = 'Won';
+                resClass = 'rg-win';
+            } else {
+                res = 'Lost';
+                resClass = 'rg-loss';
+            }
         }
-        return '<div class="recent-game"><span>' + (youAreWhite ? 'White' : 'Black') + ' vs ' + opp +
-            '</span><span class="rg-result">' + res + '</span></div>';
+        return `<div class="recent-game">
+            <span><strong>${youAreWhite ? 'White' : 'Black'}</strong> vs ${escapeHtml(opp)}</span>
+            <span class="rg-result ${resClass}">${res}</span>
+        </div>`;
     }).join('');
 }
 
-// ---------------- INIT ----------------
+// ---------------- CLEANUP & INIT ----------------
+function cleanupPhase2Listeners() {
+    if (challengesUnsub) {
+        try { challengesUnsub(); } catch (e) { }
+        challengesUnsub = null;
+    }
+    myGamesUnsubs.forEach(unsub => {
+        try { unsub(); } catch (e) { }
+    });
+    myGamesUnsubs = [];
+    if (gameUnsub) {
+        try { gameUnsub(); } catch (e) { }
+        gameUnsub = null;
+    }
+}
+
 async function initPhase2(user) {
     currentUser = user;
     me = user.uid;
-    myName = user.displayName || user.email || 'Player';
+    myName = user.displayName || user.email || 'Student';
+    cleanupPhase2Listeners();
     try { await refreshProfileStats(); } catch (e) { }
     setupMyGamesListener();
     setupChallengesListener();
     loadRecentGames().catch(() => { });
 }
 
-// ---------------- UI WIRING (window-exposed) ----------------
+window.addEventListener('beforeunload', () => {
+    stopClock();
+    cleanupPhase2Listeners();
+});
+window.addEventListener('pagehide', () => {
+    stopClock();
+    cleanupPhase2Listeners();
+});
+
+// ---------------- GLOBAL UI WIRING ----------------
 window.openOnlineModal = function () {
     document.getElementById('onlineModal').classList.add('open');
 };
@@ -1190,8 +1362,10 @@ window.startOnlineMatch = function () {
     findOrCreateOnlineGame(base, inc);
 };
 window.cancelOnlineSearch = cancelOnlineSearch;
+
 window.openChallengeModal = function () {
-    document.getElementById('challengeStatus').textContent = '';
+    const el = document.getElementById('challengeStatus');
+    if (el) el.textContent = '';
     document.getElementById('challengeModal').classList.add('open');
 };
 window.closeChallengeModal = function () {
@@ -1207,14 +1381,16 @@ window.sendChallengeFromModal = function () {
     } else {
         [base, inc] = sel.split('-').map(Number);
     }
-    if (!input) { setChallengeStatus('Enter a username or email.'); return; }
+    if (!input) { setChallengeStatus('Enter an opponent username or email.'); return; }
     sendChessChallenge(input, base, inc);
 };
+
 window.acceptChessChallenge = acceptChessChallenge;
 window.declineChessChallenge = declineChessChallenge;
 
 function setStatus(text, important) {
     const el = document.getElementById('statusLine');
+    if (!el) return;
     el.textContent = text;
     el.className = 'status-line' + (important ? ' important' : '');
 }

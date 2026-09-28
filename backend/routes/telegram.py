@@ -176,17 +176,29 @@ def channel_invite():
     if not invite_link and TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID:
         res = call_telegram_api("createChatInviteLink", {
             "chat_id": TELEGRAM_CHANNEL_ID,
-            "name": "MMMUT ERP Access Link",
+            "name": "MMMUT ERP Roomhub Access Link",
             "creates_join_request": True
         })
         if res.get("ok"):
             invite_link = res.get("result", {}).get("invite_link", "")
 
+    # Security: MUST NOT fall back to bot username or non-existent username
     if not invite_link:
-        invite_link = f"https://t.me/{TELEGRAM_BOT_USERNAME}"
+        return fail(
+            "Private channel invite link is not configured on the server. "
+            "Please ensure TELEGRAM_CHANNEL_INVITE_LINK is set in environment "
+            "or the bot has 'can_invite_users' admin rights in the channel.",
+            404
+        )
+
+    # Disallow bot username as channel invite link
+    if f"/{TELEGRAM_BOT_USERNAME}" in invite_link or invite_link.rstrip("/").endswith(f"@{TELEGRAM_BOT_USERNAME}"):
+        return fail("Configured channel invite link cannot be the bot username.", 500)
 
     return ok({
-        "inviteLink": invite_link
+        "inviteLink": invite_link,
+        "channelName": "Roomhub",
+        "channelId": TELEGRAM_CHANNEL_ID or "-1003908239361"
     })
 
 

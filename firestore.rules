@@ -38,6 +38,11 @@ service cloud.firestore {
       match /notificationTokens/{tokenId} {
         allow read, write: if isOwner(uid);
       }
+
+      // Ledger syllabus progress subcollection
+      match /ledgerProgress/{branch} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // ============================================================

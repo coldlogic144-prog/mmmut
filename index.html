@@ -17,10 +17,10 @@
         rel="stylesheet" />
 
     <!-- Modern Modular CSS Architecture -->
-    <link rel="stylesheet" href="./frontend/css/base.css" />
-    <link rel="stylesheet" href="./frontend/css/layout.css" />
-    <link rel="stylesheet" href="./frontend/css/components.css" />
-    <link rel="stylesheet" href="./frontend/css/pages.css" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/layout.css" />
+    <link rel="stylesheet" href="./css/components.css" />
+    <link rel="stylesheet" href="./css/pages.css" />
 </head>
 
 <body>
@@ -174,6 +174,10 @@
                     <button class="sidebar-link" onclick="scrollToSection('historyCard')">
                         <span class="icon">📋</span>
                         <span>Attendance History</span>
+                    </button>
+                    <button class="sidebar-link" id="sidebarLedgerBtn" onclick="toggleLedgerSection(true)">
+                        <span class="icon">📑</span>
+                        <span>Ledger</span>
                     </button>
                     <button class="sidebar-link" onclick="scrollToSection('syllabusCard')">
                         <span class="icon">📖</span>
@@ -352,6 +356,13 @@
                                 <span class="qa-sub">Campus Matches</span>
                             </div>
                         </a>
+                        <div class="qa-item" onclick="toggleLedgerSection(true)">
+                            <span class="qa-icon" style="color:var(--primary);display:inline-flex;">📑</span>
+                            <div class="qa-text">
+                                <span class="qa-title">Ledger</span>
+                                <span class="qa-sub">Syllabus Tracker</span>
+                            </div>
+                        </div>
                         <div class="qa-item" onclick="scrollToSection('syllabusCard')">
                             <span class="qa-icon">📖</span>
                             <div class="qa-text">
@@ -567,9 +578,14 @@
             style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
             <div>
                 <h1 style="font-size:26px; font-weight:800;">♟️ Chess Club</h1>
-                <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Think. Play. Improve.</p>
+                <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Think. Play. Improve. Campus Chess Community</p>
             </div>
-            <button class="btn-secondary" onclick="toggleChessClub(false)">← Back to Ledger</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="chess/chess.html" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px;">
+                    <span>♟️ Open Live Chess Arena</span>
+                </a>
+                <button class="btn-secondary" onclick="toggleChessClub(false)">← Back to MMMUT ERP</button>
+            </div>
         </div>
 
         <div class="chess-tabs" id="chessTabs">
@@ -599,10 +615,13 @@
                             participate in events.
                         </p>
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="btn-primary" id="chessJoinBtn" style="width:auto; padding:10px 24px;"
+                            <a href="chess/chess.html" class="btn-primary" style="text-decoration:none; width:auto; padding:9px 20px; display:inline-flex; align-items:center; gap:6px;">
+                                <span>♟️ Play Live Matches</span>
+                            </a>
+                            <button class="btn-secondary" id="chessJoinBtn" style="width:auto; padding:9px 20px;"
                                 onclick="handleChessJoin()">Join Club</button>
                             <button class="btn-danger" id="chessLeaveBtn"
-                                style="width:auto; padding:10px 24px; display:none;" onclick="handleChessLeave()">Leave
+                                style="width:auto; padding:9px 20px; display:none;" onclick="handleChessLeave()">Leave
                                 Club</button>
                         </div>
                         <div style="margin-top:16px; font-size:13.5px; font-weight:600;">
@@ -766,6 +785,106 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- THE LEDGER (SYLLABUS TRACKER) VIEW                           -->
+    <!-- ============================================================ -->
+    <div id="ledgerView" style="display:none;">
+        <div class="ledger-page-header">
+            <div>
+                <div class="ledger-badge-eyebrow">
+                    <span>MMMUT · GORAKHPUR</span>
+                    <span id="ledgerSyncBadge" class="ledger-sync-badge synced">
+                        <span class="sync-dot"></span><span>Cloud Synced</span>
+                    </span>
+                </div>
+                <h1 class="ledger-title">The Ledger</h1>
+                <p class="ledger-subtitle">Syllabus tracker: open any course, then tick topics and units off as you cover them.</p>
+            </div>
+            <div class="ledger-header-actions">
+                <button class="btn-secondary" onclick="toggleLedgerSection(false)">← Back to MMMUT ERP</button>
+            </div>
+        </div>
+
+        <!-- Summary Statistics Card Grid -->
+        <div class="ledger-summary-grid">
+            <div class="ledger-stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon">🎓</span>
+                    <span class="stat-label">Programme Completed</span>
+                </div>
+                <div class="stat-val" id="ledgerStatPct">0%</div>
+                <div class="stat-desc"><span id="ledgerStatCredits">0 / 0</span> credits cleared</div>
+            </div>
+            <div class="ledger-stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon">✅</span>
+                    <span class="stat-label">Topics Covered</span>
+                </div>
+                <div class="stat-val" id="ledgerStatTopicsDone">0</div>
+                <div class="stat-desc">Syllabus units mastered</div>
+            </div>
+            <div class="ledger-stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon">⏳</span>
+                    <span class="stat-label">Remaining Topics</span>
+                </div>
+                <div class="stat-val" id="ledgerStatTopicsRemaining">0</div>
+                <div class="stat-desc">Topics to complete</div>
+            </div>
+            <div class="ledger-stat-card">
+                <div class="stat-top">
+                    <span class="stat-icon">📊</span>
+                    <span class="stat-label">Active Semester Progress</span>
+                </div>
+                <div class="stat-val-sm" id="ledgerStatSemProgress">0/0 credits (0%)</div>
+                <div class="ledger-prog-bar-wrap">
+                    <div class="ledger-prog-bar"><i id="ledgerSemProgressBar" style="width:0%"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div class="ledger-controls-card">
+            <div class="ledger-controls-row">
+                <div class="ledger-field branch-field">
+                    <label for="ledgerBranchSelect">Engineering Branch</label>
+                    <div class="select-wrap">
+                        <select id="ledgerBranchSelect" onchange="handleLedgerBranchChange(this.value)"></select>
+                    </div>
+                </div>
+                <div class="ledger-field search-field">
+                    <label for="ledgerSearchInput">Search Courses &amp; Topics</label>
+                    <div class="search-input-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="search" id="ledgerSearchInput" class="ledger-search-input" 
+                            placeholder="e.g. Hardy-Cross, eigenvalues, compilers, circuits..." 
+                            oninput="handleLedgerSearchInput(this.value)" autocomplete="off" />
+                        <button type="button" id="ledgerSearchClearBtn" class="search-clear-btn" 
+                            onclick="clearLedgerSearch()" style="display:none;" aria-label="Clear search">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Semester & Elective Chips Strip -->
+            <div class="ledger-strip-wrap">
+                <div class="ledger-semester-strip" id="ledgerSemesterStrip"></div>
+            </div>
+        </div>
+
+        <!-- Courses & Syllabus Units Container -->
+        <div id="ledgerCourseList" class="ledger-course-container"></div>
+
+        <!-- Ledger Footer & Reset Bar -->
+        <div class="ledger-footer-bar">
+            <div class="footer-info">
+                <span>Curriculum data grounded in MMMUT Academic Regulations (w.e.f. 2024-25). Progress is synced with your authenticated Firebase account.</span>
+            </div>
+            <button type="button" class="btn-ledger-reset" onclick="openLedgerResetModal()">
+                🗑️ Reset this branch
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
     <!-- TELEGRAM SECTION VIEW                                        -->
     <!-- ============================================================ -->
     <div id="telegramView">
@@ -781,7 +900,39 @@
                 </h1>
                 <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Official University Community &amp; Direct Messaging</p>
             </div>
-            <button class="btn-secondary" onclick="toggleTelegramSection(false)">← Back to Ledger</button>
+            <button class="btn-secondary" id="btnBackFromTelegram" onclick="toggleTelegramSection(false)">← Back to MMMUT ERP</button>
+        </div>
+
+        <!-- In-ERP Telegram Browser Portal & Launch Gateway -->
+        <div id="telegramLaunchPortal" class="tg-portal-card" style="display:none; margin-bottom:20px; background:var(--surface); border:1px solid var(--surface-border); border-left:4px solid #0088cc; border-radius:var(--radius-sm); padding:18px 20px; box-shadow:var(--shadow-xs);">
+            <div class="tg-portal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:22px; color:#0088cc;">🌐</span>
+                    <div>
+                        <h4 id="tgPortalTitle" style="margin:0; font-size:15px; font-weight:700; color:var(--text-main);">Telegram Access Portal</h4>
+                        <div id="tgPortalUrl" style="font-size:12px; color:var(--text-muted); font-family:var(--font-mono, monospace); word-break:break-all;">https://...</div>
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="closeTelegramPortal()" style="padding:4px 10px; font-size:12px;">✕ Close</button>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); line-height:1.5; margin:0 0 14px;">
+                Choose how to open this Telegram destination. To avoid launching the external native mobile app, select <strong>Open in Browser Mode</strong>.
+            </p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <button id="btnPortalOpenWeb" class="btn-primary" style="background:#0088cc; border-color:#0088cc;">
+                    <span>🌐 Open in Browser Mode</span>
+                </button>
+                <button id="btnPortalOpenTab" class="btn-secondary">
+                    <span>↗ Open in New Tab</span>
+                </button>
+                <button class="btn-secondary" onclick="toggleTelegramSection(false)">
+                    <span>← Back to MMMUT ERP</span>
+                </button>
+            </div>
+            <div style="font-size:11.5px; color:var(--text-light); background:var(--surface-sunken, #f8fafc); border:1px solid var(--surface-border); border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:8px;">
+                <span>🔒</span>
+                <span><strong>Security Isolation Notice:</strong> Official Telegram servers enforce <code>X-Frame-Options: deny</code> to protect credentials. Browser Mode opens the official Telegram service.</span>
+            </div>
         </div>
 
         <!-- Dynamic State Machine Container for Private Telegram Access -->
@@ -805,12 +956,12 @@
                     <div class="card-head">
                         <div>
                             <div class="card-eyebrow">📢 Student Broadcast</div>
-                            <h3 class="channel-meta-title" id="telegramChannelName">MMMUT Official Channel</h3>
+                            <h3 class="channel-meta-title" id="telegramChannelName">Roomhub</h3>
                         </div>
                         <span style="font-size:12px; font-weight:700; background:#dbeafe; color:#1e40af; padding:4px 8px; border-radius:9999px;">Verified</span>
                     </div>
                     <p class="channel-meta-desc" id="telegramChannelDesc">
-                        Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.
+                        Official MMMUT Private Student Channel. Access official university announcements, semester schedules, exam circulars, and departmental updates directly on Telegram.
                     </p>
                     <ul class="telegram-channel-features">
                         <li><span>⚡</span> <span>Real-time official notices &amp; circulars</span></li>
@@ -906,6 +1057,32 @@
     <!-- ============================================================ -->
     <!-- MODALS & OVERLAYS                                             -->
     <!-- ============================================================ -->
+
+    <!-- Ledger Reset Confirmation Modal -->
+    <div class="feedback-overlay" id="ledgerResetModal">
+        <div class="feedback-panel" style="max-width:440px;">
+            <div class="feedback-panel-header">
+                <h2>⚠️ Reset Branch Progress</h2>
+                <button class="close-btn" onclick="closeLedgerResetModal()" aria-label="Close">✕</button>
+            </div>
+            <div class="feedback-panel-body" style="padding:20px;">
+                <p style="font-size:14px;color:var(--text-main);line-height:1.5;margin-bottom:12px;">
+                    Are you sure you want to reset your syllabus progress for <strong id="ledgerResetBranchName">this branch</strong>?
+                </p>
+                <div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;">
+                    <p style="font-size:12.5px;color:var(--danger-text);margin:0;line-height:1.5;">
+                        • All marked topics, units, and courses for this branch will be cleared from your cloud account.<br/>
+                        • Your progress in other branches will remain untouched.<br/>
+                        • This action cannot be undone.
+                    </p>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button type="button" class="btn-secondary" onclick="closeLedgerResetModal()">Cancel</button>
+                    <button type="button" class="btn-primary" style="background:var(--danger);border-color:var(--danger);color:#fff;" onclick="confirmLedgerReset()">Yes, Reset Progress</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Create Post Overlay (Admin only) -->
     <div class="feedback-overlay" id="createPostOverlay">
@@ -1252,9 +1429,11 @@
             window.toggleSidebar(false);
             const tgView = document.getElementById('telegramView');
             const chessView = document.getElementById('chessClubView');
+            const ledgerView = document.getElementById('ledgerView');
             const mainShell = document.getElementById('mainShell');
             if (tgView) tgView.style.display = 'none';
             if (chessView) chessView.style.display = 'none';
+            if (ledgerView) ledgerView.style.display = 'none';
             if (mainShell) mainShell.style.display = 'block';
 
             if (id === 'mainShell' || id === 'home') {
@@ -1402,7 +1581,7 @@
     </script>
 
     <!-- Application Entry Point (Composed ES Module) -->
-    <script type="module" src="./frontend/js/app.js"></script>
+    <script type="module" src="./js/app.js"></script>
 </body>
 
 </html>
