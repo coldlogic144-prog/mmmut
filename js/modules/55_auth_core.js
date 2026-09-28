@@ -196,6 +196,10 @@
             if (document.getElementById('ledgerAiChat').classList.contains('open')) {
                 document.getElementById('ledgerAiChat').classList.remove('open');
             }
+            // Close chess club if open
+            if (document.getElementById('chessClubView').style.display !== 'none') {
+                toggleChessClub(false);
+            }
             // Close Telegram section if open
             if (document.getElementById('telegramView') && document.getElementById('telegramView').style.display !== 'none') {
                 toggleTelegramSection(false);

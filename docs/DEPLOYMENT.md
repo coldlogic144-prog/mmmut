@@ -58,3 +58,4 @@ python student_roster_import.py --commit       # merge into Firestore
 - [ ] Gate accepts a fresh roster roll; name+branch auto-assigned
 - [ ] Sign out → login via 🎓 Roll Number toggle using that roll
 - [ ] Push notifications still register (SW at site root, VAPID key unchanged)
+- [ ] Chess page loads from `chess/chess.html`

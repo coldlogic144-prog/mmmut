@@ -602,9 +602,11 @@
         function toggleTelegramSection(show) {
             const telegramView = document.getElementById('telegramView');
             const mainShell = document.getElementById('mainShell');
+            const chessView = document.getElementById('chessClubView');
             if (!telegramView) return;
 
             if (show) {
+                if (chessView) chessView.style.display = 'none';
                 const ledgerView = document.getElementById('ledgerView');
                 if (ledgerView) ledgerView.style.display = 'none';
                 if (mainShell) mainShell.style.display = 'none';

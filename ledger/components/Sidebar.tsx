@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   BarChart3,
+  Trophy,
   MessagesSquare,
   BookOpen,
   Settings,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard?s=syllabus", label: "Syllabus", icon: BookOpen },
+  { href: "/dashboard?s=chess", label: "Chess Club", icon: Trophy },
   { href: "/dashboard?s=community", label: "Community", icon: MessagesSquare },
   { href: "/dashboard?s=calendar", label: "Calendar", icon: CalendarDays },
 ];
@@ -25,6 +27,7 @@ const NAV = [
 const BOTTOM = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/dashboard?s=syllabus", label: "Syllabus", icon: BookOpen },
+  { href: "/dashboard?s=chess", label: "Chess", icon: Trophy },
   { href: "/dashboard?s=community", label: "Board", icon: MessagesSquare },
 ];
 

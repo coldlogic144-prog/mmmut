@@ -51,7 +51,7 @@
                 } else {
                     btn.textContent = '🔔 Enable Notifications';
                     btn.disabled = false;
-                    btn.title = 'Get notified about notices and events.';
+                    btn.title = 'Get notified about notices, chess challenges, and events.';
                     btn.style.opacity = '1';
                 }
             } catch (e) {
@@ -104,6 +104,8 @@
                 if (type === 'notice') {
                     const el = document.getElementById('postsFeedContent') || document.getElementById('notifBell');
                     if (el && typeof scrollToPosts === 'function') scrollToPosts();
+                } else if (type === 'chess_challenge' || type === 'chess_event') {
+                    if (typeof toggleChessClub === 'function') toggleChessClub(true);
                 }
                 // 'admin' and 'general' currently just surface as a toast; no navigation.
             } catch (e) {

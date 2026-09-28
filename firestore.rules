@@ -177,6 +177,46 @@ service cloud.firestore {
       );
     }
 
+    match /chessClubMembers/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // Chess challenges: participants or admin only.
+    match /chessChallenges/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && (request.resource.data.fromUid == request.auth.uid
+            || request.resource.data.toUid == request.auth.uid);
+      allow update: if isAdmin()
+        || (isSignedIn() && (resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid));
+      allow delete: if isAdmin()
+        || (isSignedIn() && (resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid));
+    }
+
+    match /chessEvents/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Chess activity/games: signed-in may create own entries; only author/admin may modify.
+    match /chessActivity/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin()
+        || (isSignedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    match /chessGames/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
     match /studentRoster/{roll} {
       allow read: if isSignedIn();
       allow write: if isAdmin();

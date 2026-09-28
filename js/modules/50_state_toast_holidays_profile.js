@@ -22,6 +22,15 @@
         let lastReadPosts = 0;
         let communityPosts = [];
 
+        // Chess club state
+        let chessMembers = [];
+        let chessEvents = [];
+        let chessChallenges = [];
+        let chessActivity = [];
+        let chessGames = [];
+        let chessCurrentTab = 'home';
+        let chessMemberStatus = false; // whether current user is a member
+
         // ========== TOAST ==========
         function showToast(msg, duration = 3000) {
             const el = document.getElementById('toast');

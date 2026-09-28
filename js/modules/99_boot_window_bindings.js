@@ -61,6 +61,16 @@
                         window._feedbackUnsub = null; }
                     if (window._communityPostsUnsub) { window._communityPostsUnsub();
                         window._communityPostsUnsub = null; }
+                    if (window._chessMembersUnsub) { window._chessMembersUnsub();
+                        window._chessMembersUnsub = null; }
+                    if (window._chessEventsUnsub) { window._chessEventsUnsub();
+                        window._chessEventsUnsub = null; }
+                    if (window._chessChallengesUnsub) { window._chessChallengesUnsub();
+                        window._chessChallengesUnsub = null; }
+                    if (window._chessActivityUnsub) { window._chessActivityUnsub();
+                        window._chessActivityUnsub = null; }
+                    if (window._chessGamesUnsub) { window._chessGamesUnsub();
+                        window._chessGamesUnsub = null; }
                     if (typeof cleanupLedgerListener === 'function') {
                         cleanupLedgerListener();
                     }
@@ -215,6 +225,19 @@
         window.renderFeedbackPreview = renderFeedbackPreview;
         window.adminFeedbackFilter = 'all';
         window.adminFeedbackSearch = '';
+
+        // Chess club globals
+        window.toggleChessClub = toggleChessClub;
+        window.switchChessTab = switchChessTab;
+        window.handleChessJoin = handleChessJoin;
+        window.handleChessLeave = handleChessLeave;
+        window.registerForEvent = registerForEvent;
+        window.deleteChessEvent = deleteChessEvent;
+        window.openChessEventForm = openChessEventForm;
+        window.closeChessEventForm = closeChessEventForm;
+        window.submitChessEvent = submitChessEvent;
+        window.sendChessChallenge = sendChessChallenge;
+        window.respondChallenge = respondChallenge;
 
         // Push notifications globals
         window.enablePushNotifications = enablePushNotifications;

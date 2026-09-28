@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <title>Chess Arena — MMMUT ERP</title>
+    <link rel="stylesheet" href="chess.css" />
+</head>
+<body>
+
+    <!-- ============ AUTH GATE ============ -->
+    <div id="gateScreen">
+        <div class="gate-piece">♟️</div>
+        <h2 id="gateTitle">Authenticating Session…</h2>
+        <p id="gateMessage">Verifying your MMMUT ERP student session. One moment please.</p>
+        <a href="../index.html" class="btn-primary" id="gateBackLink" style="display:none; text-decoration:none; margin-top:8px;">← Back to MMMUT ERP</a>
+    </div>
+
+    <!-- ============ CHESS APP ============ -->
+    <div id="chessApp" style="display:none; flex-direction:column; min-height:100vh;">
+
+        <!-- Topbar Header -->
+        <header class="chess-topbar">
+            <div class="brand">
+                <span class="brand-icon">♟️</span>
+                <div class="brand-titles">
+                    <span class="brand-name">MMMUT ERP</span>
+                    <span class="brand-sub">University Chess Arena</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span class="rating-chip mono" id="ratingChip">Rating 1200</span>
+                <span class="topbar-player-name" id="playerNameLabel">Student</span>
+                <a href="../index.html" class="back-link" title="Return to Dashboard">← Back to MMMUT ERP</a>
+            </div>
+        </header>
+
+        <!-- Main Workspace: Clean 3-Area Simplified UX -->
+        <main class="chess-main">
+            <!-- 2-Column Responsive Workspace -->
+            <div class="chess-workspace">
+
+                <!-- 1. CHESS BOARD AREA -->
+                <div class="board-col">
+                    <!-- Opponent Strip -->
+                    <div class="player-strip top-strip" id="topPlayerStrip" data-color="b">
+                        <div class="p-info">
+                            <div class="p-badge">⚫</div>
+                            <div class="p-details">
+                                <span class="p-name" id="topPlayerName">Opponent</span>
+                                <span class="p-captures" id="topPlayerCaptures"></span>
+                            </div>
+                        </div>
+                        <div class="p-clock mono" id="topPlayerClock">05:00</div>
+                    </div>
+
+                    <!-- Board Container -->
+                    <div class="board-wrap">
+                        <div id="board"></div>
+                    </div>
+
+                    <!-- Local Player Strip -->
+                    <div class="player-strip bottom-strip" id="bottomPlayerStrip" data-color="w">
+                        <div class="p-info">
+                            <div class="p-badge">⚪</div>
+                            <div class="p-details">
+                                <span class="p-name" id="bottomPlayerName">White</span>
+                                <span class="p-captures" id="bottomPlayerCaptures"></span>
+                            </div>
+                        </div>
+                        <div class="p-clock mono" id="bottomPlayerClock">05:00</div>
+                    </div>
+
+                    <!-- Draw Offer Notification Banner -->
+                    <div id="drawOfferBanner" class="draw-offer-banner">
+                        <span>🤝 Opponent offered a draw.</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-primary" onclick="acceptDrawOffer()" style="padding:4px 10px; font-size:12px; background:var(--success); border-color:var(--success);">Accept</button>
+                            <button class="btn-secondary" onclick="declineDrawOffer()" style="padding:4px 10px; font-size:12px;">Decline</button>
+                        </div>
+                    </div>
+
+                    <!-- Subtle Secondary In-Game Controls (Below board, only active in game) -->
+                    <div class="board-controls in-game-controls" id="boardControls" style="display:none;">
+                        <button class="btn-ghost-chess" onclick="offerDraw()" title="Offer a draw">Offer Draw</button>
+                        <button class="btn-ghost-chess danger-ghost" onclick="promptResign()" title="Resign game">Resign</button>
+                        <button class="btn-ghost-chess" onclick="flipBoard()" title="Flip perspective">Flip Board</button>
+                    </div>
+                </div>
+
+                <!-- 2 & 3. GAME STATUS / PLAYER INFO & ONE CLEAR PRIMARY ACTION -->
+                <div class="side-panel action-panel">
+
+                    <!-- STATE 1: BEFORE A GAME (IDLE) -->
+                    <div class="simple-state-card" id="stateIdle">
+                        <div class="idle-content">
+                            <h1 class="idle-title">Chess</h1>
+                            <p class="idle-sub">Play a game with another student.</p>
+                            
+                            <!-- ONE CLEAR PRIMARY ACTION -->
+                            <button class="btn-primary-action" id="findOpponentBtn" onclick="heroFindOpponent()">
+                                Find Opponent
+                            </button>
+
+                            <!-- Subtle Secondary Action Links -->
+                            <div class="idle-secondary-actions">
+                                <button class="btn-text-action" onclick="openChallengeModal()">Create Challenge</button>
+                                <span class="action-dot">·</span>
+                                <button class="btn-text-action" onclick="openSetupModal()">Play Local</button>
+                            </div>
+                        </div>
+
+                        <!-- Incoming Challenge Box -->
+                        <div id="incomingChallenges" class="incoming-challenges-area"></div>
+                    </div>
+
+                    <!-- STATE 2: SEARCHING FOR OPPONENT -->
+                    <div class="simple-state-card" id="stateSearching" style="display:none;">
+                        <div class="searching-content">
+                            <div class="searching-anim">♟️</div>
+                            <h2 class="searching-title">Finding an opponent...</h2>
+                            <p class="searching-sub">Connecting with an active student on campus</p>
+                            
+                            <!-- ONE CLEAR PRIMARY ACTION -->
+                            <button class="btn-secondary-action danger-action" id="cancelSearchBtn" onclick="cancelOnlineSearch()">
+                                Cancel
+                            </button>
+                        </div>
+                        <div id="onlineStatus" class="online-status-quiet" style="display:none;"></div>
+                    </div>
+
+                    <!-- STATE 3: GAME ACTIVE -->
+                    <div class="simple-state-card" id="stateActive" style="display:none;">
+                        <div class="active-head">
+                            <span class="active-indicator-dot"></span>
+                            <div class="status-line" id="statusLine">White to move.</div>
+                        </div>
+
+                        <!-- Move History Notation -->
+                        <div class="active-moves-box">
+                            <div class="moves-header">
+                                <span class="moves-title">Moves</span>
+                                <div class="moves-tools">
+                                    <button class="btn-copy-code" onclick="copyPgn()" title="Copy PGN">PGN</button>
+                                    <button class="btn-copy-code" onclick="copyFen()" title="Copy FEN">FEN</button>
+                                </div>
+                            </div>
+                            <div id="moveList"></div>
+                            <div id="pgnBox" class="mono" style="display:none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- STATE 4: GAME FINISHED -->
+                    <div class="simple-state-card" id="stateFinished" style="display:none;">
+                        <div class="finished-content">
+                            <div class="finished-banner-box" id="finishBanner">
+                                <h2 class="finished-title" id="finishTitle">You won</h2>
+                                <p class="finished-reason" id="finishReason">Checkmate</p>
+                            </div>
+
+                            <!-- ONE CLEAR PRIMARY ACTION -->
+                            <button class="btn-primary-action" id="playAgainBtn" onclick="playAgain()">
+                                Play Again
+                            </button>
+
+                            <!-- Secondary Action -->
+                            <button class="btn-secondary-action" id="backToChessBtn" onclick="backToHome()">
+                                Back to Chess
+                            </button>
+                        </div>
+
+                        <!-- Maintained for test assertion compatibility -->
+                        <div class="panel-card" id="resultCard" style="display:none;"></div>
+                    </div>
+
+                    <!-- Collapsible Drawer for Optional Stats & Elo (Preserves data without cluttering main view) -->
+                    <details class="stats-collapsible">
+                        <summary class="stats-summary">Rating &amp; Match History</summary>
+                        <div class="stats-drawer-body">
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statRating">1200</div>
+                                    <div class="stat-label">Rating</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statGames">0</div>
+                                    <div class="stat-label">Games</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statWins">0</div>
+                                    <div class="stat-label">Wins</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statLosses">0</div>
+                                    <div class="stat-label">Losses</div>
+                                </div>
+                            </div>
+                            <div class="recent-heading">Recent Matches</div>
+                            <div id="recentGames">
+                                <div class="empty-note">No games recorded yet.</div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Hidden legacy launcher elements for test suite & background scripts -->
+                    <div class="panel-card" id="gameLauncherCard" style="display:none;">
+                        <div class="tc-grid" id="quickTcGrid"></div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ SETUP MODAL (LOCAL PLAY) ============ -->
+    <div class="modal-backdrop" id="setupModal" onclick="handleBackdropClick(event, 'setupModal')">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Start Local Game</h3>
+                <button class="modal-close-btn" onclick="closeSetupModal()">✕</button>
+            </div>
+            <div class="setup-row">
+                <label>Time Control</label>
+                <select id="setupTimeControl">
+                    <option value="60-0">1 + 0 (Bullet)</option>
+                    <option value="120-1">2 + 1 (Bullet)</option>
+                    <option value="180-0" selected>3 + 0 (Blitz)</option>
+                    <option value="180-2">3 + 2 (Blitz)</option>
+                    <option value="300-0">5 + 0 (Blitz)</option>
+                    <option value="300-3">5 + 3 (Blitz)</option>
+                    <option value="600-0">10 + 0 (Rapid)</option>
+                    <option value="600-5">10 + 5 (Rapid)</option>
+                    <option value="900-10">15 + 10 (Rapid)</option>
+                    <option value="1800-0">30 + 0 (Classical)</option>
+                    <option value="custom">Custom Time Control…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="customTcRow" style="display:none;">
+                <label>Minutes &amp; Increment (Seconds)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="customMinutes" min="1" max="180" value="10" placeholder="Min" style="width:50%;">
+                    <input type="number" id="customIncrement" min="0" max="60" value="0" placeholder="Inc (s)" style="width:50%;">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeSetupModal()">Cancel</button>
+                <button class="btn-primary" onclick="startLocalGame()">Start Match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ONLINE MATCHMAKING MODAL ============ -->
+    <div class="modal-backdrop" id="onlineModal" onclick="handleBackdropClick(event, 'onlineModal')">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Play Online — Find Opponent</h3>
+                <button class="modal-close-btn" onclick="closeOnlineModal()">✕</button>
+            </div>
+            <div class="setup-row">
+                <label>Preferred Time Control</label>
+                <select id="onlineTimeControl">
+                    <option value="60-0">1 + 0 (Bullet)</option>
+                    <option value="180-0">3 + 0 (Blitz)</option>
+                    <option value="180-2">3 + 2 (Blitz)</option>
+                    <option value="300-0" selected>5 + 0 (Blitz)</option>
+                    <option value="300-3">5 + 3 (Blitz)</option>
+                    <option value="600-5">10 + 5 (Rapid)</option>
+                    <option value="900-10">15 + 10 (Rapid)</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="onlineCustomRow" style="display:none;">
+                <label>Minutes &amp; Increment (Seconds)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="onlineMinutes" min="1" max="180" value="10" style="width:50%;">
+                    <input type="number" id="onlineIncrement" min="0" max="60" value="0" style="width:50%;">
+                </div>
+            </div>
+            <div class="online-status" id="onlineStatusModal"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeOnlineModal()">Cancel</button>
+                <button class="btn-danger" id="cancelSearchModalBtn" style="display:none;" onclick="cancelOnlineSearch()">Cancel Search</button>
+                <button class="btn-primary" onclick="startOnlineMatch()">Find Match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CHALLENGE STUDENT MODAL ============ -->
+    <div class="modal-backdrop" id="challengeModal" onclick="handleBackdropClick(event, 'challengeModal')">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Challenge a Student</h3>
+                <button class="modal-close-btn" onclick="closeChallengeModal()">✕</button>
+            </div>
+            <div class="setup-row">
+                <label>Opponent (Username or University Email)</label>
+                <input type="text" id="challengeOpponent" placeholder="e.g. roll number, username, or email">
+            </div>
+            <div class="setup-row">
+                <label>Time Control</label>
+                <select id="challengeTimeControl">
+                    <option value="60-0">1 + 0 (Bullet)</option>
+                    <option value="180-0">3 + 0 (Blitz)</option>
+                    <option value="180-2">3 + 2 (Blitz)</option>
+                    <option value="300-0" selected>5 + 0 (Blitz)</option>
+                    <option value="300-3">5 + 3 (Blitz)</option>
+                    <option value="600-5">10 + 5 (Rapid)</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="setup-row" id="challengeCustomRow" style="display:none;">
+                <label>Minutes &amp; Increment (Seconds)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" id="challengeMinutes" min="1" max="180" value="10" style="width:50%;">
+                    <input type="number" id="challengeIncrement" min="0" max="60" value="0" style="width:50%;">
+                </div>
+            </div>
+            <div class="online-status" id="challengeStatus"></div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeChallengeModal()">Cancel</button>
+                <button class="btn-primary" onclick="sendChallengeFromModal()">Send Challenge</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PROMOTION MODAL ============ -->
+    <div class="modal-backdrop" id="promoModal">
+        <div class="modal-box" style="text-align:center;">
+            <h3 style="margin-bottom:8px;">Promote Pawn</h3>
+            <p style="font-size:13px; color:var(--text-muted); margin:0;">Select a piece for pawn promotion:</p>
+            <div class="promo-choices" id="promoChoices"></div>
+        </div>
+    </div>
+
+    <!-- ============ IN-APP CONFIRM RESIGN MODAL ============ -->
+    <div class="modal-backdrop" id="resignModal" onclick="handleBackdropClick(event, 'resignModal')">
+        <div class="modal-box" style="max-width:380px;">
+            <div class="modal-head">
+                <h3 style="color:var(--danger);">🏳 Resign Game?</h3>
+                <button class="modal-close-btn" onclick="closeResignModal()">✕</button>
+            </div>
+            <p style="font-size:13.5px; color:var(--text-secondary); line-height:1.5; margin:0 0 16px;">
+                Are you sure you want to resign? Your opponent will be awarded the victory and rated points will be updated.
+            </p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeResignModal()">Cancel</button>
+                <button class="btn-danger" onclick="confirmResignAction()">Confirm Resign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backwards Compatibility Helper for Modal Backdrops & ESC Key -->
+    <script>
+        function handleBackdropClick(e, modalId) {
+            if (e.target && e.target.id === modalId) {
+                const el = document.getElementById(modalId);
+                if (el) el.classList.remove('open');
+            }
+        }
+        window.promptResign = function () {
+            const modal = document.getElementById('resignModal');
+            if (modal) modal.classList.add('open');
+        };
+        window.closeResignModal = function () {
+            const modal = document.getElementById('resignModal');
+            if (modal) modal.classList.remove('open');
+        };
+        window.confirmResignAction = function () {
+            window.closeResignModal();
+            if (typeof window.executeResign === 'function') {
+                window.executeResign();
+            } else if (typeof window.offerResign === 'function') {
+                window.offerResign();
+            }
+        };
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-backdrop.open').forEach(m => {
+                    // Do not close promoModal with ESC if promotion is strictly required
+                    if (m.id !== 'promoModal') m.classList.remove('open');
+                });
+            }
+        });
+    </script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js",
+            "chess.js": "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm"
+        }
+    }
+    </script>
+    <script type="module" src="chess.js"></script>
+</body>
+</html>

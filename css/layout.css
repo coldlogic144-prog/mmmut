@@ -551,6 +551,7 @@
 .topbar-right > .btn-request-admin,
 .topbar-right > .btn-download-app,
 .topbar-right > .btn-topbar-telegram,
+.topbar-right > .btn-chess,
 .topbar-right > .btn-ghost,
 .topbar-right > #pushNotifBtn {
     display: none !important;
@@ -1074,6 +1075,7 @@
     .user-pill-text,
     .dropdown-chevron,
     .btn-download-app,
+    .btn-chess,
     .btn-admin,
     .btn-request-admin {
         display: none !important;
