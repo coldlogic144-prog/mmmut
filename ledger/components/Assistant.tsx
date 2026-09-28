@@ -21,9 +21,6 @@ function answer(input: string): string {
   if (s.includes("minor") || s.includes("test")) {
     return "Minor Test I runs 24–28 Aug. Syllabus = BSM-110 units 1–3. Good luck! 📚";
   }
-  if (s.includes("chess")) {
-    return "Chess Club quals are Friday. Aishwary C. leads with ELO 1420. Tap Challenge on the Chess card to play.";
-  }
   return "I can help with attendance, timetable, syllabus, and Minor Tests. Try: “what if I miss 2 classes?”";
 }
 

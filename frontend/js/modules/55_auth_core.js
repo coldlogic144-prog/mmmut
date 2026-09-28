@@ -34,7 +34,8 @@
                 showError('signupError', 'Password should be at least 6 characters.');
                 return;
             }
-            const isAdminFlag = (username === 'tanish');
+            // SECURITY: never self-assign admin. Admins are promoted only via
+            // Firestore rules (isAdmin) by an existing admin.
 
             signingUp = true;
 
@@ -70,7 +71,7 @@
                 section,
                 hostel,
                 gender,
-                isAdmin: isAdminFlag,
+                isAdmin: false,
                 adminRequested: false,
                 migrationStatus: 'verified',
                 rollNumber: '',
@@ -154,14 +155,8 @@
                 return; // STOP! Do not report as incorrect password.
             }
 
-            if (record.username === 'tanish' && !record.isAdmin) {
-                try {
-                    await updateDoc(doc(usersCollection, uid), { isAdmin: true });
-                    record.isAdmin = true;
-                } catch (adminErr) {
-                    console.warn('Admin auto-promotion skipped:', adminErr);
-                }
-            }
+            // SECURITY: no client-side auto-promotion. Admin rights come only
+            // from Firestore (isAdmin) and rules block self-escalation.
 
             // ==========================================
             // STEP 3: NAVIGATION TO ERP / DASHBOARD
@@ -182,6 +177,10 @@
             attendanceCache = {};
             isAdmin = false;
             adminRequested = false;
+            try {
+                sessionStorage.removeItem('mmmut_active_view');
+                sessionStorage.clear();
+            } catch (_) {}
             document.getElementById('app').style.display = 'none';
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('loginUsername').value = '';
@@ -196,10 +195,6 @@
             closeCreatePost();
             if (document.getElementById('ledgerAiChat').classList.contains('open')) {
                 document.getElementById('ledgerAiChat').classList.remove('open');
-            }
-            // Close chess club if open
-            if (document.getElementById('chessClubView').style.display !== 'none') {
-                toggleChessClub(false);
             }
             // Close Telegram section if open
             if (document.getElementById('telegramView') && document.getElementById('telegramView').style.display !== 'none') {
@@ -233,7 +228,7 @@
                         section: 'A',
                         hostel: 'Day Scholar',
                         gender: 'Not specified',
-                        isAdmin: (fallbackUsername === 'tanish'),
+                        isAdmin: false,
                         adminRequested: false,
                         migrationStatus: 'verified',
                         rollNumber: '',

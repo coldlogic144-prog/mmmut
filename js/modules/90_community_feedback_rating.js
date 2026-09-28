@@ -36,6 +36,19 @@
             }
         }
 
+        // ========== SECURITY HELPERS (XSS-safe rendering) ==========
+        function safeUrl(u) {
+            const s = String(u || '');
+            if (/^https:\/\//.test(s)) return s.replace(/"/g, '%22');
+            return '';
+        }
+        function cleanFileName(name) {
+            return String(name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80) || 'file';
+        }
+        function safeId(id) {
+            return String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+        }
+
         async function submitCommunityPost(e) {
             e.preventDefault();
             if (!currentUser) { showToast('Please log in first.'); return; }
@@ -43,8 +56,8 @@
             const errorEl = document.getElementById('cpFormError');
             errorEl.style.display = 'none';
 
-            const title = document.getElementById('cpTitle').value.trim();
-            const content = document.getElementById('cpContent').value.trim();
+            const title = document.getElementById('cpTitle').value.trim().slice(0, 120);
+            const content = document.getElementById('cpContent').value.trim().slice(0, 5000);
             const fileInput = document.getElementById('cpImage');
 
             if (!title) { errorEl.textContent = 'Please enter a title.';
@@ -53,16 +66,22 @@
                 errorEl.style.display = 'block'; return; }
 
             let imageUrl = null;
+            let imagePath = null;
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                const path = `communityPosts/${currentUid}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, path);
+                if (file.size > 5 * 1024 * 1024) { errorEl.textContent = 'Image must be under 5MB.'; errorEl.style.display = 'block'; return; }
+                if (!String(file.type || '').startsWith('image/')) { errorEl.textContent = 'Only image files allowed.'; errorEl.style.display = 'block'; return; }
+                imagePath = `communityPosts/${currentUid}/${Date.now()}_${cleanFileName(file.name)}`;
+                const storageRef = ref(storage, imagePath);
                 try {
                     await uploadBytes(storageRef, file);
                     imageUrl = await getDownloadURL(storageRef);
                 } catch (err) {
-                    console.warn('Image upload failed, proceeding without image:', err);
-                    showToast('⚠️ Image upload failed, but post will be saved without it.');
+                    console.warn('Image upload failed:', err);
+                    errorEl.textContent = 'Image upload failed: ' + (err && err.message ? err.message : err) +
+                        ' — Storage rules may not be deployed (see storage.rules). Post not published.';
+                    errorEl.style.display = 'block';
+                    return;
                 }
             }
 
@@ -74,6 +93,7 @@
                     title,
                     content,
                     imageUrl: imageUrl || null,
+                    imagePath: imagePath || null,
                     likes: [],
                     createdAt: serverTimestamp()
                 });
@@ -113,29 +133,35 @@
               <div class="community-post">
                 <div class="cp-head">
                   <div>
-                    <div class="cp-author">${post.name || 'Unknown'} <span>@${post.username || '—'}</span>
+                    <div class="cp-author">${escapeHtml(post.name || 'Unknown')} <span>@${escapeHtml(post.username || '—')}</span>
                       <span class="cp-admin-badge">Admin</span>
                     </div>
-                    <div class="cp-title">${post.title}</div>
+                    <div class="cp-title">${escapeHtml(post.title)}</div>
                   </div>
-                  <div class="cp-time">${date}</div>
+                  <div class="cp-time">${escapeHtml(date)}</div>
                 </div>
-                <div class="cp-body">${post.content}</div>
-                ${post.imageUrl ? `<img src="${post.imageUrl}" class="cp-image" alt="Post image" loading="lazy" />` : ''}
+                <div class="cp-body">${escapeHtml(post.content)}</div>
+                ${post.imageUrl && safeUrl(post.imageUrl) ? `<img src="${safeUrl(post.imageUrl)}" class="cp-image" alt="Post image" loading="lazy" />` : ''}
                 <div class="cp-actions">
-                  <button class="cp-like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                  <button class="cp-like-btn ${isLiked ? 'liked' : ''}" data-post-id="${safeId(post.id)}" data-action="like">
                     ${isLiked ? '❤️' : '🤍'} <span class="cp-like-count">${likeCount}</span>
                   </button>
-                  ${isOwn ? `<button class="cp-delete-btn" onclick="deleteCommunityPost('${post.id}')">🗑️ Delete</button>` : ''}
+                  ${isOwn ? `<button class="cp-delete-btn" data-post-id="${safeId(post.id)}" data-action="delete">🗑️ Delete</button>` : ''}
                 </div>
               </div>
             `;
             });
 
             feed.innerHTML = html;
+            feed.querySelectorAll('button[data-action="like"]').forEach(b =>
+                b.addEventListener('click', () => toggleLike(b.dataset.postId)));
+            feed.querySelectorAll('button[data-action="delete"]').forEach(b =>
+                b.addEventListener('click', () => deleteCommunityPost(b.dataset.postId)));
         }
 
         async function toggleLike(postId) {
+            postId = String(postId || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!postId) return;
             if (!currentUser) { showToast('Please log in first.'); return; }
             try {
                 const postRef = doc(communityPostsCollection, postId);
@@ -156,6 +182,8 @@
         }
 
         async function deleteCommunityPost(postId) {
+            postId = String(postId || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!postId) return;
             if (!confirm('Delete this post? This cannot be undone.')) return;
             try {
                 const postRef = doc(communityPostsCollection, postId);
@@ -163,10 +191,9 @@
                 if (!snap.exists()) { showToast('Post not found.'); return; }
                 const data = snap.data();
                 if (data.uid !== currentUid) { showToast('You can only delete your own posts.'); return; }
-                if (data.imageUrl) {
+                if (data.imagePath) {
                     try {
-                        const imageRef = ref(storage, data.imageUrl);
-                        await deleteObject(imageRef);
+                        await deleteObject(ref(storage, data.imagePath));
                     } catch (e) {}
                 }
                 await deleteDoc(postRef);
@@ -248,10 +275,13 @@
                 errorEl.style.display = 'block'; return; }
 
             let attachmentUrl = null;
+            let attachmentPath = null;
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                const path = `feedback/${currentUid}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, path);
+                if (file.size > 5 * 1024 * 1024) { errorEl.textContent = 'Screenshot must be under 5MB.'; errorEl.style.display = 'block'; return; }
+                if (!String(file.type || '').startsWith('image/')) { errorEl.textContent = 'Only image files allowed.'; errorEl.style.display = 'block'; return; }
+                attachmentPath = `feedback/${currentUid}/${Date.now()}_${cleanFileName(file.name)}`;
+                const storageRef = ref(storage, attachmentPath);
                 try {
                     await uploadBytes(storageRef, file);
                     attachmentUrl = await getDownloadURL(storageRef);
@@ -278,6 +308,7 @@
                     priority,
                     status: 'open',
                     attachment: attachmentUrl,
+                    attachmentPath: attachmentPath || null,
                     ticketId,
                     createdAtDate: today,
                     createdAt: serverTimestamp(),
@@ -330,7 +361,7 @@
                     const date = latest.createdAt ? new Date(latest.createdAt.seconds * 1000).toLocaleDateString(
                         'en-IN', { day: 'numeric', month: 'short' }) : '—';
                     latestEl.innerHTML =
-                        `<strong>${latest.ticketId || '—'}</strong> — ${latest.subject} <span style="color:var(--ink-soft);font-size:11px;">(${statusMap[latest.status] || latest.status} · ${date})</span>`;
+                        `<strong>${escapeHtml(latest.ticketId || '—')}</strong> — ${escapeHtml(latest.subject)} <span style="color:var(--ink-soft);font-size:11px;">(${escapeHtml(statusMap[latest.status] || latest.status || '')} · ${escapeHtml(date)})</span>`;
                 }
             } catch (e) {}
         }
@@ -391,32 +422,34 @@
                 <div class="feedback-list-item">
                   <div class="fb-head">
                     <div>
-                      <span class="fb-ticket">${f.ticketId || '—'}</span>
-                      <span class="fb-subject">${f.subject}</span>
+                      <span class="fb-ticket">${escapeHtml(f.ticketId || '—')}</span>
+                      <span class="fb-subject">${escapeHtml(f.subject)}</span>
                     </div>
-                    <span class="fb-status-badge ${statusMap[f.status] || 'fb-status-open'}">${statusLabel[f.status] || 'Open'}</span>
+                    <span class="fb-status-badge ${escapeHtml(statusMap[f.status] || 'fb-status-open')}">${escapeHtml(statusLabel[f.status] || 'Open')}</span>
                   </div>
                   <div class="fb-meta">
-                    <span class="${priorityClass}">${f.priority?.toUpperCase() || 'MEDIUM'}</span>
-                    · ${f.category} · ${date}
+                    <span class="${priorityClass}">${escapeHtml((f.priority || 'medium').toUpperCase())}</span>
+                    · ${escapeHtml(f.category)} · ${escapeHtml(date)}
                   </div>
-                  <div class="fb-message">${f.message}</div>
-                  ${f.attachment ? `<a href="${f.attachment}" target="_blank" class="fb-attachment-link">📎 View Attachment</a>` : ''}
+                  <div class="fb-message">${escapeHtml(f.message)}</div>
+                  ${f.attachment && safeUrl(f.attachment) ? `<a href="${safeUrl(f.attachment)}" target="_blank" rel="noopener" class="fb-attachment-link">📎 View Attachment</a>` : ''}
                   ${f.adminReply ? `
                     <div class="fb-reply">
                       <div class="fb-reply-label">💬 Admin Reply</div>
-                      ${f.adminReply}
-                      <div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">${f.repliedBy ? 'by ' + f.repliedBy : ''} · ${f.adminReplyAt ? new Date(f.adminReplyAt.seconds * 1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
+                      ${escapeHtml(f.adminReply)}
+                      <div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">${f.repliedBy ? 'by ' + escapeHtml(f.repliedBy) : ''} · ${f.adminReplyAt ? escapeHtml(new Date(f.adminReplyAt.seconds * 1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})) : ''}</div>
                     </div>
                   ` : ''}
                   <div class="fb-actions">
-                    ${f.status === 'open' ? `<button class="btn-sm delete" onclick="deleteMyFeedback('${f.id}')">Delete</button>` : ''}
+                    ${f.status === 'open' ? `<button class="btn-sm delete" data-fb-id="${safeId(f.id)}" data-action="del">Delete</button>` : ''}
                   </div>
                 </div>
               `;
                 });
 
                 body.innerHTML = html;
+                body.querySelectorAll('button[data-action="del"]').forEach(b =>
+                    b.addEventListener('click', () => deleteMyFeedback(b.dataset.fbId)));
             } catch (e) {
                 body.innerHTML = `<div class="feedback-empty">Error loading feedback: ${e.message}</div>`;
             }
@@ -488,29 +521,30 @@
                 if (allDocs.length === 0) {
                     el.innerHTML = `
                 <div class="fb-admin-search">
-                  <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${adminFeedbackSearch}" oninput="adminFeedbackSearch=this.value;renderAdminFeedback();" />
+                  <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${escapeHtml(adminFeedbackSearch)}" id="fbAdminSearch" />
                   <div class="fb-admin-filters">
-                    <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" onclick="adminFeedbackFilter='all';renderAdminFeedback();">All</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" onclick="adminFeedbackFilter='open';renderAdminFeedback();">Open</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" onclick="adminFeedbackFilter='high';renderAdminFeedback();">High Priority</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" onclick="adminFeedbackFilter='resolved';renderAdminFeedback();">Resolved</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" onclick="adminFeedbackFilter='closed';renderAdminFeedback();">Closed</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" data-filter="all">All</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" data-filter="open">Open</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" data-filter="high">High Priority</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" data-filter="resolved">Resolved</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" data-filter="closed">Closed</button>
                   </div>
                 </div>
                 <div class="feedback-empty">No feedback tickets found.</div>
               `;
+                    wireAdminFeedbackControls(el);
                     return;
                 }
 
                 let html = `
               <div class="fb-admin-search">
-                <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${adminFeedbackSearch}" oninput="adminFeedbackSearch=this.value;renderAdminFeedback();" />
+                <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${escapeHtml(adminFeedbackSearch)}" id="fbAdminSearch" />
                 <div class="fb-admin-filters">
-                  <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" onclick="adminFeedbackFilter='all';renderAdminFeedback();">All</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" onclick="adminFeedbackFilter='open';renderAdminFeedback();">Open</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" onclick="adminFeedbackFilter='high';renderAdminFeedback();">High Priority</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" onclick="adminFeedbackFilter='resolved';renderAdminFeedback();">Resolved</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" onclick="adminFeedbackFilter='closed';renderAdminFeedback();">Closed</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" data-filter="all">All</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" data-filter="open">Open</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" data-filter="high">High Priority</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" data-filter="resolved">Resolved</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" data-filter="closed">Closed</button>
                 </div>
               </div>
               <div class="fb-admin-table-wrap">
@@ -550,18 +584,18 @@
 
                     html += `
                 <tr>
-                  <td><span class="fb-ticket" style="font-weight:600;">${f.ticketId || '—'}</span></td>
-                  <td>${f.name || '—'}<br/><span style="font-size:10px;color:var(--ink-soft);">@${f.username || '—'}</span></td>
-                  <td>${shortBranch}<br/><span style="font-size:10px;color:var(--ink-soft);">Sec ${f.section || '—'}</span></td>
-                  <td>${f.category || '—'}</td>
-                  <td><span class="${f.priority === 'high' ? 'fb-priority-high' : f.priority === 'medium' ? 'fb-priority-medium' : 'fb-priority-low'}">${f.priority?.toUpperCase() || 'MED'}</span></td>
-                  <td><span class="fb-status-badge ${statusMap[f.status] || 'fb-status-open'}">${statusLabel[f.status] || 'Open'}</span></td>
-                  <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.subject || ''}">${f.subject || '—'}</td>
+                  <td><span class="fb-ticket" style="font-weight:600;">${escapeHtml(f.ticketId || '—')}</span></td>
+                  <td>${escapeHtml(f.name || '—')}<br/><span style="font-size:10px;color:var(--ink-soft);">@${escapeHtml(f.username || '—')}</span></td>
+                  <td>${escapeHtml(shortBranch)}<br/><span style="font-size:10px;color:var(--ink-soft);">Sec ${escapeHtml(f.section || '—')}</span></td>
+                  <td>${escapeHtml(f.category || '—')}</td>
+                  <td><span class="${f.priority === 'high' ? 'fb-priority-high' : f.priority === 'medium' ? 'fb-priority-medium' : 'fb-priority-low'}">${escapeHtml((f.priority || 'med').toUpperCase())}</span></td>
+                  <td><span class="fb-status-badge ${escapeHtml(statusMap[f.status] || 'fb-status-open')}">${escapeHtml(statusLabel[f.status] || 'Open')}</span></td>
+                  <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(f.subject || '')}">${escapeHtml(f.subject || '—')}</td>
                   <td>
                     <div class="fb-admin-actions">
-                      <button class="btn-sm reply-btn" onclick="openAdminReply('${f.id}')">Reply</button>
-                      <button class="btn-sm status-btn" onclick="changeFeedbackStatus('${f.id}')">Status</button>
-                      <button class="btn-sm del-btn" onclick="deleteFeedbackAdmin('${f.id}')">Delete</button>
+                      <button class="btn-sm reply-btn" data-fb-act="reply" data-fb-id="${safeId(f.id)}">Reply</button>
+                      <button class="btn-sm status-btn" data-fb-act="status" data-fb-id="${safeId(f.id)}">Status</button>
+                      <button class="btn-sm del-btn" data-fb-act="del" data-fb-id="${safeId(f.id)}">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -570,9 +604,38 @@
 
                 html += `</tbody></table></div>`;
                 el.innerHTML = html;
+                wireAdminFeedbackControls(el);
+                el.querySelectorAll('button[data-fb-act]').forEach(b => {
+                    const id = b.dataset.fbId;
+                    const act = b.dataset.fbAct;
+                    b.addEventListener('click', () => {
+                        if (act === 'reply') openAdminReply(id);
+                        else if (act === 'status') changeFeedbackStatus(id);
+                        else if (act === 'del') deleteFeedbackAdmin(id);
+                    });
+                });
             } catch (e) {
-                el.innerHTML = `<div class="feedback-empty">Error loading feedback: ${e.message}</div>`;
+                el.innerHTML = `<div class="feedback-empty">Error loading feedback: ${escapeHtml(e.message)}</div>`;
             }
+        }
+
+        function wireAdminFeedbackControls(root) {
+            const input = root.querySelector('#fbAdminSearch');
+            if (input) {
+                input.addEventListener('input', () => {
+                    adminFeedbackSearch = input.value;
+                    const t = setTimeout(() => {}, 0);
+                    clearTimeout(t);
+                    renderAdminFeedbackDebounced();
+                });
+            }
+            root.querySelectorAll('button[data-filter]').forEach(b =>
+                b.addEventListener('click', () => { adminFeedbackFilter = b.dataset.filter; renderAdminFeedback(); }));
+        }
+        let _fbRenderTimer = null;
+        function renderAdminFeedbackDebounced() {
+            if (_fbRenderTimer) clearTimeout(_fbRenderTimer);
+            _fbRenderTimer = setTimeout(() => renderAdminFeedback(), 250);
         }
 
         // ========== ADMIN REPLY ==========
@@ -649,13 +712,15 @@
 
         // ========== DELETE FEEDBACK (ADMIN) ==========
         async function deleteFeedbackAdmin(feedbackId) {
+            feedbackId = safeId(feedbackId);
+            if (!feedbackId) return;
+            if (!isAdmin) { showToast('Only admins can delete feedback.'); return; }
             if (!confirm('Delete this feedback permanently?')) return;
             try {
                 const snap = await getDoc(doc(feedbackCollection, feedbackId));
-                if (snap.exists() && snap.data().attachment) {
+                if (snap.exists() && snap.data().attachmentPath) {
                     try {
-                        const attachmentRef = ref(storage, snap.data().attachment);
-                        await deleteObject(attachmentRef);
+                        await deleteObject(ref(storage, snap.data().attachmentPath));
                     } catch (e) {}
                 }
                 await deleteDoc(doc(feedbackCollection, feedbackId));
@@ -694,8 +759,8 @@
                     selectedRating = existingRating.rating || 0;
                     document.getElementById('ratingComment').value = existingRating.comment || '';
                     document.getElementById('ratingExisting').style.display = 'block';
-                    document.getElementById('ratingExisting').innerHTML =
-                        `⭐ You rated ${existingRating.rating} stars. You can update your rating below.`;
+                    document.getElementById('ratingExisting').textContent =
+                        `⭐ You rated ${Number(existingRating.rating) || 0} stars. You can update your rating below.`;
                     updateRatingStars();
                 } else {
                     existingRating = null;

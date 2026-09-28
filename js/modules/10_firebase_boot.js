@@ -141,12 +141,5 @@
         const ratingsCollection = collection(db, "ratings");
         const communityPostsCollection = collection(db, "communityPosts");
 
-        // ===== CHESS CLUB COLLECTIONS =====
-        const chessMembersCollection = collection(db, "chessClubMembers");
-        const chessChallengesCollection = collection(db, "chessChallenges");
-        const chessEventsCollection = collection(db, "chessEvents");
-        const chessActivityCollection = collection(db, "chessActivity");
-        const chessGamesCollection = collection(db, "chessGames");
-
         // ===== TELEGRAM PRIVATE ACCESS COLLECTIONS =====
         const telegramApplicationsCollection = collection(db, "telegramApplications");

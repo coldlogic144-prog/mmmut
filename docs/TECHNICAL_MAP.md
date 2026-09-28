@@ -14,25 +14,25 @@ was `index.html` (10,134 lines). Recovery points:
 * **Single-page app**, one file: `index.html`
   * lines 7–2658 — one giant `<style>` block (≈2,650 lines CSS)
   * lines 2660–3430 — static markup: loading screen, auth screen, app shell,
-    chess-club view, modals (post, feedback, rating, migration gate, profile),
+    modals (post, feedback, rating, migration gate, profile),
     admin panel drawer
   * lines 3431–3443 — `<script type="importmap">` (Firebase 12.17.1 CDN ESM)
   * lines 3445–10133 — **one** `<script type="module">` ≈ 6,700 lines holding
     *everything*: Firebase bootstrap, data tables, auth, roll-migration, FCM,
-    AI chat, admin panel, attendance engine, chess club, feedback, ratings.
+    AI chat, admin panel, attendance engine, feedback, ratings.
 * **Hosting**: GitHub Pages project site → `https://coldlogic144-prog.github.io/-python/`
   (hard-coded as `LEDGER_URL` inside `firebase-messaging-sw.js`). No server side today.
 * **Backend**: none deployed. Python scripts run locally against Firebase Admin SDK.
 * **Unrelated artifacts**: `ledger/` = abandoned Next.js experiment (not referenced);
   `_bak_ai.txt`, `_cur_ai.txt`, `_idx_diff.txt`, `_module_check.mjs`,
-  `_sdk_ai_12171.js`, `_sdk_ai_pretty.js` = debugging scratch dumps; `chess/test` stray.
+  `_sdk_ai_12171.js`, `_sdk_ai_pretty.js` = debugging scratch dumps.
 
 ## 2. Feature inventory (JS line ranges in original file)
 
 | Feature | Lines | Notes |
 |---|---|---|
 | Firebase imports/init + App Check | 3446–3566 | reCAPTCHA Enterprise key inline |
-| Firestore collection refs | 3567–3583 | 17 collections incl. chess + roster |
+| Firestore collection refs | 3567–3583 | 12 collections incl. roster |
 | Roll-migration flags | 3584–3605 | kill-switches, ROLL_NUMBER_PATTERN |
 | Push notifications (FCM) | 3607–3877 | VAPID key inline, SW at site root |
 | Ledger AI init (Gemini) | 3878–3906 | firebase/ai, GoogleAIBackend |
@@ -49,7 +49,6 @@ was `index.html` (10,134 lines). Recovery points:
 | Notif badge / admin request / admin roll-verify | 6647–6864 | |
 | Admin panel (dashboard/users/timetable/calendar/holidays/posts/requests) | 6865–7450 | |
 | Feed/topbar/schedule/attendance/events/canvas image/history | 7451–8013 | |
-| Chess Club manager | 8014–8578 | separate from standalone game page |
 | Community posts | 8579–8752 | Storage-backed images |
 | Feedback + rating | 8753–9346 | ticket ids, rate-limit |
 | Ledger AI chat | 9347–9893 | context gatherer + prompts |
@@ -59,7 +58,6 @@ was `index.html` (10,134 lines). Recovery points:
 
 `users/{uid}` · `attendance/{uid}` · `posts` · `communityPosts` · `feedback` ·
 `ratings` · `holidays` · `adminRequests` · `eventOverrides` · `timetableOverrides` ·
-`chessClubMembers` · `chessChallenges` · `chessEvents` · `chessActivity` · `chessGames` ·
 **`studentRoster/{rollNumber}`** (admin-imported via `student_roster_import.py`) ·
 **`userRolls/{rollNumber}`** (create-only bridge: `{uid, username, verifiedAt}`).
 
@@ -93,7 +91,7 @@ inside Firebase Auth.
 * Duplicate query shapes: timetableOverridesCollection filtered the same way in
   4 places; feedback uid-queries in 5 places.
 * Two renderers of the schedule: renderSchedule() DOM vs drawTimetableImage() canvas.
-* Firebase config duplicated in firebase-messaging-sw.js, chess/chess.js, inline
+* Firebase config duplicated in firebase-messaging-sw.js and inline
   script (inherent to SW / classic-script contexts).
 * Global mutable state: 23 let bindings shared across all sections — now single-homed
   in frontend/js/state.js.

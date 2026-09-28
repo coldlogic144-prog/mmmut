@@ -3,7 +3,7 @@ App: Ledger / MMMUT Student ERP (`index.html`) · Firebase project `student-erp-
 
 Everything below is **non-destructive and additive**. No Firebase Auth users are
 ever deleted/recreated, no UIDs/emails/passwords change, and no existing Firestore
-data (attendance, posts, feedback, timetable, syllabus, chess, FCM) is rewritten.
+data (attendance, posts, feedback, timetable, syllabus, FCM) is rewritten.
 
 ---
 
@@ -11,7 +11,7 @@ data (attendance, posts, feedback, timetable, syllabus, chess, FCM) is rewritten
 
 | Piece | Where |
 |---|---|
-| Master switches `ROLL_MIGRATION_ENABLED` / `ROLL_MIGRATION_TEST_MODE` / `ROLL_MIGRATION_TEST_USERS` | near top of the inline script (after `chessGames` collection) |
+| Master switches `ROLL_MIGRATION_ENABLED` / `ROLL_MIGRATION_TEST_MODE` / `ROLL_MIGRATION_TEST_USERS` | near top of the inline script (feature flags section) |
 | **Hard verification gate** — blocks ALL app functionality until the roll is verified; **non-dismissible** (no ✕, no “Skip for now”) | `#migrationModal` (after the profile modal); the app stays `display:none` via `enforceRollGate()` until `finalizeRollVerification()` unlocks it |
 | Gate logic `enforceRollGate()` / `verifyRollNumber()`, identity auto-assign `rosterBranchToId()` / `finalizeRollVerification()`, state helper `setMigrationState()` | before the NOTIFICATION section |
 | Roll-number login — **two explicit options** in `handleLogin()` | segmented “Username / Roll Number” toggle (`#loginMethodUser`, `#loginMethodRoll`); the roll path resolves `userRolls/{roll}` → existing account |
@@ -121,4 +121,4 @@ rules are untouched; only the two new collections get rules.
   the code reads generically from `studentRoster`.
 - No Cloud Function / Backend is required — the mapping is held in `userRolls` and
   login still goes through normal Firebase Auth email/password.
-- App Check, Firebase AI, FCM (service worker), and the chess module are not changed.
+- App Check, Firebase AI, and FCM (service worker) are not changed.

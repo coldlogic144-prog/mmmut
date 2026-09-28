@@ -21,13 +21,15 @@
             posts.forEach(p => {
                 const date = p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
                     'en-IN', { day: 'numeric', month: 'short' }) : '—';
+                const title = escapeHtml(p.title || '');
+                const content = escapeHtml(p.content || '');
                 html += `
               <div class="post-item ${p.pinned ? 'pinned' : ''}" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--paper-line);">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="post-title" style="font-size:13px;font-weight:600;">${p.title} ${p.pinned ? '📌' : ''}</span>
-                  <span style="font-size:10px;color:var(--ink-soft);">${date}</span>
+                  <span class="post-title" style="font-size:13px;font-weight:600;">${title} ${p.pinned ? '📌' : ''}</span>
+                  <span style="font-size:10px;color:var(--ink-soft);">${escapeHtml(date)}</span>
                 </div>
-                <div class="post-content" style="font-size:12px;margin-top:2px;color:var(--ink-soft);">${p.content}</div>
+                <div class="post-content" style="font-size:12px;margin-top:2px;color:var(--ink-soft);">${content}</div>
               </div>
             `;
             });
@@ -564,7 +566,3 @@
 
             container.innerHTML = html;
         }
-
-        // ============================================================
-        // ========== CHESS CLUB ======================================
-        // ============================================================

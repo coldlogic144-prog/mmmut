@@ -24,12 +24,14 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import secrets
 import time
 from typing import Any, Dict, Tuple
 
 from flask import Blueprint, jsonify, request
 
+from ..extensions import limiter
 from ..utils.responses import fail, ok
 
 logger = logging.getLogger(__name__)
@@ -41,10 +43,15 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "mmmut_erp_bot").strip().lstrip("@")
 TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
 TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "").strip()
+# No hardcoded invite fallback: must come from env or generated via Bot API.
 TELEGRAM_CHANNEL_INVITE_LINK = os.environ.get(
     "TELEGRAM_CHANNEL_INVITE_LINK",
-    "https://t.me/+Hx9BkNjz58YwZjY9"
+    ""
 ).strip()
+
+UID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+MAX_PENDING_TOKENS = 10000
+SIMULATE_ENABLED = os.environ.get("ENABLE_TELEGRAM_SIMULATE", "").lower() in ("1", "true", "yes")
 
 FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "AIzaSyDMLvLIZkPFO5nsVQBr2IA-8BRB5Hzb3Xo").strip()
 FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "student-erp-77605").strip()
@@ -64,6 +71,15 @@ def _clean_expired_tokens() -> None:
     expired = [t for t, data in PENDING_TOKENS.items() if now - data["created_at"] > TOKEN_EXPIRY_SECONDS]
     for t in expired:
         PENDING_TOKENS.pop(t, None)
+    # Bound memory: evict oldest first.
+    if len(PENDING_TOKENS) > MAX_PENDING_TOKENS:
+        oldest = sorted(PENDING_TOKENS.items(), key=lambda kv: kv[1].get("created_at", 0))
+        for t, _ in oldest[: len(PENDING_TOKENS) - MAX_PENDING_TOKENS]:
+            PENDING_TOKENS.pop(t, None)
+
+
+def _valid_uid(uid: str) -> bool:
+    return bool(uid and UID_RE.match(uid))
 
 
 def _post_json(url: str, payload: Dict[str, Any], headers: Dict[str, str] | None = None, timeout: int = 10) -> Dict[str, Any]:
@@ -115,15 +131,13 @@ def verify_firebase_id_token(expected_uid: str | None = None) -> Tuple[bool, str
     Returns:
         (is_valid: bool, authenticated_uid: str | None, error_message: str | None)
     """
-    # Allow test environments to bypass verification if explicitly configured
-    if os.environ.get("FLASK_ENV") == "testing" or os.environ.get("FIREBASE_AUTH_DISABLED") == "true":
+    # Test harness bypass only: explicit FLASK_ENV=testing. No production bypass,
+    # no local-dev auto-auth, no FIREBASE_AUTH_DISABLED backdoor.
+    if os.environ.get("FLASK_ENV") == "testing":
         return True, expected_uid or "test_uid", None
 
     auth_header = request.headers.get("Authorization", "").strip()
     if not auth_header:
-        # If running in local development mode without token, log warning
-        if not TELEGRAM_BOT_TOKEN and not os.environ.get("REQUIRE_FIREBASE_AUTH"):
-            return True, expected_uid or "local_dev_user", None
         return False, None, "Missing Authorization header with Firebase Auth ID token"
 
     parts = auth_header.split(maxsplit=1)
@@ -168,8 +182,12 @@ def telegram_config():
 
 
 @bp.get("/channel-invite")
+@limiter.limit("30 per minute")
 def channel_invite():
-    """Return the private channel invite link configured on the server."""
+    """Return the private channel invite link. Requires Firebase Auth."""
+    valid, auth_uid, err = verify_firebase_id_token()
+    if not valid:
+        return fail(err or "Unauthorized", 401)
     invite_link = TELEGRAM_CHANNEL_INVITE_LINK
 
     # If no static link is defined, attempt to generate one with creates_join_request=True
@@ -198,11 +216,11 @@ def channel_invite():
     return ok({
         "inviteLink": invite_link,
         "channelName": "Roomhub",
-        "channelId": TELEGRAM_CHANNEL_ID or "-1003908239361"
     })
 
 
 @bp.post("/create-token")
+@limiter.limit("10 per minute")
 def create_linking_token():
     """Generate a single-use deep-link token to link ERP user to Telegram.
     
@@ -211,8 +229,8 @@ def create_linking_token():
     _clean_expired_tokens()
     data = request.get_json(silent=True) or {}
     uid = str(data.get("uid", "")).strip()
-    if not uid:
-        return fail("Missing required field: uid", 400)
+    if not uid or not _valid_uid(uid):
+        return fail("Missing or invalid field: uid", 400)
 
     # Verify caller's Firebase Auth ID token
     valid, auth_uid, err = verify_firebase_id_token(expected_uid=uid)
@@ -238,21 +256,29 @@ def create_linking_token():
 
 
 @bp.get("/token-status/<token>")
+@limiter.limit("60 per minute")
 def check_token_status(token: str):
-    """Check if the student has started the bot with this token."""
+    """Check if the student has started the bot with this token.
+
+    Requires Firebase Auth; only the token owner may poll it. Minimal fields
+    returned to avoid UID/telegram-ID enumeration.
+    """
     _clean_expired_tokens()
+    token = (token or "")[:128]
     entry = PENDING_TOKENS.get(token)
     if not entry:
         return fail("Token expired or not found", 404)
 
+    valid, auth_uid, err = verify_firebase_id_token(expected_uid=entry.get("uid"))
+    if not valid:
+        return fail(err or "Unauthorized", 401)
+
     is_linked = entry["status"] == "LINKED"
-    return ok({
-        "token": token,
-        "linked": is_linked,
-        "uid": entry["uid"],
-        "telegramUserId": entry.get("telegramUserId"),
-        "telegramUsername": entry.get("telegramUsername"),
-    })
+    resp = {"token": token, "linked": is_linked}
+    if is_linked:
+        # Single-use: consume shortly after first successful poll.
+        PENDING_TOKENS.pop(token, None)
+    return ok(resp)
 
 
 @bp.post("/webhook")
@@ -267,12 +293,14 @@ def telegram_webhook():
     - chat_join_request : Marks JOIN_REQUEST_PENDING (NEVER auto-approves).
     - chat_member : Updates membership status if active member.
     """
-    # 1. Validate Webhook Secret Header
-    if TELEGRAM_WEBHOOK_SECRET:
-        header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "").strip()
-        if not header_secret or not secrets.compare_digest(header_secret, TELEGRAM_WEBHOOK_SECRET):
-            logger.warning("Unauthorized webhook request: secret token mismatch.")
-            return fail("Unauthorized: invalid secret token", 401)
+    # 1. Validate Webhook Secret Header (mandatory in production).
+    if not TELEGRAM_WEBHOOK_SECRET:
+        logger.error("Webhook called but TELEGRAM_WEBHOOK_SECRET is not configured.")
+        return fail("Webhook secret not configured", 503)
+    header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "").strip()
+    if not header_secret or not secrets.compare_digest(header_secret, TELEGRAM_WEBHOOK_SECRET):
+        logger.warning("Unauthorized webhook request: secret token mismatch.")
+        return fail("Unauthorized: invalid secret token", 401)
 
     update = request.get_json(silent=True) or {}
     logger.info("Received Telegram webhook update ID: %s", update.get("update_id"))
@@ -286,10 +314,12 @@ def telegram_webhook():
 
         if text.startswith("/start"):
             parts = text.split(maxsplit=1)
-            token = parts[1].strip() if len(parts) > 1 else ""
+            token = parts[1].strip()[:128] if len(parts) > 1 else ""
 
             if token and token in PENDING_TOKENS:
                 entry = PENDING_TOKENS[token]
+                if entry.get("status") == "LINKED":
+                    return ok({"status": "already_linked"})
                 uid = entry["uid"]
                 telegram_user_id = str(from_user.get("id", ""))
                 telegram_username = from_user.get("username", "")
@@ -359,28 +389,23 @@ def telegram_webhook():
 
 
 @bp.post("/check-membership")
+@limiter.limit("30 per minute")
 def check_membership():
     """Verify if the student is currently an active member of the private channel.
 
-    Protected by Firebase Auth ID Token verification.
-
-    CORRECTION ENFORCEMENT:
-    - If getChatMember returns member, administrator, or creator -> CHANNEL_APPROVED
-    - Otherwise -> REMAIN JOIN_REQUEST_PENDING (do not falsely mark CHANNEL_REJECTED)
-    - Only mark CHANNEL_REJECTED if there is explicit proof of rejection/ban.
+    Always requires Firebase Auth for the claimed uid. telegramUserId-only
+    lookups are rejected to prevent enumeration.
     """
     data = request.get_json(silent=True) or {}
     uid = str(data.get("uid", "")).strip()
-    telegram_user_id = str(data.get("telegramUserId", "")).strip()
+    telegram_user_id = str(data.get("telegramUserId", "")).strip()[:64]
 
-    if not uid and not telegram_user_id:
-        return fail("Missing required field: uid or telegramUserId", 400)
+    if not uid or not _valid_uid(uid):
+        return fail("Missing or invalid field: uid", 400)
 
-    # Verify caller's Firebase Auth ID token if uid is supplied
-    if uid:
-        valid, auth_uid, err = verify_firebase_id_token(expected_uid=uid)
-        if not valid:
-            return fail(err or "Unauthorized: Invalid Firebase ID token", 401)
+    valid, auth_uid, err = verify_firebase_id_token(expected_uid=uid)
+    if not valid:
+        return fail(err or "Unauthorized: Invalid Firebase ID token", 401)
 
     # Locate user in cache if telegram_user_id not provided
     if not telegram_user_id and uid in USER_TELEGRAM_CACHE:
@@ -447,18 +472,22 @@ def check_membership():
 
 
 @bp.get("/verify-setup")
+@limiter.limit("10 per minute")
 def verify_setup():
-    """Verify live Telegram Bot configuration, webhook, and channel admin permissions."""
+    """Verify live Telegram Bot configuration. Requires Firebase Auth.
+
+    Returns only boolean readiness flags, never raw channel/bot IDs.
+    """
+    valid, auth_uid, err = verify_firebase_id_token()
+    if not valid:
+        return fail(err or "Unauthorized", 401)
     report: Dict[str, Any] = {
         "timestamp": time.time(),
         "environment": {
-            "TELEGRAM_BOT_TOKEN_SET": bool(TELEGRAM_BOT_TOKEN),
-            "TELEGRAM_BOT_TOKEN_PREVIEW": "configured" if TELEGRAM_BOT_TOKEN else "MISSING",
-            "TELEGRAM_CHANNEL_ID_SET": bool(TELEGRAM_CHANNEL_ID),
-            "TELEGRAM_CHANNEL_ID": TELEGRAM_CHANNEL_ID or "MISSING",
-            "TELEGRAM_BOT_USERNAME": TELEGRAM_BOT_USERNAME,
-            "TELEGRAM_WEBHOOK_SECRET_SET": bool(TELEGRAM_WEBHOOK_SECRET),
-            "TELEGRAM_CHANNEL_INVITE_LINK_SET": bool(TELEGRAM_CHANNEL_INVITE_LINK),
+            "botConfigured": bool(TELEGRAM_BOT_TOKEN),
+            "channelConfigured": bool(TELEGRAM_CHANNEL_ID),
+            "webhookSecretConfigured": bool(TELEGRAM_WEBHOOK_SECRET),
+            "inviteLinkConfigured": bool(TELEGRAM_CHANNEL_INVITE_LINK),
         },
         "bot": {"status": "unverified"},
         "webhook": {"status": "unverified"},
@@ -492,7 +521,7 @@ def verify_setup():
             report["bot"] = {"status": "failed", "error": err}
             action_items.append(f"Verify TELEGRAM_BOT_TOKEN validity with @BotFather: {err}")
 
-    # 2. Webhook check
+    # 2. Webhook check (URL redacted to avoid leaking infra details)
     if TELEGRAM_BOT_TOKEN:
         wh_res = call_telegram_api("getWebhookInfo")
         if wh_res.get("ok"):
@@ -500,36 +529,29 @@ def verify_setup():
             wh_url = wh_info.get("url", "")
             report["webhook"] = {
                 "status": "configured" if wh_url else "not_set",
-                "url": wh_url,
+                "configured": bool(wh_url),
+                "pointsToBackend": bool(wh_url.endswith("/api/telegram/webhook")),
                 "pending_update_count": wh_info.get("pending_update_count", 0),
-                "last_error_date": wh_info.get("last_error_date"),
-                "last_error_message": wh_info.get("last_error_message"),
-                "max_connections": wh_info.get("max_connections"),
-                "allowed_updates": wh_info.get("allowed_updates", []),
-                "has_custom_certificate": wh_info.get("has_custom_certificate"),
             }
             if not wh_url:
-                action_items.append("Set Telegram Bot Webhook to https://mmmut-ero-backend.onrender.com/api/telegram/webhook")
+                action_items.append("Set Telegram Bot Webhook to the backend /api/telegram/webhook URL.")
             elif not wh_url.endswith("/api/telegram/webhook"):
-                action_items.append(f"Webhook URL ({wh_url}) does not point to /api/telegram/webhook.")
+                action_items.append("Webhook URL does not point to /api/telegram/webhook.")
         else:
-            report["webhook"] = {"status": "failed", "error": wh_res.get("description")}
+            report["webhook"] = {"status": "failed"}
 
-    # 3. Channel check
+    # 3. Channel check (no raw IDs/titles leaked)
     if not TELEGRAM_CHANNEL_ID:
-        action_items.append("Set TELEGRAM_CHANNEL_ID in Render environment variables (e.g. -1001234567890).")
-        report["channel"]["error"] = "TELEGRAM_CHANNEL_ID is not configured."
+        action_items.append("Set TELEGRAM_CHANNEL_ID in environment variables.")
+        report["channel"]["error"] = "Channel is not configured."
     elif TELEGRAM_BOT_TOKEN:
         # Check chat info
         chat_res = call_telegram_api("getChat", {"chat_id": TELEGRAM_CHANNEL_ID})
         if chat_res.get("ok"):
-            chat_info = chat_res.get("result", {})
-            report["channel"]["chat_title"] = chat_info.get("title")
-            report["channel"]["chat_type"] = chat_info.get("type")
+            report["channel"]["reachable"] = True
         else:
-            chat_err = chat_res.get("description", "Failed to access channel")
-            report["channel"]["error"] = chat_err
-            action_items.append(f"Telegram channel check failed ({chat_err}). Ensure bot has been added to the channel.")
+            report["channel"]["error"] = "Failed to access channel"
+            action_items.append("Telegram channel check failed. Ensure bot has been added to the channel.")
 
         # Check administrators and permissions
         admin_res = call_telegram_api("getChatAdministrators", {"chat_id": TELEGRAM_CHANNEL_ID})
@@ -555,12 +577,10 @@ def verify_setup():
             else:
                 report["channel"]["bot_is_admin"] = False
                 report["channel"]["status"] = "bot_not_admin"
-                action_items.append(f"Bot (@{TELEGRAM_BOT_USERNAME}) is not an administrator of channel {TELEGRAM_CHANNEL_ID}. Add the bot as Channel Administrator.")
+                action_items.append("Bot is not an administrator of the channel. Add the bot as Channel Administrator.")
         else:
-            admin_err = admin_res.get("description", "")
             report["channel"]["status"] = "error"
-            report["channel"]["admin_check_error"] = admin_err
-            action_items.append(f"Could not retrieve channel administrators: {admin_err}")
+            action_items.append("Could not retrieve channel administrators.")
 
     # 4. Webhook secret check
     if not TELEGRAM_WEBHOOK_SECRET:
@@ -575,44 +595,65 @@ def verify_setup():
 
 
 @bp.post("/set-webhook")
+@limiter.limit("5 per minute")
 def set_webhook():
-    """Register the backend webhook URL with Telegram Bot API."""
+    """Register the backend webhook URL with Telegram Bot API.
+
+    Requires Firebase Auth and a server-configured allowlist. Arbitrary
+    webhookUrl values from clients are rejected.
+    """
+    valid, auth_uid, err = verify_firebase_id_token()
+    if not valid:
+        return fail(err or "Unauthorized", 401)
     if not TELEGRAM_BOT_TOKEN:
         return fail("TELEGRAM_BOT_TOKEN is not configured on the server", 400)
+    if not TELEGRAM_WEBHOOK_SECRET:
+        return fail("TELEGRAM_WEBHOOK_SECRET is not configured on the server", 400)
 
     data = request.get_json(silent=True) or {}
-    webhook_url = data.get("webhookUrl") or "https://mmmut-ero-backend.onrender.com/api/telegram/webhook"
-    secret_token = data.get("secretToken") or TELEGRAM_WEBHOOK_SECRET
+    allowed = [u.strip() for u in os.environ.get("TELEGRAM_WEBHOOK_ALLOWLIST", "").split(",") if u.strip()]
+    default_url = (allowed[0] if allowed else "").rstrip("/") + "/api/telegram/webhook" if allowed else ""
+    webhook_url = str(data.get("webhookUrl") or default_url).strip()
+    if not webhook_url or not webhook_url.startswith("https://") or not webhook_url.endswith("/api/telegram/webhook"):
+        return fail("Invalid webhookUrl: must be https and end with /api/telegram/webhook", 400)
+    if allowed and webhook_url not in [a.rstrip("/") + "/api/telegram/webhook" if not a.endswith("/api/telegram/webhook") else a for a in allowed]:
+        # Also accept exact allowlist entries.
+        if webhook_url not in allowed:
+            return fail("webhookUrl is not in the server allowlist", 403)
 
     payload: Dict[str, Any] = {
         "url": webhook_url,
         "allowed_updates": ["message", "chat_join_request", "chat_member"],
         "drop_pending_updates": False,
+        "secret_token": TELEGRAM_WEBHOOK_SECRET,
     }
-    if secret_token:
-        payload["secret_token"] = secret_token
 
     res = call_telegram_api("setWebhook", payload)
     if res.get("ok"):
         return ok({
             "message": "Webhook successfully registered with Telegram Bot API",
-            "url": webhook_url,
-            "secret_configured": bool(secret_token),
+            "configured": True,
             "allowed_updates": payload["allowed_updates"],
-            "telegram_response": res
         })
     else:
-        return fail(f"Telegram setWebhook failed: {res.get('description', 'Unknown error')}", 400)
+        return fail("Telegram setWebhook failed", 400)
 
 
 @bp.post("/simulate-link")
 def simulate_link():
-    """Development / Testing endpoint to simulate a user completing the bot /start flow."""
+    """Development-only endpoint. Disabled unless ENABLE_TELEGRAM_SIMULATE=true."""
+    if not SIMULATE_ENABLED or os.environ.get("FLASK_ENV") == "production":
+        return fail("Not found", 404)
+    valid, auth_uid, err = verify_firebase_id_token()
+    if not valid:
+        return fail(err or "Unauthorized", 401)
     data = request.get_json(silent=True) or {}
-    token = data.get("token", "")
+    token = str(data.get("token", ""))[:128]
     entry = PENDING_TOKENS.get(token)
     if not entry:
         return fail("Token not found or expired", 404)
+    if entry.get("uid") != auth_uid:
+        return fail("Token does not belong to this user", 403)
 
     uid = entry["uid"]
     fake_tg_id = str(data.get("telegramUserId") or "123456789")
@@ -640,9 +681,16 @@ def simulate_link():
 
 @bp.post("/simulate-channel-action")
 def simulate_channel_action():
-    """Development / Testing endpoint to simulate channel admin approve/reject."""
+    """Development-only endpoint. Disabled unless ENABLE_TELEGRAM_SIMULATE=true."""
+    if not SIMULATE_ENABLED or os.environ.get("FLASK_ENV") == "production":
+        return fail("Not found", 404)
+    valid, auth_uid, err = verify_firebase_id_token()
+    if not valid:
+        return fail(err or "Unauthorized", 401)
     data = request.get_json(silent=True) or {}
-    uid = data.get("uid", "")
+    uid = str(data.get("uid", ""))
+    if uid != auth_uid:
+        return fail("Can only simulate your own uid", 403)
     action = data.get("action", "")  # "approve" or "reject" or "request"
 
     if uid not in USER_TELEGRAM_CACHE:

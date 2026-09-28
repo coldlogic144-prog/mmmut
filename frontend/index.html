@@ -187,10 +187,6 @@
                         <span class="icon">💬</span>
                         <span>Help &amp; Feedback</span>
                     </button>
-                    <button class="sidebar-link" onclick="toggleChessClub(true)">
-                        <span class="icon">♟️</span>
-                        <span>Chess Club</span>
-                    </button>
                     <button class="sidebar-link" id="sidebarTelegramBtn" onclick="toggleTelegramSection(true)">
                         <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;color:#0088cc;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -300,7 +296,6 @@
                         <div style="display:none !important;" aria-hidden="true">
                             <a href="https://www.mediafire.com/file/q924finlss1x9mz/app-debug.apk/file" target="_blank" class="btn-download-app">📱 APK</a>
                             <button class="btn-topbar-telegram" onclick="toggleTelegramSection(true)">Telegram</button>
-                            <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
                             <button class="btn-ghost" id="pushNotifBtn" onclick="enablePushNotifications()">🔔 Notifications</button>
                         </div>
                     </div>
@@ -345,13 +340,6 @@
                                 <span class="qa-sub">Private Community</span>
                             </div>
                         </div>
-                        <a class="qa-item" href="chess/chess.html" style="text-decoration:none;">
-                            <span class="qa-icon">♟️</span>
-                            <div class="qa-text">
-                                <span class="qa-title">Chess Club</span>
-                                <span class="qa-sub">Campus Matches</span>
-                            </div>
-                        </a>
                         <div class="qa-item" onclick="toggleLedgerSection(true)">
                             <span class="qa-icon" style="color:var(--primary);display:inline-flex;">📑</span>
                             <div class="qa-text">
@@ -546,220 +534,6 @@
                 </main>
 
 <!-- ============================================================ -->
-    <!-- CHESS CLUB VIEW                                               -->
-    <!-- ============================================================ -->
-    <div id="chessClubView">
-        <div
-            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-            <div>
-                <h1 style="font-size:26px; font-weight:800;">♟️ Chess Club</h1>
-                <p style="color:var(--text-muted); font-size:14px; margin-top:2px;">Think. Play. Improve. Campus Chess Community</p>
-            </div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <a href="chess/chess.html" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px;">
-                    <span>♟️ Open Live Chess Arena</span>
-                </a>
-                <button class="btn-secondary" onclick="toggleChessClub(false)">← Back to MMMUT ERP</button>
-            </div>
-        </div>
-
-        <div class="chess-tabs" id="chessTabs">
-            <button class="tab-btn active" data-tab="home" onclick="switchChessTab('home')">🏠 Home</button>
-            <button class="tab-btn" data-tab="members" onclick="switchChessTab('members')">👥 Members</button>
-            <button class="tab-btn" data-tab="leaderboard" onclick="switchChessTab('leaderboard')">🏆
-                Leaderboard</button>
-            <button class="tab-btn" data-tab="events" onclick="switchChessTab('events')">📅 Events</button>
-            <button class="tab-btn" data-tab="challenges" onclick="switchChessTab('challenges')">⚔️ Challenges</button>
-            <button class="tab-btn" data-tab="games" onclick="switchChessTab('games')">🎮 My Games</button>
-            <button class="tab-btn" data-tab="activity" onclick="switchChessTab('activity')">📜 Activity</button>
-        </div>
-
-        <!-- Home -->
-        <div id="chessTab-home" class="chess-tab-content">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">♟️ Chess Club</div>
-                        <div class="card-title">Welcome to the Chess Club</div>
-                    </div>
-                </div>
-                <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
-                    <div style="flex:1; min-width:200px;">
-                        <p style="font-size:14px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
-                            A community for chess enthusiasts at MMMUT. Join, challenge others, track your rating, and
-                            participate in events.
-                        </p>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <a href="chess/chess.html" class="btn-primary" style="text-decoration:none; width:auto; padding:9px 20px; display:inline-flex; align-items:center; gap:6px;">
-                                <span>♟️ Play Live Matches</span>
-                            </a>
-                            <button class="btn-secondary" id="chessJoinBtn" style="width:auto; padding:9px 20px;"
-                                onclick="handleChessJoin()">Join Club</button>
-                            <button class="btn-danger" id="chessLeaveBtn"
-                                style="width:auto; padding:9px 20px; display:none;" onclick="handleChessLeave()">Leave
-                                Club</button>
-                        </div>
-                        <div style="margin-top:16px; font-size:13.5px; font-weight:600;">
-                            <span>👥 <span id="chessMemberCount">0</span> members</span>
-                        </div>
-                    </div>
-                    <div
-                        style="flex:1; min-width:200px; background:var(--surface-subtle); border-radius:var(--radius-sm); padding:16px; border:1px solid var(--surface-border);">
-                        <div style="font-weight:700; margin-bottom:8px; font-size:13.5px;">🏆 Upcoming Tournament</div>
-                        <div id="chessNextEvent">
-                            <div style="font-size:13px; color:var(--text-muted);">No upcoming events.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">🏅 Leaderboard</div>
-                        <div class="card-title">Top 3 Players</div>
-                    </div>
-                    <button class="btn-secondary" style="padding:6px 14px; font-size:12px;"
-                        onclick="switchChessTab('leaderboard')">View all</button>
-                </div>
-                <div id="chessLeaderboardPreview">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Members -->
-        <div id="chessTab-members" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">👥 Members</div>
-                        <div class="card-title">All Club Members</div>
-                    </div>
-                    <span id="chessMemberCount2" style="font-size:13px; color:var(--text-muted); font-weight:600;">0
-                        members</span>
-                </div>
-                <div id="chessMembersList">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Leaderboard -->
-        <div id="chessTab-leaderboard" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">🏆 Leaderboard</div>
-                        <div class="card-title">Club Rankings</div>
-                    </div>
-                </div>
-                <div id="chessLeaderboardFull">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Events -->
-        <div id="chessTab-events" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">📅 Events</div>
-                        <div class="card-title">Upcoming &amp; Past</div>
-                    </div>
-                    <button class="btn-primary" id="chessEventCreateBtn"
-                        style="padding:6px 14px; font-size:12px; width:auto; display:none;"
-                        onclick="openChessEventForm()">➕ New Event</button>
-                </div>
-                <div id="chessEventsList">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-            <!-- Event creation form (admin) -->
-            <div id="chessEventForm" style="display:none; margin-top:20px;">
-                <div class="chess-card">
-                    <div class="card-head">
-                        <div>
-                            <div class="card-eyebrow">✏️ Create Event</div>
-                            <div class="card-title">New Chess Event</div>
-                        </div>
-                        <button class="btn-secondary" onclick="closeChessEventForm()">Cancel</button>
-                    </div>
-                    <form onsubmit="submitChessEvent(event)">
-                        <div class="field"><label>Title</label><input id="chessEventTitle"
-                                placeholder="e.g. Sunday Blitz" required /></div>
-                        <div class="field-row">
-                            <div class="field"><label>Date</label><input type="date" id="chessEventDate" required />
-                            </div>
-                            <div class="field"><label>Time</label><input type="time" id="chessEventTime" required />
-                            </div>
-                        </div>
-                        <div class="field"><label>Time Control</label><input id="chessEventTimeControl"
-                                placeholder="e.g. 10+5" /></div>
-                        <div class="field"><label>Description</label><textarea id="chessEventDesc" rows="2"
-                                placeholder="Event description"></textarea></div>
-                        <button type="submit" class="btn-primary" style="width:auto; padding:10px 24px;">Create
-                            Event</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Challenges -->
-        <div id="chessTab-challenges" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">⚔️ Challenges</div>
-                        <div class="card-title">Challenge a Member</div>
-                    </div>
-                </div>
-                <div style="margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                    <label style="font-weight:600; font-size:13.5px;">Select opponent:</label>
-                    <select id="chessChallengeOpponent"
-                        style="padding:8px 12px; border-radius:var(--radius-xs); border:1px solid var(--surface-border); background:#fff; font-size:13px;"></select>
-                    <button class="btn-primary" style="width:auto; padding:8px 20px;"
-                        onclick="sendChessChallenge()">Challenge</button>
-                </div>
-                <div id="chessChallengesList">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- My Games -->
-        <div id="chessTab-games" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">🎮 My Games</div>
-                        <div class="card-title">Game History</div>
-                    </div>
-                </div>
-                <div id="chessGamesList">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Activity -->
-        <div id="chessTab-activity" class="chess-tab-content" style="display:none;">
-            <div class="chess-card">
-                <div class="card-head">
-                    <div>
-                        <div class="card-eyebrow">📜 Activity</div>
-                        <div class="card-title">Recent Club Activity</div>
-                    </div>
-                </div>
-                <div id="chessActivityList">
-                    <div style="padding:12px 0; color:var(--text-muted);">Loading...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================================ -->
     <!-- THE LEDGER (SYLLABUS TRACKER) VIEW                           -->
     <!-- ============================================================ -->
     <div id="ledgerView" style="display:none;">
@@ -1403,11 +1177,9 @@
         window.scrollToSection = function (id) {
             window.toggleSidebar(false);
             const tgView = document.getElementById('telegramView');
-            const chessView = document.getElementById('chessClubView');
             const ledgerView = document.getElementById('ledgerView');
             const mainShell = document.getElementById('mainShell');
             if (tgView) tgView.style.display = 'none';
-            if (chessView) chessView.style.display = 'none';
             if (ledgerView) ledgerView.style.display = 'none';
             if (mainShell) mainShell.style.display = 'block';
 

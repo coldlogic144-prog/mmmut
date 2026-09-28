@@ -180,13 +180,11 @@
             const ledgerView = document.getElementById('ledgerView');
             const mainShell = document.getElementById('mainShell');
             const telegramView = document.getElementById('telegramView');
-            const chessView = document.getElementById('chessClubView');
             if (!ledgerView) return;
 
             if (show) {
                 if (mainShell) mainShell.style.display = 'none';
                 if (telegramView) telegramView.style.display = 'none';
-                if (chessView) chessView.style.display = 'none';
                 ledgerView.style.display = 'block';
 
                 try { sessionStorage.setItem('mmmut_active_view', 'ledger'); } catch (_) {}

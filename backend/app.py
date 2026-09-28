@@ -23,15 +23,32 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from .extensions import limiter
+
 
 def create_app() -> Flask:
     app = Flask(__name__)
 
-    origins = [o.strip() for o in os.environ.get(
-        "API_ALLOW_ORIGIN", "*").split(",") if o.strip()]
-    # supports_credentials stays False: the API is public read-only JSON.
-    CORS(app, origins=origins, supports_credentials=False,
+    # Lock down CORS: empty/ "*" is rejected in production. Set API_ALLOW_ORIGIN
+    # to the exact GitHub Pages origin (see render.yaml).
+    raw_origins = os.environ.get("API_ALLOW_ORIGIN", "").strip()
+    if not raw_origins or raw_origins == "*":
+        origins = []
+    else:
+        origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+    # supports_credentials stays False: the API uses Bearer tokens, not cookies.
+    CORS(app, origins=origins or ["http://127.0.0.1:5000"],
+         supports_credentials=False,
          allow_headers=["Content-Type", "Authorization", "X-Telegram-Bot-Api-Secret-Token"])
+
+    limiter.init_app(app)
+
+    @app.after_request
+    def _security_headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "DENY")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        return resp
 
     from .routes.roster import bp as roster_bp
     app.register_blueprint(roster_bp)

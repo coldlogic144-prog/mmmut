@@ -9,7 +9,6 @@ import AttendanceWidget from "@/components/AttendanceWidget";
 import Announcements from "@/components/Announcements";
 import SyllabusWidget from "@/components/SyllabusWidget";
 import CalendarWidget from "@/components/CalendarWidget";
-import ChessClub from "@/components/ChessClub";
 import CommunityBoard from "@/components/CommunityBoard";
 import Assistant from "@/components/Assistant";
 import GradientText from "@/components/GradientText";
@@ -24,7 +23,6 @@ import {
 const TITLES: Record<string, string> = {
   "": "Your semester, at a glance",
   syllabus: "Syllabus & Curriculum",
-  chess: "Chess Club",
   community: "Community & Feedback",
   calendar: "Academic Calendar",
 };
@@ -116,7 +114,6 @@ export default function DashboardShell({ tab }: { tab: string }) {
               transition={{ duration: 0.25 }}
             >
               {tab === "syllabus" && <SyllabusWidget />}
-              {tab === "chess" && <ChessClub />}
               {tab === "community" && <CommunityBoard />}
               {tab === "calendar" && <CalendarWidget />}
               {(tab === "" || tab === undefined) && (

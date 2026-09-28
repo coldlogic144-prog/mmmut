@@ -107,12 +107,15 @@
                         '<th style="padding:9px 8px;text-align:left;">Actions</th></tr></thead><tbody>';
                     needReview.forEach(u => {
                         const roll = u.rollNumber || u.pendingRollNumber || '';
+                        const safeUid = String(u.id || '').replace(/[^A-Za-z0-9_-]/g, '');
+                        const safeRoll = String(roll || '').replace(/[^0-9]/g, '').slice(0, 12);
+                        const safeUsername = escapeHtml(u.username || '');
                         const reasons = u.migrationReviewReason ? ' <small style="color:var(--brick);">(' + escapeHtml(u.migrationReviewReason) + ')</small>' : '';
                         const actions = (u.migrationStatus === 'verified')
                             ? '<span style="color:var(--moss);">✓ verified</span>'
-                            : '<button class="btn-primary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminApproveRoll(\'' + u.id + '\',\'' + escapeHtml(u.username || '') + '\',\'' + roll + '\')">Approve</button>' +
-                              '<button class="btn-secondary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminRejectRoll(\'' + u.id + '\',\'' + roll + '\')">Reject</button>' +
-                              '<button class="btn-secondary" style="margin:0;padding:5px 10px;font-size:12px;" onclick="adminManualRoll(\'' + u.id + '\')">Review</button>';
+                            : '<button class="btn-primary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" data-roll-act="approve" data-uid="' + safeUid + '" data-username="' + safeUsername + '" data-roll="' + safeRoll + '">Approve</button>' +
+                              '<button class="btn-secondary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" data-roll-act="reject" data-uid="' + safeUid + '" data-roll="' + safeRoll + '">Reject</button>' +
+                              '<button class="btn-secondary" style="margin:0;padding:5px 10px;font-size:12px;" data-roll-act="review" data-uid="' + safeUid + '">Review</button>';
                         html += '<tr style="border-bottom:1px solid var(--paper-line);">' +
                             '<td style="padding:8px;">' + escapeHtml(u.name || '—') + '</td>' +
                             '<td style="padding:8px;" class="mono">' + escapeHtml(u.username || '—') + '</td>' +
@@ -127,9 +130,19 @@
                     '<label style="font-weight:600;font-size:13px;">Look up a roll number (roster + current claim)</label>' +
                     '<div style="display:flex;gap:8px;margin-top:8px;">' +
                     '<input id="adminRollLookupInput" placeholder="2026011001" maxlength="12" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--paper-line);font-size:13px;" />' +
-                    '<button class="btn-primary" style="margin:0;padding:8px 18px;" onclick="adminRollLookup()">Look up</button>' +
+                    '<button class="btn-primary" style="margin:0;padding:8px 18px;" id="adminRollLookupBtn">Look up</button>' +
                     '</div><div id="adminRollLookupResult" style="margin-top:10px;font-size:13px;line-height:1.6;"></div></div>';
                 el.innerHTML = html;
+                el.querySelectorAll('button[data-roll-act]').forEach(b => {
+                    b.addEventListener('click', () => {
+                        const uid = b.dataset.uid, roll = b.dataset.roll;
+                        if (b.dataset.rollAct === 'approve') adminApproveRoll(uid, b.dataset.username || '', roll);
+                        else if (b.dataset.rollAct === 'reject') adminRejectRoll(uid, roll);
+                        else adminManualRoll(uid);
+                    });
+                });
+                const lookupBtn = el.querySelector('#adminRollLookupBtn');
+                if (lookupBtn) lookupBtn.addEventListener('click', adminRollLookup);
             } catch (e) {
                 el.innerHTML = '<div class="empty-note">Error loading roll verification: ' + escapeHtml(e.message) + '</div>';
             }

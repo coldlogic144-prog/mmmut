@@ -16,6 +16,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // Privileged fields that owners may never self-write.
+    function noPrivilegedEscalation() {
+      return !request.resource.data.keys().hasAny(
+        ['isAdmin', 'rollNumberVerified', 'migrationStatus', 'rollNumber', 'migrationReviewReason', 'rollClaimedAt']
+      ) || isAdmin();
+    }
+
     // ============================================================
     // USERS COLLECTION: User profile documents
     // Path: /users/{uid}
@@ -25,11 +32,23 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       // SIGNUP FIX: An authenticated user can create their own profile during signup.
-      // Must be signed in, and document ID must match the authenticated UID.
-      allow create: if isOwner(uid);
+      // Must be signed in, document ID must match UID, and privileged flags
+      // can never be set at creation (isAdmin always false on create).
+      allow create: if isOwner(uid)
+        && request.resource.data.username is string
+        && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false)
+        && (!request.resource.data.keys().hasAny(['rollNumberVerified']) || request.resource.data.rollNumberVerified == false);
 
-      // A user can update their own profile, or an admin can update it
-      allow update: if isOwner(uid) || isAdmin();
+      // Owner may update only safe profile fields; privileged fields need admin.
+      // Admins may update anything (roll verification workflow).
+      allow update: if isAdmin() || (
+        isOwner(uid)
+        && request.resource.data.uid == null
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(
+          ['name', 'branchId', 'section', 'hostel', 'gender', 'adminRequested',
+           'pendingRollNumber', 'lastReadPosts', 'updatedAt']
+        )
+      );
 
       // Only admins can delete user profiles
       allow delete: if isAdmin();
@@ -89,8 +108,15 @@ service cloud.firestore {
     // ============================================================
     // OTHER APP COLLECTIONS
     // ============================================================
+    // Admin requests: any signed-in user may create their own pending request;
+    // only admins may read all / update / delete. Client queries by uid are
+    // still allowed via owner check on document data.
     match /adminRequests/{requestId} {
-      allow read, write: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update, delete: if isAdmin();
     }
 
     match /posts/{postId} {
@@ -113,36 +139,42 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Feedback: owner create, owner read own, admin read all, admin reply/status,
+    // owner delete only while open.
     match /feedback/{id} {
-      allow read, write: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if isAdmin() || (
+        isSignedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == resource.data.status
+        && !request.resource.data.keys().hasAny(['adminReply', 'adminReplyAt', 'repliedBy', 'status'])
+      );
+      allow delete: if isAdmin() || (
+        isSignedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'open'
+      );
     }
 
+    // Ratings: one doc per user; owner-only write with uid match.
     match /ratings/{id} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isSignedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid;
     }
 
+    // Community posts: admin-only create/delete; any signed-in may read;
+    // likes array may be updated by any signed-in user but nothing else.
     match /communityPosts/{id} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /chessClubMembers/{uid} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /chessChallenges/{id} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /chessEvents/{id} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /chessActivity/{id} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /chessGames/{id} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['likes'])
+      );
     }
 
     match /studentRoster/{roll} {
@@ -150,9 +182,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Roll claims: public readability retained for verification UX, but claims
+    // are create-only and immutable (no overwrite/steal).
     match /userRolls/{roll} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.rollNumber == roll;
+      allow update, delete: if false;
     }
   }
 }

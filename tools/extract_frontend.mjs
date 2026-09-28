@@ -42,7 +42,6 @@ const SECTIONS = [
   SEC('70_notif_badge_admin_request.js', 'Notification badge, posts-read, admin role request, admin roll-verify tab', [[6647, 6864]]),
   SEC('75_admin_panel.js', 'Admin dashboard/users/timetable-editor/calendar/holidays/posts/requests', [[6865, 7450]]),
   SEC('80_feed_attendance_events_image_history.js', 'Posts feed, topbar, schedule render+marking, stats, events, canvas image, history', [[7451, 8012]]),
-  SEC('85_chess_club.js', 'Chess club manager (members/events/challenges/games/activity)', [[8013, 8578]]),
   SEC('90_community_feedback_rating.js', 'Community posts, feedback tickets, ratings', [[8579, 9346]]),
   SEC('95_ledger_ai_chat.js', 'Ledger AI chat UI, context builder, prompts', [[9347, 9893]]),
   SEC('99_boot_window_bindings.js', 'boot(), auth-state router, window.* bindings for inline onclick, DOMContentLoaded', [[9894, 10132]]),
@@ -93,7 +92,7 @@ const CSS_FILES = [
   ['css/base.css', 8, 102, 'Design tokens (:root), resets, typography, loading screen'],
   ['css/layout.css', 103, 551, 'Auth screens, app shell, topbar, shell grid'],
   ['css/components.css', 552, 1995, 'Cards, rail, stats, admin panel, modals, toast, history'],
-  ['css/pages.css', 1996, 2657, 'Ledger AI chat + Chess club styles'],
+  ['css/pages.css', 1996, 2657, 'Ledger AI chat + Telegram view styles'],
 ];
 
 // ---------- frontend/index.html ----------

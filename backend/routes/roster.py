@@ -8,10 +8,10 @@ apiService.js treats any non-200 or network failure as "backend absent".
 """
 from __future__ import annotations
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
+from ..extensions import limiter
 from ..services.roster_store import store
-from ..utils.responses import fail
 
 bp = Blueprint("roster", __name__, url_prefix="/api")
 
@@ -28,6 +28,7 @@ def health():
 
 
 @bp.get("/roster/<roll>")
+@limiter.limit("60 per minute")
 def roster_lookup(roll: str):
     rec = store.get(roll)
     if rec is None:
@@ -38,13 +39,14 @@ def roster_lookup(roll: str):
 
 
 @bp.get("/roster/search")
+@limiter.limit("30 per minute")
 def roster_search():
-    from flask import request
-    q = request.args.get("q", "")
+    q = request.args.get("q", "")[:64]
     try:
-        limit = min(int(request.args.get("limit", 25)), 100)
+        limit = int(request.args.get("limit", 25))
     except ValueError:
         limit = 25
+    limit = max(1, min(limit, 25))
     results = store.search(q, limit=limit)
     return jsonify({"ok": True, "count": len(results), "results": results})
 

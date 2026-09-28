@@ -23,7 +23,13 @@ services:
       - key: TELEGRAM_WEBHOOK_SECRET
         generateValue: true
       - key: TELEGRAM_CHANNEL_INVITE_LINK
-        value: "https://t.me/+Hx9BkNjz58YwZjY9"
+        sync: false
+      - key: FLASK_ENV
+        value: production
+      - key: ENABLE_TELEGRAM_SIMULATE
+        value: "false"
+      - key: TELEGRAM_WEBHOOK_ALLOWLIST
+        value: https://mmmut-ero-backend.onrender.com
       # The CSV ships with the repo (data/admission_data.csv). To refresh the
       # roster without redeploying, host it elsewhere and set a URL fetch —
       # for now the repo copy is the source of truth.

@@ -465,14 +465,15 @@
                     posts.forEach(p => {
                         const date = p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
                             'en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                        const pid = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
                         html += `
                   <div class="post-item ${p.pinned ? 'pinned' : ''}">
-                    <div class="post-title">${p.title} ${p.pinned ? '📌' : ''}</div>
-                    <div class="post-meta">by ${p.author || 'admin'} · ${date}</div>
-                    <div class="post-content">${p.content}</div>
+                    <div class="post-title">${escapeHtml(p.title)} ${p.pinned ? '📌' : ''}</div>
+                    <div class="post-meta">by ${escapeHtml(p.author || 'admin')} · ${escapeHtml(date)}</div>
+                    <div class="post-content">${escapeHtml(p.content)}</div>
                     <div class="actions" style="margin-top:6px;display:flex;gap:6px;">
-                      <button class="btn-sm ${p.pinned ? 'edit' : 'pin'}" onclick="togglePinPost('${p.id}', ${!p.pinned})">${p.pinned ? 'Unpin' : 'Pin'}</button>
-                      <button class="btn-sm delete" onclick="deletePost('${p.id}')">Delete</button>
+                      <button class="btn-sm ${p.pinned ? 'edit' : 'pin'}" data-pact="pin" data-pid="${pid}" data-pin="${p.pinned ? '0' : '1'}">${p.pinned ? 'Unpin' : 'Pin'}</button>
+                      <button class="btn-sm delete" data-pact="del" data-pid="${pid}">Delete</button>
                     </div>
                   </div>
                 `;
@@ -480,16 +481,25 @@
                 }
                 html += `</div>`;
                 el.innerHTML = html;
+                el.querySelectorAll('button[data-pact]').forEach(b => {
+                    b.addEventListener('click', () => {
+                        const id = b.dataset.pid;
+                        if (!id) return;
+                        if (b.dataset.pact === 'pin') togglePinPost(id, b.dataset.pin === '1');
+                        else if (b.dataset.pact === 'del') deletePost(id);
+                    });
+                });
             } catch (e) {
-                el.innerHTML = `<div class="empty-note">Error loading posts: ${e.message}</div>`;
+                el.innerHTML = `<div class="empty-note">Error loading posts: ${escapeHtml(e.message)}</div>`;
             }
         }
 
         async function addPost() {
-            const title = document.getElementById('postTitle').value.trim();
-            const content = document.getElementById('postContent').value.trim();
+            const title = document.getElementById('postTitle').value.trim().slice(0, 120);
+            const content = document.getElementById('postContent').value.trim().slice(0, 5000);
             const pinned = document.getElementById('postPinned').checked;
             if (!title || !content) { showToast('Fill in title and content.'); return; }
+            if (!isAdmin) { showToast('Only admins can publish announcements.'); return; }
             try {
                 await addDoc(postsCollection, {
                     title,
@@ -510,6 +520,9 @@
         }
 
         async function togglePinPost(id, pinned) {
+            id = String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!id) return;
+            if (!isAdmin) { showToast('Only admins can pin posts.'); return; }
             try {
                 await updateDoc(doc(postsCollection, id), { pinned });
                 showToast(pinned ? 'Post pinned.' : 'Post unpinned.');
@@ -519,6 +532,9 @@
         }
 
         async function deletePost(id) {
+            id = String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!id) return;
+            if (!isAdmin) { showToast('Only admins can delete announcements.'); return; }
             if (!confirm('Delete this announcement?')) return;
             try {
                 await deleteDoc(doc(postsCollection, id));

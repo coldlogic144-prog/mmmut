@@ -15,7 +15,7 @@
         //   * creates ONE userRolls/{roll} doc (claim once, never overwritten),
         //   * updateDoc()s (merges) the CURRENT user's own users/{uid} doc.
         // It NEVER deletes/recreates Firebase users, changes UIDs/emails/
-        // passwords, nor touches attendance, chess, notices, feedback,
+        // passwords, nor touches attendance, notices, feedback,
         // timetable, syllabus or FCM data.
         //
         // SAFETY (2026-08 incident): set to FALSE while Firestore studentRoster
@@ -35,8 +35,8 @@
         const studentRosterCollection = collection(db, "studentRoster");
         const userRollsCollection = collection(db, "userRolls");
         // ========== FIREBASE CLOUD MESSAGING (WEB PUSH NOTIFICATIONS) ==========
-        // Additive module. Does not touch auth, App Check, AI Logic, Firestore rules,
-        // or chess club logic. Safe no-ops if unsupported / not yet configured.
+        // Additive module. Does not touch auth, App Check, AI Logic, Firestore rules.
+        // Safe no-ops if unsupported / not yet configured.
 
         // PART 3 — VAPID KEY
         // Paste the PUBLIC VAPID key from:

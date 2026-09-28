@@ -210,8 +210,6 @@
             renderFeedbackPreview();
             loadExistingRating();
             renderCommunityPosts();
-            // Initialize chess club if not already
-            initChessClub();
 
             // Initialize push notifications (additive, non-blocking, never prompts
             // automatically — see PART 4/9). Runs after auth is fully established.

@@ -10,18 +10,35 @@ const API_BASE_URL = localStorage.getItem('mmmut_api_base') || '';
 // fallback without touching localStorage. Keep '' while no backend is deployed.
 const BAKED_API_BASE = 'https://mmmut-ero-backend.onrender.com';
 
-function base() {
-    const override = localStorage.getItem('mmmut_api_base');
-    return ((override !== null && override !== '') ? override
-        : (BAKED_API_BASE || API_BASE_URL)).replace(/\/$/, '');
+function isSafeBase(u) {
+    if (!u) return false;
+    try {
+        const parsed = new URL(u);
+        return parsed.protocol === 'https:' ||
+            ((parsed.protocol === 'http:') &&
+             (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1'));
+    } catch (_) { return false; }
 }
 
-async function getJson(url, timeoutMs = 6000) {
+function base() {
+    const override = localStorage.getItem('mmmut_api_base');
+    const candidate = ((override !== null && override !== '') ? override
+        : (BAKED_API_BASE || API_BASE_URL));
+    if (!candidate) return '';
+    const clean = String(candidate).replace(/\/$/, '');
+    // Reject javascript:/data: and non-https overrides to prevent open-redirect / token theft.
+    if (!isSafeBase(clean)) return '';
+    return clean;
+}
+
+async function getJson(url, timeoutMs = 6000, idToken = null) {
     if (!base()) return null; // backend not configured -> skip silently
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-        const res = await fetch(base() + url, { signal: ctrl.signal });
+        const headers = {};
+        if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+        const res = await fetch(base() + url, { signal: ctrl.signal, headers });
         if (!res.ok) return null;
         return await res.json();
     } catch (e) {
@@ -73,29 +90,34 @@ async function postJson(url, payload = {}, timeoutMs = 8000, idToken = null) {
     }
 }
 
-// Telegram Private Access API Helpers
+// Telegram Private Access API Helpers (all protected endpoints need idToken)
 export async function apiCreateTelegramToken(uid, idToken = null) {
     if (!uid) return null;
     return await postJson('/api/telegram/create-token', { uid }, 8000, idToken);
 }
 
-export async function apiGetTelegramTokenStatus(token) {
+export async function apiGetTelegramTokenStatus(token, idToken = null) {
     if (!token) return null;
-    return await getJson('/api/telegram/token-status/' + encodeURIComponent(token));
+    if (!idToken) return null;
+    return await getJson('/api/telegram/token-status/' + encodeURIComponent(token), 6000, idToken);
 }
 
 export async function apiCheckTelegramMembership(uid, telegramUserId, idToken = null) {
+    if (!uid || !idToken) return null;
     return await postJson('/api/telegram/check-membership', { uid, telegramUserId }, 8000, idToken);
 }
 
-export async function apiGetTelegramChannelInvite() {
-    return await getJson('/api/telegram/channel-invite');
+export async function apiGetTelegramChannelInvite(idToken = null) {
+    if (!idToken) return null;
+    return await getJson('/api/telegram/channel-invite', 6000, idToken);
 }
 
-export async function apiVerifyTelegramSetup() {
-    return await getJson('/api/telegram/verify-setup');
+export async function apiVerifyTelegramSetup(idToken = null) {
+    if (!idToken) return null;
+    return await getJson('/api/telegram/verify-setup', 6000, idToken);
 }
 
-export async function apiSetTelegramWebhook(webhookUrl = null, secretToken = null) {
-    return await postJson('/api/telegram/set-webhook', { webhookUrl, secretToken });
+export async function apiSetTelegramWebhook(webhookUrl = null, secretToken = null, idToken = null) {
+    if (!idToken) return null;
+    return await postJson('/api/telegram/set-webhook', { webhookUrl, secretToken }, 8000, idToken);
 }

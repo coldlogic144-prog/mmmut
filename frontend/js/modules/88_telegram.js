@@ -10,30 +10,23 @@
         let currentTelegramAppData = null;
         let telegramTokenWatcherTimer = null;
 
+        async function getIdTokenSafe() {
+            try {
+                if (typeof auth !== 'undefined' && auth.currentUser) {
+                    return await auth.currentUser.getIdToken();
+                }
+            } catch (_) {}
+            return null;
+        }
+
         async function fetchChannelInviteLink() {
             const cfg = window.TELEGRAM_CONFIG || (typeof TELEGRAM_CONFIG !== 'undefined' ? TELEGRAM_CONFIG : {});
 
-            // Check developer override in localStorage if set
-            try {
-                const localInvite = localStorage.getItem('mmmut_telegram_channel_invite');
-                if (localInvite && localInvite.trim() && !localInvite.includes('mmmut_erp_bot') && !localInvite.includes('mmmut_erp_official')) {
-                    cfg.channelUrl = localInvite.trim();
-                    return localInvite.trim();
-                }
-            } catch (_) {}
-
-            // Check if already configured or previously cached
-            if (cfg.channelUrl && typeof cfg.channelUrl === 'string' && cfg.channelUrl.trim()) {
-                const link = cfg.channelUrl.trim();
-                if (!link.includes('mmmut_erp_official') && !link.includes('mmmut_erp_bot')) {
-                    return link;
-                }
-            }
-
-            // Attempt to retrieve real private invite link from backend
+            // Attempt to retrieve real private invite link from backend (auth required)
             if (typeof apiGetTelegramChannelInvite === 'function') {
                 try {
-                    const res = await apiGetTelegramChannelInvite();
+                    const idToken = await getIdTokenSafe();
+                    const res = await apiGetTelegramChannelInvite(idToken);
                     if (res && res.ok && res.inviteLink) {
                         const link = String(res.inviteLink).trim();
                         if (link && !link.includes('mmmut_erp_bot') && !link.includes('mmmut_erp_official')) {
@@ -47,10 +40,8 @@
                 }
             }
 
-            // Reliable default fallback to the configured official channel invite link
-            const defaultInvite = 'https://t.me/+Hx9BkNjz58YwZjY9';
-            cfg.channelUrl = defaultInvite;
-            return defaultInvite;
+            // No hardcoded fallback: invite must come from the server after auth.
+            return cfg.channelUrl || null;
         }
 
         function openTelegramWeb(sameTab = false) {
@@ -224,14 +215,7 @@
             if (btn) { btn.disabled = true; btn.textContent = 'Generating Link…'; }
 
             try {
-                let idToken = null;
-                if (currentUser && typeof currentUser.getIdToken === 'function') {
-                    try {
-                        idToken = await currentUser.getIdToken();
-                    } catch (e) {
-                        console.warn('[Telegram] Could not fetch ID token:', e);
-                    }
-                }
+                const idToken = await getIdTokenSafe();
 
                 // Request single-use linking token from server-side backend
                 const res = typeof apiCreateTelegramToken === 'function' ?
@@ -240,13 +224,9 @@
                 if (res && res.ok && res.deepLink) {
                     window.open(res.deepLink, '_blank', 'noopener,noreferrer');
                     showToast('Opening Telegram bot… Press Start in Telegram to link.');
-                    startTelegramTokenWatcher(res.token);
+                    startTelegramTokenWatcher(res.token, idToken);
                 } else {
-                    // Fallback to bot username direct link if backend offline
-                    const botUser = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.botUsername) || 'mmmut_erp_bot';
-                    const fallbackUrl = 'https://t.me/' + botUser;
-                    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-                    promptManualTelegramHandle();
+                    showToast('Could not generate Telegram link. Please try again after login.');
                 }
             } catch (err) {
                 console.error('[Telegram] Error connecting Telegram:', err);
@@ -257,7 +237,7 @@
         }
 
         // Polling watcher while student links with bot on Telegram
-        function startTelegramTokenWatcher(token) {
+        function startTelegramTokenWatcher(token, idToken) {
             if (telegramTokenWatcherTimer) {
                 clearInterval(telegramTokenWatcherTimer);
                 telegramTokenWatcherTimer = null;
@@ -273,23 +253,15 @@
                 }
 
                 if (typeof apiGetTelegramTokenStatus === 'function') {
-                    const statusRes = await apiGetTelegramTokenStatus(token);
+                    const fresh = idToken || await getIdTokenSafe();
+                    const statusRes = await apiGetTelegramTokenStatus(token, fresh);
                     if (statusRes && statusRes.ok && statusRes.linked) {
                         clearInterval(telegramTokenWatcherTimer);
                         telegramTokenWatcherTimer = null;
 
-                        // Save linked identity to Firestore doc
-                        try {
-                            await updateDoc(doc(telegramApplicationsCollection, currentUid), {
-                                telegramUserId: statusRes.telegramUserId || null,
-                                telegramUsername: statusRes.telegramUsername || null,
-                                status: 'JOIN_REQUEST_NOT_SENT',
-                                linkedAt: serverTimestamp()
-                            });
-                            showToast('🎉 Telegram account connected successfully!');
-                        } catch (e) {
-                            console.warn('[Telegram] Could not update linked status directly:', e);
-                        }
+                        // Token is single-use and consumed server-side; webhook
+                        // already recorded the link. Refresh from Firestore listener.
+                        showToast('🎉 Telegram account connected successfully!');
                     }
                 }
             }, 3000);
@@ -358,14 +330,7 @@
 
             try {
                 const tgUserId = currentTelegramAppData?.telegramUserId;
-                let idToken = null;
-                if (currentUser && typeof currentUser.getIdToken === 'function') {
-                    try {
-                        idToken = await currentUser.getIdToken();
-                    } catch (e) {
-                        console.warn('[Telegram] Could not fetch ID token:', e);
-                    }
-                }
+                const idToken = await getIdTokenSafe();
 
                 let checkRes = null;
                 if (typeof apiCheckTelegramMembership === 'function') {
@@ -637,11 +602,9 @@
         function toggleTelegramSection(show) {
             const telegramView = document.getElementById('telegramView');
             const mainShell = document.getElementById('mainShell');
-            const chessView = document.getElementById('chessClubView');
             if (!telegramView) return;
 
             if (show) {
-                if (chessView) chessView.style.display = 'none';
                 const ledgerView = document.getElementById('ledgerView');
                 if (ledgerView) ledgerView.style.display = 'none';
                 if (mainShell) mainShell.style.display = 'none';

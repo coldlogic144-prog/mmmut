@@ -195,13 +195,6 @@ export const ANNOUNCEMENTS: Announcement[] = [
     urgent: true,
   },
   {
-    id: 2,
-    tag: "CLUB",
-    title: "Chess Club qualifiers this Friday",
-    body: "Register in the community board by Thursday 5 PM for the knockout round.",
-    urgent: false,
-  },
-  {
     id: 3,
     tag: "ACADEMIC",
     title: "Web Designing I lab moved",
@@ -266,24 +259,6 @@ export const ACADEMIC_CALENDAR: CalendarEvent[] = [
   { id: 4, start: "2026-10-20", end: "2026-10-24", title: "Minor Test II", kind: "Exam" },
   { id: 5, start: "2026-12-14", end: "2026-12-18", title: "End Semester Practicals", kind: "Exam" },
 ];
-/* ============ Chess club ============ */
-
-export type ChessPlayer = {
-  id: number;
-  name: string;
-  elo: number;
-  wins: number;
-  losses: number;
-  active: boolean;
-};
-
-export const CHESS_LEADERBOARD: ChessPlayer[] = [
-  { id: 1, name: "Aishwary C.", elo: 1420, wins: 18, losses: 4, active: true },
-  { id: 2, name: "Ankit R.", elo: 1365, wins: 15, losses: 6, active: true },
-  { id: 3, name: "Divyansh S.", elo: 1310, wins: 12, losses: 7, active: false },
-  { id: 4, name: "Naman B.", elo: 1275, wins: 10, losses: 9, active: true },
-];
-
 /* ============ Community & support ============ */
 
 export type Post = { id: number; author: string; body: string; likes: number; tags: string[] };

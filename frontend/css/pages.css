@@ -2,8 +2,7 @@
    MMMUT ERP / THE LEDGER — PAGES & SPECIALTY MODULES
    Authentic University Portal Design System
    1. Campus Ledger AI Assistant (Helpdesk Utility)
-   2. University Chess Club Module
-   3. Official University Telegram Private Access System
+   2. Official University Telegram Private Access System
    ============================================================================ */
 
 /* ----------------------------------------------------------------------------
@@ -340,128 +339,7 @@
 }
 
 /* ----------------------------------------------------------------------------
-   2. UNIVERSITY CHESS CLUB MODULE
-   ---------------------------------------------------------------------------- */
-#chessClubView {
-    display: none;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 28px 48px;
-}
-
-#chessClubView .chess-tabs {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--surface-border);
-    padding-bottom: 8px;
-}
-
-#chessClubView .chess-tabs .tab-btn {
-    border: 1px solid transparent;
-    background: var(--surface-subtle);
-    padding: 6px 14px;
-    border-radius: var(--radius-xs);
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text-muted);
-    transition: all var(--transition-fast);
-    cursor: pointer;
-}
-
-#chessClubView .chess-tabs .tab-btn.active {
-    background: var(--primary);
-    color: #ffffff;
-}
-
-#chessClubView .chess-tabs .tab-btn:hover:not(.active) {
-    background: var(--surface-hover);
-    color: var(--text-main);
-}
-
-#chessClubView .chess-card {
-    background: var(--surface);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--radius-sm);
-    padding: 20px 22px;
-    box-shadow: var(--shadow-xs);
-    margin-bottom: 18px;
-}
-
-.member-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--surface-border-subtle);
-}
-
-.member-item:last-child {
-    border-bottom: none;
-}
-
-.member-item .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-xs);
-    background: var(--primary);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    flex-shrink: 0;
-}
-
-.member-item .info .name {
-    font-weight: 600;
-    font-size: 13.5px;
-    color: var(--text-main);
-}
-
-.member-item .info .branch {
-    font-size: 11.5px;
-    color: var(--text-muted);
-}
-
-.member-item .rating {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    color: var(--primary);
-    font-size: 12.5px;
-    margin-left: auto;
-}
-
-.leaderboard-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--surface-border-subtle);
-}
-
-.leaderboard-row:last-child {
-    border-bottom: none;
-}
-
-.leaderboard-row .rank {
-    font-weight: 700;
-    width: 28px;
-    text-align: center;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 12px;
-}
-
-.leaderboard-row .rank.gold { color: #D97706; font-weight: 800; }
-.leaderboard-row .rank.silver { color: #64748B; font-weight: 800; }
-.leaderboard-row .rank.bronze { color: #92400E; font-weight: 800; }
-
-/* ----------------------------------------------------------------------------
-   3. OFFICIAL UNIVERSITY TELEGRAM ACCESS SYSTEM
+   2. OFFICIAL UNIVERSITY TELEGRAM ACCESS SYSTEM
    ---------------------------------------------------------------------------- */
 #telegramView {
     display: none;
@@ -864,7 +742,6 @@
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     #telegramView,
-    #chessClubView,
     #ledgerView {
         padding: 14px 12px calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 24px) 12px;
         width: 100%;

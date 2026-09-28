@@ -2,7 +2,7 @@
 
 Firebase-backed student app for M.M.M. University of Technology, Gorakhpur:
 attendance, timetable, syllabus, announcements, community posts, feedback,
-chess club, FCM push, Gemini AI assistant — with **roll-number verified login**.
+FCM push, Gemini AI assistant — with **roll-number verified login**.
 
 Production today: GitHub Pages (`coldlogic144-prog.github.io/-python/`).
 Optional Python backend (this repo, `backend/`) hardens roll verification.
@@ -32,7 +32,6 @@ mmmut/
 │       │   ├── 70_notif_badge_admin_request.js
 │       │   ├── 75_admin_panel.js          admin tabs
 │       │   ├── 80_feed_attendance_events_image_history.js
-│       │   ├── 85_chess_club.js
 │       │   ├── 90_community_feedback_rating.js
 │       │   ├── 95_ledger_ai_chat.js
 │       │   └── 99_boot_window_bindings.js boot() + window.* bindings
@@ -46,7 +45,6 @@ mmmut/
 ├── data/admission_data.csv    # authoritative B.Tech 2026-27 roster (1,189)
 ├── docs/                      # TECHNICAL_MAP · DEPLOYMENT · REFACTOR_NOTES
 ├── tools/                     # extract_frontend.mjs · build_frontend.mjs
-├── chess/                     # standalone game page (linked from topbar)
 ├── backups/                   # recovery points — never delete
 └── student_roster_import.py   # one-time Firestore importer (--dry-run first!)
 ```

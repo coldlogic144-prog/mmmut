@@ -5,7 +5,7 @@
 //     node tools/build_frontend.mjs
 // All sections share ONE module scope, exactly like the original single
 // inline <script type="module">. Statement order is preserved.
-// Sections composed: 10_firebase_boot.js, 15_flags_config.js, 20_notifications_push.js, 25_ai_init.js, 30_data_tables.js, 35_schedule_engine.js, 40_syllabus_data.js, 41_ledger_data.js, 45_syllabus_ui.js, 50_state_toast_holidays_profile.js, 55_auth_core.js, 60_session_loginAs.js, 65_roll_verification.js, 70_notif_badge_admin_request.js, 75_admin_panel.js, 80_feed_attendance_events_image_history.js, 85_chess_club.js, 86_ledger.js, 88_telegram.js, 90_community_feedback_rating.js, 95_ledger_ai_chat.js, 99_boot_window_bindings.js
+// Sections composed: 10_firebase_boot.js, 15_flags_config.js, 20_notifications_push.js, 25_ai_init.js, 30_data_tables.js, 35_schedule_engine.js, 40_syllabus_data.js, 41_ledger_data.js, 45_syllabus_ui.js, 50_state_toast_holidays_profile.js, 55_auth_core.js, 60_session_loginAs.js, 65_roll_verification.js, 70_notif_badge_admin_request.js, 75_admin_panel.js, 80_feed_attendance_events_image_history.js, 86_ledger.js, 88_telegram.js, 90_community_feedback_rating.js, 95_ledger_ai_chat.js, 99_boot_window_bindings.js
 // ============================================================================
 
 // ============================================================================
@@ -154,13 +154,6 @@
         const ratingsCollection = collection(db, "ratings");
         const communityPostsCollection = collection(db, "communityPosts");
 
-        // ===== CHESS CLUB COLLECTIONS =====
-        const chessMembersCollection = collection(db, "chessClubMembers");
-        const chessChallengesCollection = collection(db, "chessChallenges");
-        const chessEventsCollection = collection(db, "chessEvents");
-        const chessActivityCollection = collection(db, "chessActivity");
-        const chessGamesCollection = collection(db, "chessGames");
-
         // ===== TELEGRAM PRIVATE ACCESS COLLECTIONS =====
         const telegramApplicationsCollection = collection(db, "telegramApplications");
 
@@ -181,7 +174,7 @@
         //   * creates ONE userRolls/{roll} doc (claim once, never overwritten),
         //   * updateDoc()s (merges) the CURRENT user's own users/{uid} doc.
         // It NEVER deletes/recreates Firebase users, changes UIDs/emails/
-        // passwords, nor touches attendance, chess, notices, feedback,
+        // passwords, nor touches attendance, notices, feedback,
         // timetable, syllabus or FCM data.
         //
         // SAFETY (2026-08 incident): set to FALSE while Firestore studentRoster
@@ -201,8 +194,8 @@
         const studentRosterCollection = collection(db, "studentRoster");
         const userRollsCollection = collection(db, "userRolls");
         // ========== FIREBASE CLOUD MESSAGING (WEB PUSH NOTIFICATIONS) ==========
-        // Additive module. Does not touch auth, App Check, AI Logic, Firestore rules,
-        // or chess club logic. Safe no-ops if unsupported / not yet configured.
+        // Additive module. Does not touch auth, App Check, AI Logic, Firestore rules.
+        // Safe no-ops if unsupported / not yet configured.
 
         // PART 3 — VAPID KEY
         // Paste the PUBLIC VAPID key from:
@@ -294,7 +287,7 @@
                 } else {
                     btn.textContent = '🔔 Enable Notifications';
                     btn.disabled = false;
-                    btn.title = 'Get notified about notices, chess challenges, and events.';
+                    btn.title = 'Get notified about notices and events.';
                     btn.style.opacity = '1';
                 }
             } catch (e) {
@@ -347,8 +340,6 @@
                 if (type === 'notice') {
                     const el = document.getElementById('postsFeedContent') || document.getElementById('notifBell');
                     if (el && typeof scrollToPosts === 'function') scrollToPosts();
-                } else if (type === 'chess_challenge' || type === 'chess_event') {
-                    if (typeof toggleChessClub === 'function') toggleChessClub(true);
                 }
                 // 'admin' and 'general' currently just surface as a toast; no navigation.
             } catch (e) {
@@ -2398,15 +2389,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         let lastReadPosts = 0;
         let communityPosts = [];
 
-        // Chess club state
-        let chessMembers = [];
-        let chessEvents = [];
-        let chessChallenges = [];
-        let chessActivity = [];
-        let chessGames = [];
-        let chessCurrentTab = 'home';
-        let chessMemberStatus = false; // whether current user is a member
-
         // ========== TOAST ==========
         function showToast(msg, duration = 3000) {
             const el = document.getElementById('toast');
@@ -2604,7 +2586,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 showError('signupError', 'Password should be at least 6 characters.');
                 return;
             }
-            const isAdminFlag = (username === 'tanish');
+            // SECURITY: never self-assign admin. Admins are promoted only via
+            // Firestore rules (isAdmin) by an existing admin.
 
             signingUp = true;
 
@@ -2640,7 +2623,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 section,
                 hostel,
                 gender,
-                isAdmin: isAdminFlag,
+                isAdmin: false,
                 adminRequested: false,
                 migrationStatus: 'verified',
                 rollNumber: '',
@@ -2724,14 +2707,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 return; // STOP! Do not report as incorrect password.
             }
 
-            if (record.username === 'tanish' && !record.isAdmin) {
-                try {
-                    await updateDoc(doc(usersCollection, uid), { isAdmin: true });
-                    record.isAdmin = true;
-                } catch (adminErr) {
-                    console.warn('Admin auto-promotion skipped:', adminErr);
-                }
-            }
+            // SECURITY: no client-side auto-promotion. Admin rights come only
+            // from Firestore (isAdmin) and rules block self-escalation.
 
             // ==========================================
             // STEP 3: NAVIGATION TO ERP / DASHBOARD
@@ -2752,6 +2729,10 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             attendanceCache = {};
             isAdmin = false;
             adminRequested = false;
+            try {
+                sessionStorage.removeItem('mmmut_active_view');
+                sessionStorage.clear();
+            } catch (_) {}
             document.getElementById('app').style.display = 'none';
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('loginUsername').value = '';
@@ -2766,10 +2747,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             closeCreatePost();
             if (document.getElementById('ledgerAiChat').classList.contains('open')) {
                 document.getElementById('ledgerAiChat').classList.remove('open');
-            }
-            // Close chess club if open
-            if (document.getElementById('chessClubView').style.display !== 'none') {
-                toggleChessClub(false);
             }
             // Close Telegram section if open
             if (document.getElementById('telegramView') && document.getElementById('telegramView').style.display !== 'none') {
@@ -2803,7 +2780,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                         section: 'A',
                         hostel: 'Day Scholar',
                         gender: 'Not specified',
-                        isAdmin: (fallbackUsername === 'tanish'),
+                        isAdmin: false,
                         adminRequested: false,
                         migrationStatus: 'verified',
                         rollNumber: '',
@@ -3077,8 +3054,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             renderFeedbackPreview();
             loadExistingRating();
             renderCommunityPosts();
-            // Initialize chess club if not already
-            initChessClub();
 
             // Initialize push notifications (additive, non-blocking, never prompts
             // automatically — see PART 4/9). Runs after auth is fully established.
@@ -3541,12 +3516,15 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                         '<th style="padding:9px 8px;text-align:left;">Actions</th></tr></thead><tbody>';
                     needReview.forEach(u => {
                         const roll = u.rollNumber || u.pendingRollNumber || '';
+                        const safeUid = String(u.id || '').replace(/[^A-Za-z0-9_-]/g, '');
+                        const safeRoll = String(roll || '').replace(/[^0-9]/g, '').slice(0, 12);
+                        const safeUsername = escapeHtml(u.username || '');
                         const reasons = u.migrationReviewReason ? ' <small style="color:var(--brick);">(' + escapeHtml(u.migrationReviewReason) + ')</small>' : '';
                         const actions = (u.migrationStatus === 'verified')
                             ? '<span style="color:var(--moss);">✓ verified</span>'
-                            : '<button class="btn-primary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminApproveRoll(\'' + u.id + '\',\'' + escapeHtml(u.username || '') + '\',\'' + roll + '\')">Approve</button>' +
-                              '<button class="btn-secondary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" onclick="adminRejectRoll(\'' + u.id + '\',\'' + roll + '\')">Reject</button>' +
-                              '<button class="btn-secondary" style="margin:0;padding:5px 10px;font-size:12px;" onclick="adminManualRoll(\'' + u.id + '\')">Review</button>';
+                            : '<button class="btn-primary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" data-roll-act="approve" data-uid="' + safeUid + '" data-username="' + safeUsername + '" data-roll="' + safeRoll + '">Approve</button>' +
+                              '<button class="btn-secondary" style="margin:0 4px 0 0;padding:5px 10px;font-size:12px;" data-roll-act="reject" data-uid="' + safeUid + '" data-roll="' + safeRoll + '">Reject</button>' +
+                              '<button class="btn-secondary" style="margin:0;padding:5px 10px;font-size:12px;" data-roll-act="review" data-uid="' + safeUid + '">Review</button>';
                         html += '<tr style="border-bottom:1px solid var(--paper-line);">' +
                             '<td style="padding:8px;">' + escapeHtml(u.name || '—') + '</td>' +
                             '<td style="padding:8px;" class="mono">' + escapeHtml(u.username || '—') + '</td>' +
@@ -3561,9 +3539,19 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     '<label style="font-weight:600;font-size:13px;">Look up a roll number (roster + current claim)</label>' +
                     '<div style="display:flex;gap:8px;margin-top:8px;">' +
                     '<input id="adminRollLookupInput" placeholder="2026011001" maxlength="12" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--paper-line);font-size:13px;" />' +
-                    '<button class="btn-primary" style="margin:0;padding:8px 18px;" onclick="adminRollLookup()">Look up</button>' +
+                    '<button class="btn-primary" style="margin:0;padding:8px 18px;" id="adminRollLookupBtn">Look up</button>' +
                     '</div><div id="adminRollLookupResult" style="margin-top:10px;font-size:13px;line-height:1.6;"></div></div>';
                 el.innerHTML = html;
+                el.querySelectorAll('button[data-roll-act]').forEach(b => {
+                    b.addEventListener('click', () => {
+                        const uid = b.dataset.uid, roll = b.dataset.roll;
+                        if (b.dataset.rollAct === 'approve') adminApproveRoll(uid, b.dataset.username || '', roll);
+                        else if (b.dataset.rollAct === 'reject') adminRejectRoll(uid, roll);
+                        else adminManualRoll(uid);
+                    });
+                });
+                const lookupBtn = el.querySelector('#adminRollLookupBtn');
+                if (lookupBtn) lookupBtn.addEventListener('click', adminRollLookup);
             } catch (e) {
                 el.innerHTML = '<div class="empty-note">Error loading roll verification: ' + escapeHtml(e.message) + '</div>';
             }
@@ -4126,14 +4114,15 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     posts.forEach(p => {
                         const date = p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
                             'en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                        const pid = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
                         html += `
                   <div class="post-item ${p.pinned ? 'pinned' : ''}">
-                    <div class="post-title">${p.title} ${p.pinned ? '📌' : ''}</div>
-                    <div class="post-meta">by ${p.author || 'admin'} · ${date}</div>
-                    <div class="post-content">${p.content}</div>
+                    <div class="post-title">${escapeHtml(p.title)} ${p.pinned ? '📌' : ''}</div>
+                    <div class="post-meta">by ${escapeHtml(p.author || 'admin')} · ${escapeHtml(date)}</div>
+                    <div class="post-content">${escapeHtml(p.content)}</div>
                     <div class="actions" style="margin-top:6px;display:flex;gap:6px;">
-                      <button class="btn-sm ${p.pinned ? 'edit' : 'pin'}" onclick="togglePinPost('${p.id}', ${!p.pinned})">${p.pinned ? 'Unpin' : 'Pin'}</button>
-                      <button class="btn-sm delete" onclick="deletePost('${p.id}')">Delete</button>
+                      <button class="btn-sm ${p.pinned ? 'edit' : 'pin'}" data-pact="pin" data-pid="${pid}" data-pin="${p.pinned ? '0' : '1'}">${p.pinned ? 'Unpin' : 'Pin'}</button>
+                      <button class="btn-sm delete" data-pact="del" data-pid="${pid}">Delete</button>
                     </div>
                   </div>
                 `;
@@ -4141,16 +4130,25 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 }
                 html += `</div>`;
                 el.innerHTML = html;
+                el.querySelectorAll('button[data-pact]').forEach(b => {
+                    b.addEventListener('click', () => {
+                        const id = b.dataset.pid;
+                        if (!id) return;
+                        if (b.dataset.pact === 'pin') togglePinPost(id, b.dataset.pin === '1');
+                        else if (b.dataset.pact === 'del') deletePost(id);
+                    });
+                });
             } catch (e) {
-                el.innerHTML = `<div class="empty-note">Error loading posts: ${e.message}</div>`;
+                el.innerHTML = `<div class="empty-note">Error loading posts: ${escapeHtml(e.message)}</div>`;
             }
         }
 
         async function addPost() {
-            const title = document.getElementById('postTitle').value.trim();
-            const content = document.getElementById('postContent').value.trim();
+            const title = document.getElementById('postTitle').value.trim().slice(0, 120);
+            const content = document.getElementById('postContent').value.trim().slice(0, 5000);
             const pinned = document.getElementById('postPinned').checked;
             if (!title || !content) { showToast('Fill in title and content.'); return; }
+            if (!isAdmin) { showToast('Only admins can publish announcements.'); return; }
             try {
                 await addDoc(postsCollection, {
                     title,
@@ -4171,6 +4169,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         }
 
         async function togglePinPost(id, pinned) {
+            id = String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!id) return;
+            if (!isAdmin) { showToast('Only admins can pin posts.'); return; }
             try {
                 await updateDoc(doc(postsCollection, id), { pinned });
                 showToast(pinned ? 'Post pinned.' : 'Post unpinned.');
@@ -4180,6 +4181,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         }
 
         async function deletePost(id) {
+            id = String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!id) return;
+            if (!isAdmin) { showToast('Only admins can delete announcements.'); return; }
             if (!confirm('Delete this announcement?')) return;
             try {
                 await deleteDoc(doc(postsCollection, id));
@@ -4436,13 +4440,15 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             posts.forEach(p => {
                 const date = p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString(
                     'en-IN', { day: 'numeric', month: 'short' }) : '—';
+                const title = escapeHtml(p.title || '');
+                const content = escapeHtml(p.content || '');
                 html += `
               <div class="post-item ${p.pinned ? 'pinned' : ''}" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--paper-line);">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="post-title" style="font-size:13px;font-weight:600;">${p.title} ${p.pinned ? '📌' : ''}</span>
-                  <span style="font-size:10px;color:var(--ink-soft);">${date}</span>
+                  <span class="post-title" style="font-size:13px;font-weight:600;">${title} ${p.pinned ? '📌' : ''}</span>
+                  <span style="font-size:10px;color:var(--ink-soft);">${escapeHtml(date)}</span>
                 </div>
-                <div class="post-content" style="font-size:12px;margin-top:2px;color:var(--ink-soft);">${p.content}</div>
+                <div class="post-content" style="font-size:12px;margin-top:2px;color:var(--ink-soft);">${content}</div>
               </div>
             `;
             });
@@ -4980,595 +4986,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             container.innerHTML = html;
         }
 
-        // ============================================================
-        // ========== CHESS CLUB ======================================
-        // ============================================================
-
-// ============================================================================
-// SECTION: 85_chess_club.js
-// Chess club manager (members/events/challenges/games/activity)
-// Source: index.html lines 8013-8578 (verbatim)
-// NOTE: sections share one module scope after composition — plain code, no
-// imports/exports here by design. Rebuild app.js after editing.
-// ============================================================================
-
-
-        function toggleChessClub(show) {
-            const chessView = document.getElementById('chessClubView');
-            const mainShell = document.getElementById('mainShell');
-            const app = document.getElementById('app');
-            if (show) {
-                const telegramView = document.getElementById('telegramView');
-                const ledgerView = document.getElementById('ledgerView');
-                if (telegramView) telegramView.style.display = 'none';
-                if (ledgerView) ledgerView.style.display = 'none';
-                chessView.style.display = 'block';
-                mainShell.style.display = 'none';
-                // Hide footer? We'll keep footer visible but it's outside shell. Actually footer is inside app but after shell? The footer is inside app but after shell. We'll hide footer too.
-                const footer = document.querySelector('.app-foot');
-                if (footer) footer.style.display = 'none';
-                // Show chess club view
-                chessView.style.display = 'block';
-                // Initialize data if not loaded
-                if (currentUser) {
-                    initChessClub();
-                }
-            } else {
-                chessView.style.display = 'none';
-                mainShell.style.display = 'flex';
-                const footer = document.querySelector('.app-foot');
-                if (footer) footer.style.display = 'block';
-                // Clean up Firestore real-time listeners on exit to prevent memory & network leaks
-                if (window._chessMembersUnsub) { window._chessMembersUnsub(); window._chessMembersUnsub = null; }
-                if (window._chessEventsUnsub) { window._chessEventsUnsub(); window._chessEventsUnsub = null; }
-                if (window._chessChallengesUnsub) { window._chessChallengesUnsub(); window._chessChallengesUnsub = null; }
-                if (window._chessActivityUnsub) { window._chessActivityUnsub(); window._chessActivityUnsub = null; }
-                if (window._chessGamesUnsub) { window._chessGamesUnsub(); window._chessGamesUnsub = null; }
-            }
-        }
-
-        function switchChessTab(tab) {
-            chessCurrentTab = tab;
-            document.querySelectorAll('#chessClubView .chess-tabs .tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tab);
-            });
-            document.querySelectorAll('#chessClubView .chess-tab-content').forEach(el => {
-                el.style.display = 'none';
-            });
-            const target = document.getElementById('chessTab-' + tab);
-            if (target) target.style.display = 'block';
-            // Render content based on tab
-            if (tab === 'home') renderChessHome();
-            else if (tab === 'members') renderChessMembers();
-            else if (tab === 'leaderboard') renderChessLeaderboard();
-            else if (tab === 'events') renderChessEvents();
-            else if (tab === 'challenges') renderChessChallenges();
-            else if (tab === 'games') renderChessGames();
-            else if (tab === 'activity') renderChessActivity();
-        }
-
-        async function initChessClub() {
-            // Check if user is member
-            if (currentUid) {
-                const docSnap = await getDoc(doc(chessMembersCollection, currentUid));
-                chessMemberStatus = docSnap.exists();
-                updateChessJoinButtons();
-            }
-            // Load members count
-            const snap = await getDocs(chessMembersCollection);
-            const count = snap.size;
-            document.getElementById('chessMemberCount').textContent = count;
-            document.getElementById('chessMemberCount2').textContent = count + ' members';
-
-            // Listen for changes
-            if (window._chessMembersUnsub) window._chessMembersUnsub();
-            window._chessMembersUnsub = onSnapshot(chessMembersCollection, (snap) => {
-                const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                chessMembers = docs;
-                document.getElementById('chessMemberCount').textContent = docs.length;
-                document.getElementById('chessMemberCount2').textContent = docs.length + ' members';
-                if (chessCurrentTab === 'home') renderChessHome();
-                if (chessCurrentTab === 'members') renderChessMembers();
-                if (chessCurrentTab === 'leaderboard') renderChessLeaderboard();
-                // Also update challenge opponent dropdown
-                populateChallengeOpponents();
-            });
-
-            if (window._chessEventsUnsub) window._chessEventsUnsub();
-            window._chessEventsUnsub = onSnapshot(chessEventsCollection, (snap) => {
-                chessEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (chessCurrentTab === 'home') renderChessHome();
-                if (chessCurrentTab === 'events') renderChessEvents();
-            });
-
-            if (window._chessChallengesUnsub) window._chessChallengesUnsub();
-            window._chessChallengesUnsub = onSnapshot(chessChallengesCollection, (snap) => {
-                chessChallenges = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (chessCurrentTab === 'challenges') renderChessChallenges();
-                if (chessCurrentTab === 'home') renderChessHome();
-            });
-
-            if (window._chessActivityUnsub) window._chessActivityUnsub();
-            window._chessActivityUnsub = onSnapshot(query(chessActivityCollection, orderBy('createdAt', 'desc'), limit(20)), (snap) => {
-                chessActivity = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (chessCurrentTab === 'activity') renderChessActivity();
-                if (chessCurrentTab === 'home') renderChessHome();
-            });
-
-            if (window._chessGamesUnsub) window._chessGamesUnsub();
-            window._chessGamesUnsub = onSnapshot(chessGamesCollection, (snap) => {
-                chessGames = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (chessCurrentTab === 'games') renderChessGames();
-            });
-
-            // Initial render
-            switchChessTab(chessCurrentTab);
-            renderChessHome();
-            populateChallengeOpponents();
-            // Admin event button
-            const eventCreateBtn = document.getElementById('chessEventCreateBtn');
-            if (eventCreateBtn) {
-                eventCreateBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-            }
-        }
-
-        function updateChessJoinButtons() {
-            const joinBtn = document.getElementById('chessJoinBtn');
-            const leaveBtn = document.getElementById('chessLeaveBtn');
-            if (chessMemberStatus) {
-                joinBtn.style.display = 'none';
-                leaveBtn.style.display = 'inline-block';
-            } else {
-                joinBtn.style.display = 'inline-block';
-                leaveBtn.style.display = 'none';
-            }
-        }
-
-        async function handleChessJoin() {
-            if (!currentUser) { showToast('Please log in first.'); return; }
-            try {
-                await setDoc(doc(chessMembersCollection, currentUid), {
-                    uid: currentUid,
-                    name: currentUser.name,
-                    username: currentUser.username,
-                    branch: currentUser.branchId,
-                    section: currentUser.section,
-                    joinedAt: serverTimestamp(),
-                    rating: 1200, // initial rating
-                    wins: 0,
-                    losses: 0,
-                    draws: 0
-                });
-                chessMemberStatus = true;
-                updateChessJoinButtons();
-                showToast('🎉 You joined the Chess Club!');
-                // Add activity
-                await addDoc(chessActivityCollection, {
-                    type: 'join',
-                    uid: currentUid,
-                    name: currentUser.name,
-                    message: `${currentUser.name} joined the Chess Club`,
-                    createdAt: serverTimestamp()
-                });
-                renderChessHome();
-                renderChessMembers();
-                renderChessLeaderboard();
-            } catch (e) {
-                showToast('Error joining: ' + e.message);
-            }
-        }
-
-        async function handleChessLeave() {
-            if (!currentUser) { showToast('Please log in first.'); return; }
-            if (!confirm('Are you sure you want to leave the Chess Club?')) return;
-            try {
-                await deleteDoc(doc(chessMembersCollection, currentUid));
-                chessMemberStatus = false;
-                updateChessJoinButtons();
-                showToast('You left the Chess Club.');
-                // Activity
-                await addDoc(chessActivityCollection, {
-                    type: 'leave',
-                    uid: currentUid,
-                    name: currentUser.name,
-                    message: `${currentUser.name} left the Chess Club`,
-                    createdAt: serverTimestamp()
-                });
-                renderChessHome();
-                renderChessMembers();
-                renderChessLeaderboard();
-            } catch (e) {
-                showToast('Error leaving: ' + e.message);
-            }
-        }
-
-        function renderChessHome() {
-            // Next event
-            const nextEvent = chessEvents.filter(e => new Date(e.date + 'T' + (e.time || '00:00')) >= new Date()).sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')))[0];
-            const nextEl = document.getElementById('chessNextEvent');
-            if (nextEvent) {
-                const date = new Date(nextEvent.date + 'T' + (nextEvent.time || '00:00'));
-                const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-                const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                nextEl.innerHTML = `
-                    <div style="font-weight:600; font-size:15px;">${nextEvent.title}</div>
-                    <div style="font-size:13px; color:var(--ink-soft);">${nextEvent.timeControl || ''} • ${dateStr} ${timeStr}</div>
-                `;
-            } else {
-                nextEl.innerHTML = `<div style="font-size:13px; color:var(--ink-soft);">No upcoming events.</div>`;
-            }
-
-            // Leaderboard preview (top 3)
-            const sorted = [...chessMembers].sort((a, b) => (b.rating || 1200) - (a.rating || 1200));
-            const top3 = sorted.slice(0, 3);
-            const preview = document.getElementById('chessLeaderboardPreview');
-            if (top3.length === 0) {
-                preview.innerHTML = `<div class="empty-note">No members yet.</div>`;
-            } else {
-                const medals = ['🥇', '🥈', '🥉'];
-                preview.innerHTML = top3.map((m, i) => `
-                    <div class="leaderboard-row">
-                        <div class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${medals[i] || i+1}</div>
-                        <div class="player">${m.name || 'Unknown'}</div>
-                        <div class="rating">${m.rating || 1200}</div>
-                    </div>
-                `).join('');
-            }
-
-            // Recent activity preview
-            const activityPreview = document.getElementById('chessActivityList');
-            if (activityPreview && chessCurrentTab === 'home') {
-                // we'll show only in activity tab
-            }
-        }
-
-        function renderChessMembers() {
-            const list = document.getElementById('chessMembersList');
-            if (!list) return;
-            if (chessMembers.length === 0) {
-                list.innerHTML = `<div class="empty-note">No members yet. Be the first to join!</div>`;
-                return;
-            }
-            let html = '';
-            chessMembers.forEach(m => {
-                const branchName = getBranch(m.branch)?.name || m.branch || '';
-                const shortBranch = branchName.replace('B.Tech — ', '');
-                const avatar = (m.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-                html += `
-                    <div class="member-item">
-                        <div class="avatar">${avatar}</div>
-                        <div class="info">
-                            <div class="name">${m.name || 'Unknown'} ${m.uid === currentUid ? ' (you)' : ''}</div>
-                            <div class="branch">${shortBranch}${m.section ? ' · Sec ' + m.section : ''}</div>
-                        </div>
-                        <div class="rating">${m.rating || 1200}</div>
-                    </div>
-                `;
-            });
-            list.innerHTML = html;
-        }
-
-        function renderChessLeaderboard() {
-            const container = document.getElementById('chessLeaderboardFull');
-            if (!container) return;
-            const sorted = [...chessMembers].sort((a, b) => (b.rating || 1200) - (a.rating || 1200));
-            if (sorted.length === 0) {
-                container.innerHTML = `<div class="empty-note">No members yet.</div>`;
-                return;
-            }
-            let html = '';
-            sorted.forEach((m, i) => {
-                const rank = i + 1;
-                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
-                const games = (m.wins || 0) + (m.losses || 0) + (m.draws || 0);
-                html += `
-                    <div class="leaderboard-row">
-                        <div class="rank ${rank===1?'gold':rank===2?'silver':rank===3?'bronze':''}">${medal}</div>
-                        <div class="player">${m.name || 'Unknown'}</div>
-                        <div style="font-size:12px; color:var(--ink-soft); flex:1;">${games} games</div>
-                        <div class="rating">${m.rating || 1200}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderChessEvents() {
-            const container = document.getElementById('chessEventsList');
-            if (!container) return;
-            if (chessEvents.length === 0) {
-                container.innerHTML = `<div class="empty-note">No events scheduled.</div>`;
-                return;
-            }
-            const sorted = [...chessEvents].sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
-            let html = '';
-            sorted.forEach(e => {
-                const date = new Date(e.date + 'T' + (e.time || '00:00'));
-                const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-                const timeStr = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const participants = e.participants ? e.participants.length : 0;
-                const isPast = date < new Date();
-                html += `
-                    <div class="event-card">
-                        <div class="title">${e.title} ${isPast ? ' (past)' : ''}</div>
-                        <div class="details">${dateStr} ${timeStr} · ${e.timeControl || 'No time control'} · ${participants} participants</div>
-                        <div class="details" style="font-size:12px;">${e.description || ''}</div>
-                        <div class="actions">
-                            ${!isPast && currentUser ? `<button class="btn-primary" style="margin:0; padding:4px 16px; font-size:12px;" onclick="registerForEvent('${e.id}')">Register</button>` : ''}
-                            ${isAdmin ? `<button class="btn-danger" style="margin:0; padding:4px 16px; font-size:12px;" onclick="deleteChessEvent('${e.id}')">Delete</button>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        async function registerForEvent(eventId) {
-            if (!currentUser) { showToast('Please log in first.'); return; }
-            try {
-                const ref = doc(chessEventsCollection, eventId);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) { showToast('Event not found.'); return; }
-                const data = snap.data();
-                const participants = data.participants || [];
-                if (participants.includes(currentUid)) {
-                    showToast('You are already registered.');
-                    return;
-                }
-                participants.push(currentUid);
-                await updateDoc(ref, { participants });
-                showToast('Registered for event!');
-                renderChessEvents();
-                // Activity
-                await addDoc(chessActivityCollection, {
-                    type: 'register',
-                    uid: currentUid,
-                    name: currentUser.name,
-                    message: `${currentUser.name} registered for ${data.title}`,
-                    createdAt: serverTimestamp()
-                });
-            } catch (e) {
-                showToast('Error: ' + e.message);
-            }
-        }
-
-        async function deleteChessEvent(eventId) {
-            if (!confirm('Delete this event?')) return;
-            try {
-                await deleteDoc(doc(chessEventsCollection, eventId));
-                showToast('Event deleted.');
-                renderChessEvents();
-            } catch (e) {
-                showToast('Error: ' + e.message);
-            }
-        }
-
-        function openChessEventForm() {
-            document.getElementById('chessEventForm').style.display = 'block';
-            document.getElementById('chessEventDate').value = dateKey(new Date());
-            document.getElementById('chessEventTime').value = '19:00';
-        }
-
-        function closeChessEventForm() {
-            document.getElementById('chessEventForm').style.display = 'none';
-        }
-
-        async function submitChessEvent(e) {
-            e.preventDefault();
-            if (!isAdmin) { showToast('Only admins can create events.'); return; }
-            const title = document.getElementById('chessEventTitle').value.trim();
-            const date = document.getElementById('chessEventDate').value;
-            const time = document.getElementById('chessEventTime').value;
-            const timeControl = document.getElementById('chessEventTimeControl').value.trim();
-            const description = document.getElementById('chessEventDesc').value.trim();
-            if (!title || !date) { showToast('Title and date are required.'); return; }
-            try {
-                await addDoc(chessEventsCollection, {
-                    title,
-                    date,
-                    time,
-                    timeControl: timeControl || 'N/A',
-                    description,
-                    participants: [],
-                    createdBy: currentUid,
-                    createdAt: serverTimestamp()
-                });
-                showToast('Event created!');
-                closeChessEventForm();
-                renderChessEvents();
-                // Activity
-                await addDoc(chessActivityCollection, {
-                    type: 'event_created',
-                    uid: currentUid,
-                    name: currentUser.name,
-                    message: `${currentUser.name} created event: ${title}`,
-                    createdAt: serverTimestamp()
-                });
-                // Reset form
-                document.getElementById('chessEventTitle').value = '';
-                document.getElementById('chessEventDesc').value = '';
-                document.getElementById('chessEventTimeControl').value = '';
-            } catch (e) {
-                showToast('Error: ' + e.message);
-            }
-        }
-
-        function populateChallengeOpponents() {
-            const sel = document.getElementById('chessChallengeOpponent');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '';
-            chessMembers.forEach(m => {
-                if (m.uid !== currentUid) {
-                    const opt = document.createElement('option');
-                    opt.value = m.uid;
-                    opt.textContent = m.name || 'Unknown';
-                    sel.appendChild(opt);
-                }
-            });
-            if (current && sel.querySelector(`option[value="${current}"]`)) {
-                sel.value = current;
-            }
-        }
-
-        async function sendChessChallenge() {
-            if (!currentUser) { showToast('Please log in first.'); return; }
-            const opponentUid = document.getElementById('chessChallengeOpponent').value;
-            if (!opponentUid) { showToast('Select an opponent.'); return; }
-            if (opponentUid === currentUid) { showToast('You cannot challenge yourself.'); return; }
-            // Check if there is already a pending challenge between these two
-            const existing = chessChallenges.find(c =>
-                (c.challengerUid === currentUid && c.opponentUid === opponentUid && c.status === 'pending') ||
-                (c.challengerUid === opponentUid && c.opponentUid === currentUid && c.status === 'pending')
-            );
-            if (existing) {
-                showToast('A challenge is already pending between you two.');
-                return;
-            }
-            try {
-                await addDoc(chessChallengesCollection, {
-                    challengerUid: currentUid,
-                    opponentUid: opponentUid,
-                    status: 'pending',
-                    createdAt: serverTimestamp(),
-                    challengerName: currentUser.name,
-                    opponentName: chessMembers.find(m => m.uid === opponentUid)?.name || 'Unknown'
-                });
-                showToast('Challenge sent!');
-                renderChessChallenges();
-                // Activity
-                await addDoc(chessActivityCollection, {
-                    type: 'challenge',
-                    uid: currentUid,
-                    name: currentUser.name,
-                    message: `${currentUser.name} challenged ${chessMembers.find(m=>m.uid===opponentUid)?.name || 'Unknown'}`,
-                    createdAt: serverTimestamp()
-                });
-            } catch (e) {
-                showToast('Error: ' + e.message);
-            }
-        }
-
-        function renderChessChallenges() {
-            const container = document.getElementById('chessChallengesList');
-            if (!container) return;
-            // Show challenges where current user is involved
-            const myChallenges = chessChallenges.filter(c => c.challengerUid === currentUid || c.opponentUid === currentUid);
-            if (myChallenges.length === 0) {
-                container.innerHTML = `<div class="empty-note">No challenges.</div>`;
-                return;
-            }
-            let html = '';
-            myChallenges.forEach(c => {
-                const isChallenger = c.challengerUid === currentUid;
-                const otherName = isChallenger ? c.opponentName || 'Unknown' : c.challengerName || 'Unknown';
-                const status = c.status;
-                const date = c.createdAt ? new Date(c.createdAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
-                let actions = '';
-                if (status === 'pending' && !isChallenger) {
-                    actions = `<button class="btn-success" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','accepted')">Accept</button>
-                               <button class="btn-danger" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','declined')">Decline</button>`;
-                } else if (status === 'pending' && isChallenger) {
-                    actions = `<button class="btn-danger" style="margin:0; padding:4px 12px; font-size:11px;" onclick="respondChallenge('${c.id}','cancelled')">Cancel</button>`;
-                }
-                html += `
-                    <div class="challenge-item">
-                        <div class="info">
-                            <strong>${isChallenger ? 'You' : otherName}</strong> ${isChallenger ? 'challenged' : 'challenged you'} 
-                            (${status}) ${date}
-                        </div>
-                        <div class="actions">${actions}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        async function respondChallenge(challengeId, status) {
-            if (!currentUser) { showToast('Please log in first.'); return; }
-            try {
-                await updateDoc(doc(chessChallengesCollection, challengeId), { status });
-                showToast(`Challenge ${status}.`);
-                renderChessChallenges();
-                // Activity
-                const challenge = chessChallenges.find(c => c.id === challengeId);
-                if (challenge) {
-                    const msg = status === 'accepted' ? `${currentUser.name} accepted challenge from ${challenge.challengerName}` :
-                        status === 'declined' ? `${currentUser.name} declined challenge from ${challenge.challengerName}` :
-                        `Challenge cancelled`;
-                    await addDoc(chessActivityCollection, {
-                        type: 'challenge_response',
-                        uid: currentUid,
-                        name: currentUser.name,
-                        message: msg,
-                        createdAt: serverTimestamp()
-                    });
-                }
-            } catch (e) {
-                showToast('Error: ' + e.message);
-            }
-        }
-
-        function renderChessGames() {
-            const container = document.getElementById('chessGamesList');
-            if (!container) return;
-            // Show games where current user is involved
-            const myGames = chessGames.filter(g => g.whiteUid === currentUid || g.blackUid === currentUid);
-            if (myGames.length === 0) {
-                container.innerHTML = `<div class="empty-note">No games recorded yet.</div>`;
-                return;
-            }
-            let html = '';
-            myGames.forEach(g => {
-                const isWhite = g.whiteUid === currentUid;
-                const opponent = isWhite ? g.blackName : g.whiteName;
-                const result = g.result; // 'win', 'loss', 'draw'
-                const resultText = result === 'win' ? (isWhite ? 'Win' : 'Loss') : result === 'loss' ? (isWhite ? 'Loss' : 'Win') : 'Draw';
-                const date = g.playedAt ? new Date(g.playedAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-                const ratingChange = g.ratingChange || 0;
-                const resultClass = result === 'win' ? 'win' : result === 'loss' ? 'loss' : 'draw';
-                html += `
-                    <div class="game-item">
-                        <div><span class="opponent">${opponent}</span> · ${date}</div>
-                        <div><span class="result ${resultClass}">${resultText}</span> ${ratingChange !== 0 ? '(' + (ratingChange > 0 ? '+' : '') + ratingChange + ')' : ''}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderChessActivity() {
-            const container = document.getElementById('chessActivityList');
-            if (!container) return;
-            if (chessActivity.length === 0) {
-                container.innerHTML = `<div class="empty-note">No activity yet.</div>`;
-                return;
-            }
-            let html = '';
-            chessActivity.forEach(a => {
-                const date = a.createdAt ? new Date(a.createdAt.seconds * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-                html += `
-                    <div style="padding:6px 0; border-bottom:1px solid var(--paper-line); font-size:13px;">
-                        <span style="color:var(--ink-soft);">${date}</span> — ${a.message}
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        // Admin event form triggers
-        document.addEventListener('DOMContentLoaded', () => {
-            const chessEventCreateBtn = document.getElementById('chessEventCreateBtn');
-            if (chessEventCreateBtn) {
-                chessEventCreateBtn.addEventListener('click', openChessEventForm);
-            }
-        });
-
-        // ============================================================
-        // ========== COMMUNITY POSTS ==================================
-        // ============================================================
-
-
         let ledgerCurrentBranch = 'civil';
         let ledgerCurrentView = '1';
         let ledgerSearchQuery = '';
@@ -5744,13 +5161,11 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             const ledgerView = document.getElementById('ledgerView');
             const mainShell = document.getElementById('mainShell');
             const telegramView = document.getElementById('telegramView');
-            const chessView = document.getElementById('chessClubView');
             if (!ledgerView) return;
 
             if (show) {
                 if (mainShell) mainShell.style.display = 'none';
                 if (telegramView) telegramView.style.display = 'none';
-                if (chessView) chessView.style.display = 'none';
                 ledgerView.style.display = 'block';
 
                 try { sessionStorage.setItem('mmmut_active_view', 'ledger'); } catch (_) {}
@@ -6482,30 +5897,23 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         let currentTelegramAppData = null;
         let telegramTokenWatcherTimer = null;
 
+        async function getIdTokenSafe() {
+            try {
+                if (typeof auth !== 'undefined' && auth.currentUser) {
+                    return await auth.currentUser.getIdToken();
+                }
+            } catch (_) {}
+            return null;
+        }
+
         async function fetchChannelInviteLink() {
             const cfg = window.TELEGRAM_CONFIG || (typeof TELEGRAM_CONFIG !== 'undefined' ? TELEGRAM_CONFIG : {});
 
-            // Check developer override in localStorage if set
-            try {
-                const localInvite = localStorage.getItem('mmmut_telegram_channel_invite');
-                if (localInvite && localInvite.trim() && !localInvite.includes('mmmut_erp_bot') && !localInvite.includes('mmmut_erp_official')) {
-                    cfg.channelUrl = localInvite.trim();
-                    return localInvite.trim();
-                }
-            } catch (_) {}
-
-            // Check if already configured or previously cached
-            if (cfg.channelUrl && typeof cfg.channelUrl === 'string' && cfg.channelUrl.trim()) {
-                const link = cfg.channelUrl.trim();
-                if (!link.includes('mmmut_erp_official') && !link.includes('mmmut_erp_bot')) {
-                    return link;
-                }
-            }
-
-            // Attempt to retrieve real private invite link from backend
+            // Attempt to retrieve real private invite link from backend (auth required)
             if (typeof apiGetTelegramChannelInvite === 'function') {
                 try {
-                    const res = await apiGetTelegramChannelInvite();
+                    const idToken = await getIdTokenSafe();
+                    const res = await apiGetTelegramChannelInvite(idToken);
                     if (res && res.ok && res.inviteLink) {
                         const link = String(res.inviteLink).trim();
                         if (link && !link.includes('mmmut_erp_bot') && !link.includes('mmmut_erp_official')) {
@@ -6519,10 +5927,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 }
             }
 
-            // Reliable default fallback to the configured official channel invite link
-            const defaultInvite = 'https://t.me/+Hx9BkNjz58YwZjY9';
-            cfg.channelUrl = defaultInvite;
-            return defaultInvite;
+            // No hardcoded fallback: invite must come from the server after auth.
+            return cfg.channelUrl || null;
         }
 
         function openTelegramWeb(sameTab = false) {
@@ -6696,14 +6102,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             if (btn) { btn.disabled = true; btn.textContent = 'Generating Link…'; }
 
             try {
-                let idToken = null;
-                if (currentUser && typeof currentUser.getIdToken === 'function') {
-                    try {
-                        idToken = await currentUser.getIdToken();
-                    } catch (e) {
-                        console.warn('[Telegram] Could not fetch ID token:', e);
-                    }
-                }
+                const idToken = await getIdTokenSafe();
 
                 // Request single-use linking token from server-side backend
                 const res = typeof apiCreateTelegramToken === 'function' ?
@@ -6712,13 +6111,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 if (res && res.ok && res.deepLink) {
                     window.open(res.deepLink, '_blank', 'noopener,noreferrer');
                     showToast('Opening Telegram bot… Press Start in Telegram to link.');
-                    startTelegramTokenWatcher(res.token);
+                    startTelegramTokenWatcher(res.token, idToken);
                 } else {
-                    // Fallback to bot username direct link if backend offline
-                    const botUser = (window.TELEGRAM_CONFIG && window.TELEGRAM_CONFIG.botUsername) || 'mmmut_erp_bot';
-                    const fallbackUrl = 'https://t.me/' + botUser;
-                    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-                    promptManualTelegramHandle();
+                    showToast('Could not generate Telegram link. Please try again after login.');
                 }
             } catch (err) {
                 console.error('[Telegram] Error connecting Telegram:', err);
@@ -6729,7 +6124,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         }
 
         // Polling watcher while student links with bot on Telegram
-        function startTelegramTokenWatcher(token) {
+        function startTelegramTokenWatcher(token, idToken) {
             if (telegramTokenWatcherTimer) {
                 clearInterval(telegramTokenWatcherTimer);
                 telegramTokenWatcherTimer = null;
@@ -6745,23 +6140,15 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 }
 
                 if (typeof apiGetTelegramTokenStatus === 'function') {
-                    const statusRes = await apiGetTelegramTokenStatus(token);
+                    const fresh = idToken || await getIdTokenSafe();
+                    const statusRes = await apiGetTelegramTokenStatus(token, fresh);
                     if (statusRes && statusRes.ok && statusRes.linked) {
                         clearInterval(telegramTokenWatcherTimer);
                         telegramTokenWatcherTimer = null;
 
-                        // Save linked identity to Firestore doc
-                        try {
-                            await updateDoc(doc(telegramApplicationsCollection, currentUid), {
-                                telegramUserId: statusRes.telegramUserId || null,
-                                telegramUsername: statusRes.telegramUsername || null,
-                                status: 'JOIN_REQUEST_NOT_SENT',
-                                linkedAt: serverTimestamp()
-                            });
-                            showToast('🎉 Telegram account connected successfully!');
-                        } catch (e) {
-                            console.warn('[Telegram] Could not update linked status directly:', e);
-                        }
+                        // Token is single-use and consumed server-side; webhook
+                        // already recorded the link. Refresh from Firestore listener.
+                        showToast('🎉 Telegram account connected successfully!');
                     }
                 }
             }, 3000);
@@ -6830,14 +6217,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
 
             try {
                 const tgUserId = currentTelegramAppData?.telegramUserId;
-                let idToken = null;
-                if (currentUser && typeof currentUser.getIdToken === 'function') {
-                    try {
-                        idToken = await currentUser.getIdToken();
-                    } catch (e) {
-                        console.warn('[Telegram] Could not fetch ID token:', e);
-                    }
-                }
+                const idToken = await getIdTokenSafe();
 
                 let checkRes = null;
                 if (typeof apiCheckTelegramMembership === 'function') {
@@ -7109,11 +6489,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         function toggleTelegramSection(show) {
             const telegramView = document.getElementById('telegramView');
             const mainShell = document.getElementById('mainShell');
-            const chessView = document.getElementById('chessClubView');
             if (!telegramView) return;
 
             if (show) {
-                if (chessView) chessView.style.display = 'none';
                 const ledgerView = document.getElementById('ledgerView');
                 if (ledgerView) ledgerView.style.display = 'none';
                 if (mainShell) mainShell.style.display = 'none';
@@ -7182,6 +6560,19 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             }
         }
 
+        // ========== SECURITY HELPERS (XSS-safe rendering) ==========
+        function safeUrl(u) {
+            const s = String(u || '');
+            if (/^https:\/\//.test(s)) return s.replace(/"/g, '%22');
+            return '';
+        }
+        function cleanFileName(name) {
+            return String(name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80) || 'file';
+        }
+        function safeId(id) {
+            return String(id || '').replace(/[^A-Za-z0-9_-]/g, '');
+        }
+
         async function submitCommunityPost(e) {
             e.preventDefault();
             if (!currentUser) { showToast('Please log in first.'); return; }
@@ -7189,8 +6580,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
             const errorEl = document.getElementById('cpFormError');
             errorEl.style.display = 'none';
 
-            const title = document.getElementById('cpTitle').value.trim();
-            const content = document.getElementById('cpContent').value.trim();
+            const title = document.getElementById('cpTitle').value.trim().slice(0, 120);
+            const content = document.getElementById('cpContent').value.trim().slice(0, 5000);
             const fileInput = document.getElementById('cpImage');
 
             if (!title) { errorEl.textContent = 'Please enter a title.';
@@ -7199,16 +6590,22 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 errorEl.style.display = 'block'; return; }
 
             let imageUrl = null;
+            let imagePath = null;
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                const path = `communityPosts/${currentUid}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, path);
+                if (file.size > 5 * 1024 * 1024) { errorEl.textContent = 'Image must be under 5MB.'; errorEl.style.display = 'block'; return; }
+                if (!String(file.type || '').startsWith('image/')) { errorEl.textContent = 'Only image files allowed.'; errorEl.style.display = 'block'; return; }
+                imagePath = `communityPosts/${currentUid}/${Date.now()}_${cleanFileName(file.name)}`;
+                const storageRef = ref(storage, imagePath);
                 try {
                     await uploadBytes(storageRef, file);
                     imageUrl = await getDownloadURL(storageRef);
                 } catch (err) {
-                    console.warn('Image upload failed, proceeding without image:', err);
-                    showToast('⚠️ Image upload failed, but post will be saved without it.');
+                    console.warn('Image upload failed:', err);
+                    errorEl.textContent = 'Image upload failed: ' + (err && err.message ? err.message : err) +
+                        ' — Storage rules may not be deployed (see storage.rules). Post not published.';
+                    errorEl.style.display = 'block';
+                    return;
                 }
             }
 
@@ -7220,6 +6617,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     title,
                     content,
                     imageUrl: imageUrl || null,
+                    imagePath: imagePath || null,
                     likes: [],
                     createdAt: serverTimestamp()
                 });
@@ -7259,29 +6657,35 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
               <div class="community-post">
                 <div class="cp-head">
                   <div>
-                    <div class="cp-author">${post.name || 'Unknown'} <span>@${post.username || '—'}</span>
+                    <div class="cp-author">${escapeHtml(post.name || 'Unknown')} <span>@${escapeHtml(post.username || '—')}</span>
                       <span class="cp-admin-badge">Admin</span>
                     </div>
-                    <div class="cp-title">${post.title}</div>
+                    <div class="cp-title">${escapeHtml(post.title)}</div>
                   </div>
-                  <div class="cp-time">${date}</div>
+                  <div class="cp-time">${escapeHtml(date)}</div>
                 </div>
-                <div class="cp-body">${post.content}</div>
-                ${post.imageUrl ? `<img src="${post.imageUrl}" class="cp-image" alt="Post image" loading="lazy" />` : ''}
+                <div class="cp-body">${escapeHtml(post.content)}</div>
+                ${post.imageUrl && safeUrl(post.imageUrl) ? `<img src="${safeUrl(post.imageUrl)}" class="cp-image" alt="Post image" loading="lazy" />` : ''}
                 <div class="cp-actions">
-                  <button class="cp-like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                  <button class="cp-like-btn ${isLiked ? 'liked' : ''}" data-post-id="${safeId(post.id)}" data-action="like">
                     ${isLiked ? '❤️' : '🤍'} <span class="cp-like-count">${likeCount}</span>
                   </button>
-                  ${isOwn ? `<button class="cp-delete-btn" onclick="deleteCommunityPost('${post.id}')">🗑️ Delete</button>` : ''}
+                  ${isOwn ? `<button class="cp-delete-btn" data-post-id="${safeId(post.id)}" data-action="delete">🗑️ Delete</button>` : ''}
                 </div>
               </div>
             `;
             });
 
             feed.innerHTML = html;
+            feed.querySelectorAll('button[data-action="like"]').forEach(b =>
+                b.addEventListener('click', () => toggleLike(b.dataset.postId)));
+            feed.querySelectorAll('button[data-action="delete"]').forEach(b =>
+                b.addEventListener('click', () => deleteCommunityPost(b.dataset.postId)));
         }
 
         async function toggleLike(postId) {
+            postId = String(postId || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!postId) return;
             if (!currentUser) { showToast('Please log in first.'); return; }
             try {
                 const postRef = doc(communityPostsCollection, postId);
@@ -7302,6 +6706,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         }
 
         async function deleteCommunityPost(postId) {
+            postId = String(postId || '').replace(/[^A-Za-z0-9_-]/g, '');
+            if (!postId) return;
             if (!confirm('Delete this post? This cannot be undone.')) return;
             try {
                 const postRef = doc(communityPostsCollection, postId);
@@ -7309,10 +6715,9 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 if (!snap.exists()) { showToast('Post not found.'); return; }
                 const data = snap.data();
                 if (data.uid !== currentUid) { showToast('You can only delete your own posts.'); return; }
-                if (data.imageUrl) {
+                if (data.imagePath) {
                     try {
-                        const imageRef = ref(storage, data.imageUrl);
-                        await deleteObject(imageRef);
+                        await deleteObject(ref(storage, data.imagePath));
                     } catch (e) {}
                 }
                 await deleteDoc(postRef);
@@ -7394,10 +6799,13 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 errorEl.style.display = 'block'; return; }
 
             let attachmentUrl = null;
+            let attachmentPath = null;
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
-                const path = `feedback/${currentUid}/${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, path);
+                if (file.size > 5 * 1024 * 1024) { errorEl.textContent = 'Screenshot must be under 5MB.'; errorEl.style.display = 'block'; return; }
+                if (!String(file.type || '').startsWith('image/')) { errorEl.textContent = 'Only image files allowed.'; errorEl.style.display = 'block'; return; }
+                attachmentPath = `feedback/${currentUid}/${Date.now()}_${cleanFileName(file.name)}`;
+                const storageRef = ref(storage, attachmentPath);
                 try {
                     await uploadBytes(storageRef, file);
                     attachmentUrl = await getDownloadURL(storageRef);
@@ -7424,6 +6832,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     priority,
                     status: 'open',
                     attachment: attachmentUrl,
+                    attachmentPath: attachmentPath || null,
                     ticketId,
                     createdAtDate: today,
                     createdAt: serverTimestamp(),
@@ -7476,7 +6885,7 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     const date = latest.createdAt ? new Date(latest.createdAt.seconds * 1000).toLocaleDateString(
                         'en-IN', { day: 'numeric', month: 'short' }) : '—';
                     latestEl.innerHTML =
-                        `<strong>${latest.ticketId || '—'}</strong> — ${latest.subject} <span style="color:var(--ink-soft);font-size:11px;">(${statusMap[latest.status] || latest.status} · ${date})</span>`;
+                        `<strong>${escapeHtml(latest.ticketId || '—')}</strong> — ${escapeHtml(latest.subject)} <span style="color:var(--ink-soft);font-size:11px;">(${escapeHtml(statusMap[latest.status] || latest.status || '')} · ${escapeHtml(date)})</span>`;
                 }
             } catch (e) {}
         }
@@ -7537,32 +6946,34 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 <div class="feedback-list-item">
                   <div class="fb-head">
                     <div>
-                      <span class="fb-ticket">${f.ticketId || '—'}</span>
-                      <span class="fb-subject">${f.subject}</span>
+                      <span class="fb-ticket">${escapeHtml(f.ticketId || '—')}</span>
+                      <span class="fb-subject">${escapeHtml(f.subject)}</span>
                     </div>
-                    <span class="fb-status-badge ${statusMap[f.status] || 'fb-status-open'}">${statusLabel[f.status] || 'Open'}</span>
+                    <span class="fb-status-badge ${escapeHtml(statusMap[f.status] || 'fb-status-open')}">${escapeHtml(statusLabel[f.status] || 'Open')}</span>
                   </div>
                   <div class="fb-meta">
-                    <span class="${priorityClass}">${f.priority?.toUpperCase() || 'MEDIUM'}</span>
-                    · ${f.category} · ${date}
+                    <span class="${priorityClass}">${escapeHtml((f.priority || 'medium').toUpperCase())}</span>
+                    · ${escapeHtml(f.category)} · ${escapeHtml(date)}
                   </div>
-                  <div class="fb-message">${f.message}</div>
-                  ${f.attachment ? `<a href="${f.attachment}" target="_blank" class="fb-attachment-link">📎 View Attachment</a>` : ''}
+                  <div class="fb-message">${escapeHtml(f.message)}</div>
+                  ${f.attachment && safeUrl(f.attachment) ? `<a href="${safeUrl(f.attachment)}" target="_blank" rel="noopener" class="fb-attachment-link">📎 View Attachment</a>` : ''}
                   ${f.adminReply ? `
                     <div class="fb-reply">
                       <div class="fb-reply-label">💬 Admin Reply</div>
-                      ${f.adminReply}
-                      <div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">${f.repliedBy ? 'by ' + f.repliedBy : ''} · ${f.adminReplyAt ? new Date(f.adminReplyAt.seconds * 1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
+                      ${escapeHtml(f.adminReply)}
+                      <div style="font-size:10px;color:var(--ink-soft);margin-top:4px;">${f.repliedBy ? 'by ' + escapeHtml(f.repliedBy) : ''} · ${f.adminReplyAt ? escapeHtml(new Date(f.adminReplyAt.seconds * 1000).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})) : ''}</div>
                     </div>
                   ` : ''}
                   <div class="fb-actions">
-                    ${f.status === 'open' ? `<button class="btn-sm delete" onclick="deleteMyFeedback('${f.id}')">Delete</button>` : ''}
+                    ${f.status === 'open' ? `<button class="btn-sm delete" data-fb-id="${safeId(f.id)}" data-action="del">Delete</button>` : ''}
                   </div>
                 </div>
               `;
                 });
 
                 body.innerHTML = html;
+                body.querySelectorAll('button[data-action="del"]').forEach(b =>
+                    b.addEventListener('click', () => deleteMyFeedback(b.dataset.fbId)));
             } catch (e) {
                 body.innerHTML = `<div class="feedback-empty">Error loading feedback: ${e.message}</div>`;
             }
@@ -7634,29 +7045,30 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 if (allDocs.length === 0) {
                     el.innerHTML = `
                 <div class="fb-admin-search">
-                  <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${adminFeedbackSearch}" oninput="adminFeedbackSearch=this.value;renderAdminFeedback();" />
+                  <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${escapeHtml(adminFeedbackSearch)}" id="fbAdminSearch" />
                   <div class="fb-admin-filters">
-                    <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" onclick="adminFeedbackFilter='all';renderAdminFeedback();">All</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" onclick="adminFeedbackFilter='open';renderAdminFeedback();">Open</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" onclick="adminFeedbackFilter='high';renderAdminFeedback();">High Priority</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" onclick="adminFeedbackFilter='resolved';renderAdminFeedback();">Resolved</button>
-                    <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" onclick="adminFeedbackFilter='closed';renderAdminFeedback();">Closed</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" data-filter="all">All</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" data-filter="open">Open</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" data-filter="high">High Priority</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" data-filter="resolved">Resolved</button>
+                    <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" data-filter="closed">Closed</button>
                   </div>
                 </div>
                 <div class="feedback-empty">No feedback tickets found.</div>
               `;
+                    wireAdminFeedbackControls(el);
                     return;
                 }
 
                 let html = `
               <div class="fb-admin-search">
-                <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${adminFeedbackSearch}" oninput="adminFeedbackSearch=this.value;renderAdminFeedback();" />
+                <input class="search-box" placeholder="Search by name, username, ticket, subject…" value="${escapeHtml(adminFeedbackSearch)}" id="fbAdminSearch" />
                 <div class="fb-admin-filters">
-                  <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" onclick="adminFeedbackFilter='all';renderAdminFeedback();">All</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" onclick="adminFeedbackFilter='open';renderAdminFeedback();">Open</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" onclick="adminFeedbackFilter='high';renderAdminFeedback();">High Priority</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" onclick="adminFeedbackFilter='resolved';renderAdminFeedback();">Resolved</button>
-                  <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" onclick="adminFeedbackFilter='closed';renderAdminFeedback();">Closed</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='all'?'active':''}" data-filter="all">All</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='open'?'active':''}" data-filter="open">Open</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='high'?'active':''}" data-filter="high">High Priority</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='resolved'?'active':''}" data-filter="resolved">Resolved</button>
+                  <button class="filter-btn ${adminFeedbackFilter==='closed'?'active':''}" data-filter="closed">Closed</button>
                 </div>
               </div>
               <div class="fb-admin-table-wrap">
@@ -7696,18 +7108,18 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
 
                     html += `
                 <tr>
-                  <td><span class="fb-ticket" style="font-weight:600;">${f.ticketId || '—'}</span></td>
-                  <td>${f.name || '—'}<br/><span style="font-size:10px;color:var(--ink-soft);">@${f.username || '—'}</span></td>
-                  <td>${shortBranch}<br/><span style="font-size:10px;color:var(--ink-soft);">Sec ${f.section || '—'}</span></td>
-                  <td>${f.category || '—'}</td>
-                  <td><span class="${f.priority === 'high' ? 'fb-priority-high' : f.priority === 'medium' ? 'fb-priority-medium' : 'fb-priority-low'}">${f.priority?.toUpperCase() || 'MED'}</span></td>
-                  <td><span class="fb-status-badge ${statusMap[f.status] || 'fb-status-open'}">${statusLabel[f.status] || 'Open'}</span></td>
-                  <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.subject || ''}">${f.subject || '—'}</td>
+                  <td><span class="fb-ticket" style="font-weight:600;">${escapeHtml(f.ticketId || '—')}</span></td>
+                  <td>${escapeHtml(f.name || '—')}<br/><span style="font-size:10px;color:var(--ink-soft);">@${escapeHtml(f.username || '—')}</span></td>
+                  <td>${escapeHtml(shortBranch)}<br/><span style="font-size:10px;color:var(--ink-soft);">Sec ${escapeHtml(f.section || '—')}</span></td>
+                  <td>${escapeHtml(f.category || '—')}</td>
+                  <td><span class="${f.priority === 'high' ? 'fb-priority-high' : f.priority === 'medium' ? 'fb-priority-medium' : 'fb-priority-low'}">${escapeHtml((f.priority || 'med').toUpperCase())}</span></td>
+                  <td><span class="fb-status-badge ${escapeHtml(statusMap[f.status] || 'fb-status-open')}">${escapeHtml(statusLabel[f.status] || 'Open')}</span></td>
+                  <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(f.subject || '')}">${escapeHtml(f.subject || '—')}</td>
                   <td>
                     <div class="fb-admin-actions">
-                      <button class="btn-sm reply-btn" onclick="openAdminReply('${f.id}')">Reply</button>
-                      <button class="btn-sm status-btn" onclick="changeFeedbackStatus('${f.id}')">Status</button>
-                      <button class="btn-sm del-btn" onclick="deleteFeedbackAdmin('${f.id}')">Delete</button>
+                      <button class="btn-sm reply-btn" data-fb-act="reply" data-fb-id="${safeId(f.id)}">Reply</button>
+                      <button class="btn-sm status-btn" data-fb-act="status" data-fb-id="${safeId(f.id)}">Status</button>
+                      <button class="btn-sm del-btn" data-fb-act="del" data-fb-id="${safeId(f.id)}">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -7716,9 +7128,38 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
 
                 html += `</tbody></table></div>`;
                 el.innerHTML = html;
+                wireAdminFeedbackControls(el);
+                el.querySelectorAll('button[data-fb-act]').forEach(b => {
+                    const id = b.dataset.fbId;
+                    const act = b.dataset.fbAct;
+                    b.addEventListener('click', () => {
+                        if (act === 'reply') openAdminReply(id);
+                        else if (act === 'status') changeFeedbackStatus(id);
+                        else if (act === 'del') deleteFeedbackAdmin(id);
+                    });
+                });
             } catch (e) {
-                el.innerHTML = `<div class="feedback-empty">Error loading feedback: ${e.message}</div>`;
+                el.innerHTML = `<div class="feedback-empty">Error loading feedback: ${escapeHtml(e.message)}</div>`;
             }
+        }
+
+        function wireAdminFeedbackControls(root) {
+            const input = root.querySelector('#fbAdminSearch');
+            if (input) {
+                input.addEventListener('input', () => {
+                    adminFeedbackSearch = input.value;
+                    const t = setTimeout(() => {}, 0);
+                    clearTimeout(t);
+                    renderAdminFeedbackDebounced();
+                });
+            }
+            root.querySelectorAll('button[data-filter]').forEach(b =>
+                b.addEventListener('click', () => { adminFeedbackFilter = b.dataset.filter; renderAdminFeedback(); }));
+        }
+        let _fbRenderTimer = null;
+        function renderAdminFeedbackDebounced() {
+            if (_fbRenderTimer) clearTimeout(_fbRenderTimer);
+            _fbRenderTimer = setTimeout(() => renderAdminFeedback(), 250);
         }
 
         // ========== ADMIN REPLY ==========
@@ -7795,13 +7236,15 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
 
         // ========== DELETE FEEDBACK (ADMIN) ==========
         async function deleteFeedbackAdmin(feedbackId) {
+            feedbackId = safeId(feedbackId);
+            if (!feedbackId) return;
+            if (!isAdmin) { showToast('Only admins can delete feedback.'); return; }
             if (!confirm('Delete this feedback permanently?')) return;
             try {
                 const snap = await getDoc(doc(feedbackCollection, feedbackId));
-                if (snap.exists() && snap.data().attachment) {
+                if (snap.exists() && snap.data().attachmentPath) {
                     try {
-                        const attachmentRef = ref(storage, snap.data().attachment);
-                        await deleteObject(attachmentRef);
+                        await deleteObject(ref(storage, snap.data().attachmentPath));
                     } catch (e) {}
                 }
                 await deleteDoc(doc(feedbackCollection, feedbackId));
@@ -7840,8 +7283,8 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                     selectedRating = existingRating.rating || 0;
                     document.getElementById('ratingComment').value = existingRating.comment || '';
                     document.getElementById('ratingExisting').style.display = 'block';
-                    document.getElementById('ratingExisting').innerHTML =
-                        `⭐ You rated ${existingRating.rating} stars. You can update your rating below.`;
+                    document.getElementById('ratingExisting').textContent =
+                        `⭐ You rated ${Number(existingRating.rating) || 0} stars. You can update your rating below.`;
                     updateRatingStars();
                 } else {
                     existingRating = null;
@@ -8540,16 +7983,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                         window._feedbackUnsub = null; }
                     if (window._communityPostsUnsub) { window._communityPostsUnsub();
                         window._communityPostsUnsub = null; }
-                    if (window._chessMembersUnsub) { window._chessMembersUnsub();
-                        window._chessMembersUnsub = null; }
-                    if (window._chessEventsUnsub) { window._chessEventsUnsub();
-                        window._chessEventsUnsub = null; }
-                    if (window._chessChallengesUnsub) { window._chessChallengesUnsub();
-                        window._chessChallengesUnsub = null; }
-                    if (window._chessActivityUnsub) { window._chessActivityUnsub();
-                        window._chessActivityUnsub = null; }
-                    if (window._chessGamesUnsub) { window._chessGamesUnsub();
-                        window._chessGamesUnsub = null; }
                     if (typeof cleanupLedgerListener === 'function') {
                         cleanupLedgerListener();
                     }
@@ -8568,12 +8001,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
                 }
                 try {
                     const record = await loadUserProfile(user.uid);
-                    if (record.username === 'tanish' && !record.isAdmin) {
-                        try {
-                            await updateDoc(doc(usersCollection, user.uid), { isAdmin: true });
-                            record.isAdmin = true;
-                        } catch (e) {}
-                    }
                     await loginAs(record, user.uid);
                     document.getElementById('loadingScreen').style.display = 'none';
                     setTimeout(() => renderPostsFeed(), 500);
@@ -8710,19 +8137,6 @@ const LEDGER_DETAIL = {"BSM 110":{"n":"Engineering Mathematics I","c":"Basic Sci
         window.renderFeedbackPreview = renderFeedbackPreview;
         window.adminFeedbackFilter = 'all';
         window.adminFeedbackSearch = '';
-
-        // Chess club globals
-        window.toggleChessClub = toggleChessClub;
-        window.switchChessTab = switchChessTab;
-        window.handleChessJoin = handleChessJoin;
-        window.handleChessLeave = handleChessLeave;
-        window.registerForEvent = registerForEvent;
-        window.deleteChessEvent = deleteChessEvent;
-        window.openChessEventForm = openChessEventForm;
-        window.closeChessEventForm = closeChessEventForm;
-        window.submitChessEvent = submitChessEvent;
-        window.sendChessChallenge = sendChessChallenge;
-        window.respondChallenge = respondChallenge;
 
         // Push notifications globals
         window.enablePushNotifications = enablePushNotifications;
