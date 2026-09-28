@@ -536,6 +536,10 @@
             renderLedgerSummaryStats();
             renderLedgerSemesterChips();
             renderLedgerCoursesOnly();
+            // Keep the dashboard Syllabus Tracker preview in sync (single source: Ledger state).
+            if (typeof renderDashboardLedgerPreview === 'function') {
+                try { renderDashboardLedgerPreview(); } catch (_) {}
+            }
         }
 
         function renderLedgerBranchSelector() {

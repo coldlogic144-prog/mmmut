@@ -17,10 +17,10 @@
         rel="stylesheet" />
 
     <!-- Modern Modular CSS Architecture -->
-    <link rel="stylesheet" href="./css/base.css" />
-    <link rel="stylesheet" href="./css/layout.css" />
-    <link rel="stylesheet" href="./css/components.css" />
-    <link rel="stylesheet" href="./css/pages.css" />
+    <link rel="stylesheet" href="./frontend/css/base.css" />
+    <link rel="stylesheet" href="./frontend/css/layout.css" />
+    <link rel="stylesheet" href="./frontend/css/components.css" />
+    <link rel="stylesheet" href="./frontend/css/pages.css" />
 </head>
 
 <body>
@@ -177,11 +177,7 @@
                     </button>
                     <button class="sidebar-link" id="sidebarLedgerBtn" onclick="toggleLedgerSection(true)">
                         <span class="icon">📑</span>
-                        <span>Ledger</span>
-                    </button>
-                    <button class="sidebar-link" onclick="scrollToSection('syllabusCard')">
-                        <span class="icon">📖</span>
-                        <span>Syllabus &amp; Modules</span>
+                        <span>Syllabus Tracker</span>
                     </button>
                     <button class="sidebar-link" onclick="scrollToSection('postsTopCard')">
                         <span class="icon">📢</span>
@@ -359,15 +355,8 @@
                         <div class="qa-item" onclick="toggleLedgerSection(true)">
                             <span class="qa-icon" style="color:var(--primary);display:inline-flex;">📑</span>
                             <div class="qa-text">
-                                <span class="qa-title">Ledger</span>
-                                <span class="qa-sub">Syllabus Tracker</span>
-                            </div>
-                        </div>
-                        <div class="qa-item" onclick="scrollToSection('syllabusCard')">
-                            <span class="qa-icon">📖</span>
-                            <div class="qa-text">
-                                <span class="qa-title">Curriculum</span>
-                                <span class="qa-sub">Branch Syllabus</span>
+                                <span class="qa-title">Syllabus Tracker</span>
+                                <span class="qa-sub">Track Units &amp; Topics</span>
                             </div>
                         </div>
                         <div class="qa-item" onclick="openFeedbackForm()">
@@ -460,33 +449,19 @@
                                 <div id="historyView"></div>
                             </div>
 
-                            <!-- Syllabus Card -->
-                            <div class="syllabus-card" id="syllabusCard">
+                            <!-- Syllabus Tracker (Ledger) Preview Card — replaces old static Curriculum viewer.
+                                 Single source of truth is The Ledger full view; this is a live preview. -->
+                            <div class="syllabus-card ledger-preview-card" id="syllabusCard">
                                 <div class="card-head">
                                     <div>
-                                        <div class="card-eyebrow">📖 Curriculum</div>
-                                        <div class="card-title">Course Syllabus</div>
+                                        <div class="card-eyebrow">📑 Syllabus Tracker</div>
+                                        <div class="card-title">Course Progress</div>
                                     </div>
                                     <button class="btn-secondary" style="padding:6px 14px;font-size:12px;"
-                                        onclick="openSyllabusFullView()">📄 Full View</button>
+                                        onclick="toggleLedgerSection(true)">📑 Open Tracker</button>
                                 </div>
-                                <div class="syllabus-branch-selector" id="syllabusSelector">
-                                    <div class="field">
-                                        <label for="syllabusBranch">Branch</label>
-                                        <select id="syllabusBranch" onchange="loadSyllabus()"></select>
-                                    </div>
-                                    <div class="field">
-                                        <label for="syllabusYear">Year</label>
-                                        <select id="syllabusYear" onchange="loadSyllabus()">
-                                            <option value="1">1st Year</option>
-                                            <option value="2">2nd Year</option>
-                                            <option value="3">3rd Year</option>
-                                            <option value="4">4th Year</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="syllabus-content" id="syllabusContent">
-                                    <div class="syllabus-loading">Select your branch to view the syllabus.</div>
+                                <div id="dashboardLedgerPreview">
+                                    <div class="syllabus-loading">Loading your syllabus progress…</div>
                                 </div>
                             </div>
                         </div>
@@ -1581,7 +1556,7 @@
     </script>
 
     <!-- Application Entry Point (Composed ES Module) -->
-    <script type="module" src="./js/app.js"></script>
+    <script type="module" src="./frontend/js/app.js"></script>
 </body>
 
 </html>

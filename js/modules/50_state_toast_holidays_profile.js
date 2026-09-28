@@ -161,32 +161,9 @@
             sel.innerHTML = BRANCHES.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
             populateSectionOptions();
 
-            const syllabusSel = document.getElementById('syllabusBranch');
-            syllabusSel.innerHTML = `<option value="">Select Branch</option>` +
-                Object.entries(syllabusData).map(([id, data]) =>
-                    `<option value="${id}">${data.name}</option>`
-                ).join('');
-            if (currentUser) {
-                const branchId = currentUser.branchId;
-                const syllabusBranchMap = {
-                    'cse': 'cse',
-                    'it': 'it',
-                    'ece': 'ece',
-                    'eceiot': 'eceiot',
-                    'civil': 'civil',
-                    'me': 'me',
-                    'chemical': 'chemical',
-                    'ee': 'ee',
-                    'bba': 'bba',
-                    'bpharm': 'bpharm'
-                };
-                const mapped = syllabusBranchMap[branchId];
-                if (mapped && syllabusData[mapped]) {
-                    syllabusSel.value = mapped;
-                }
-                document.getElementById('syllabusYear').value = '1';
-                loadSyllabus();
-            }
+            // Old static Curriculum branch/year selects were removed — the
+            // dashboard now shows a live Ledger (Syllabus Tracker) preview.
+            // Nothing to populate here; preview renders from Ledger state.
         }
 
         function populateSectionOptions() {

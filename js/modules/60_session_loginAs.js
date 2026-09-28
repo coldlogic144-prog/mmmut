@@ -90,24 +90,10 @@
             historyDate = new Date();
             renderHistoryView();
 
-            const syllabusSel = document.getElementById('syllabusBranch');
-            const syllabusBranchMap = {
-                'cse': 'cse',
-                'it': 'it',
-                'ece': 'ece',
-                'eceiot': 'eceiot',
-                'civil': 'civil',
-                'me': 'me',
-                'chemical': 'chemical',
-                'ee': 'ee',
-                'bba': 'bba',
-                'bpharm': 'bpharm'
-            };
-            const mapped = syllabusBranchMap[record.branchId];
-            if (mapped && syllabusData[mapped]) {
-                syllabusSel.value = mapped;
-                document.getElementById('syllabusYear').value = '1';
-                loadSyllabus();
+            // Curriculum viewer merged into Syllabus Tracker — refresh the
+            // dashboard preview instead of the removed static table.
+            if (typeof renderDashboardLedgerPreview === 'function') {
+                try { renderDashboardLedgerPreview(); } catch (_) {}
             }
 
             if (window._holidaysUnsub) window._holidaysUnsub();

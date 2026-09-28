@@ -285,6 +285,9 @@
         window.loginAs = loginAs;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Legacy static Curriculum selects (syllabusBranch/syllabusYear)
+            // were removed — the dashboard card is now a live Ledger preview.
+            // Keep the guards so nothing throws if old markup is cached.
             const syllabusBranch = document.getElementById('syllabusBranch');
             if (syllabusBranch) {
                 syllabusBranch.addEventListener('change', loadSyllabus);
@@ -292,6 +295,9 @@
             const syllabusYear = document.getElementById('syllabusYear');
             if (syllabusYear) {
                 syllabusYear.addEventListener('change', loadSyllabus);
+            }
+            if (typeof renderDashboardLedgerPreview === 'function') {
+                try { renderDashboardLedgerPreview(); } catch (_) {}
             }
         });
 
